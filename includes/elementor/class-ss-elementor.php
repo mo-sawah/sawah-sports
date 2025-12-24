@@ -42,6 +42,17 @@ final class Sawah_Sports_Elementor {
         wp_localize_script('sawah-sports-live', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
+            'i18n' => [
+                'live' => __('LIVE', 'sawah-sports'),
+                'team' => __('Team', 'sawah-sports'),
+                'form' => __('Form', 'sawah-sports'),
+                'noLive' => __('No live matches right now.', 'sawah-sports'),
+                'noFixtures' => __('No fixtures found.', 'sawah-sports'),
+                'noStandings' => __('No standings data.', 'sawah-sports'),
+                'liveErr' => __('Unable to load live matches.', 'sawah-sports'),
+                'fixturesErr' => __('Unable to load fixtures.', 'sawah-sports'),
+                'standingsErr' => __('Unable to load standings.', 'sawah-sports'),
+            ],
         ]);
     }
 }

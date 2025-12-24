@@ -71,28 +71,47 @@ final class Sawah_Sports_REST {
         if (is_wp_error($rl)) return $rl;
 
         $s = Sawah_Sports_Helpers::settings();
-        $league_id = Sawah_Sports_Helpers::sanitize_int_list($req->get_param('league_id'));
-        $include = $req->get_param('include');
-        if (empty($include)) $include = 'participants,league';
+        $league_csv = Sawah_Sports_Helpers::sanitize_int_list($req->get_param('league_id'));
+        $league_ids = array_filter(array_map('intval', array_map('trim', explode(',', (string)$league_csv))));
 
-        $query = ['include' => sanitize_text_field($include)];
-        if (!empty($league_id)) {
-            // Sportmonks supports filters; in v3 many endpoints accept filters[league_id]=
-            // We keep it flexible by passing filters[league_id] when present.
-            $query['filters[league_id]'] = $league_id;
+        // Sportmonks docs: inplay livescores does NOT support filters on the endpoint.
+        // We'll fetch in-play and filter server-side when league_id is provided.
+        $include = $req->get_param('include');
+        if (empty($include)) $include = 'participants;league;scores;state;periods';
+
+        $query = [
+            'include' => sanitize_text_field($include),
+        ];
+
+        // Auto-locale: if WP site is Greek, ask Sportmonks to translate name fields.
+        $wp_locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+        $sm_locale = strtolower(substr((string)$wp_locale, 0, 2));
+        if (!empty($sm_locale) && $sm_locale !== 'en') {
+            $query['locale'] = $sm_locale;
         }
 
-        $cache_key = 'ss_live_' . md5(json_encode($query));
+        $cache_key = 'ss_live_' . md5(json_encode([$league_csv, $query]));
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // In-play livescores endpoint.
         $res = $this->client()->get('livescores/inplay', $query, 12);
-        if (!$res['ok']) return new WP_Error('sportmonks_error', $res['error'] ?? 'error', ['status' => 502]);
+        if (!$res['ok']) {
+            $status = !empty($res['status']) ? (int)$res['status'] : 502;
+            return new WP_Error('sportmonks_error', $res['error'] ?? 'Sportmonks error', ['status' => $status]);
+        }
 
         $payload = $res['data'];
+
+        // Filter by league ids locally (if requested)
+        if (!empty($league_ids) && isset($payload['data']) && is_array($payload['data'])) {
+            $payload['data'] = array_values(array_filter($payload['data'], function($fx) use ($league_ids) {
+                $lid = isset($fx['league_id']) ? (int)$fx['league_id'] : 0;
+                return $lid && in_array($lid, $league_ids, true);
+            }));
+        }
+
         if (!empty($s['cache_enabled'])) {
             Sawah_Sports_Cache::set($cache_key, $payload, (int)$s['ttl_live']);
         }
@@ -105,9 +124,11 @@ final class Sawah_Sports_REST {
 
         $s = Sawah_Sports_Helpers::settings();
         $include = $req->get_param('include');
-        if (empty($include)) $include = 'participants,league';
+        if (empty($include)) $include = 'participants;league;scores;state';
 
-        $league_id = Sawah_Sports_Helpers::sanitize_int_list($req->get_param('league_id'));
+        $league_csv = Sawah_Sports_Helpers::sanitize_int_list($req->get_param('league_id'));
+        $league_ids = array_filter(array_map('intval', array_map('trim', explode(',', (string)$league_csv))));
+
         $team_id = Sawah_Sports_Helpers::sanitize_int_list($req->get_param('team_id'));
         $date = sanitize_text_field((string)$req->get_param('date'));
         $start = sanitize_text_field((string)$req->get_param('start'));
@@ -115,31 +136,46 @@ final class Sawah_Sports_REST {
 
         $query = ['include' => sanitize_text_field($include)];
 
+        $wp_locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+        $sm_locale = strtolower(substr((string)$wp_locale, 0, 2));
+        if (!empty($sm_locale) && $sm_locale !== 'en') {
+            $query['locale'] = $sm_locale;
+        }
+
+        // Decide endpoint
         $path = 'fixtures';
         if (!empty($date)) {
-            // /fixtures/date/{date}
             $path = 'fixtures/date/' . rawurlencode($date);
         } elseif (!empty($start) && !empty($end) && !empty($team_id)) {
-            // /fixtures/between/{start}/{end}/{team_id}
             $path = 'fixtures/between/' . rawurlencode($start) . '/' . rawurlencode($end) . '/' . rawurlencode($team_id);
         }
 
-        if (!empty($league_id)) $query['filters[league_id]'] = $league_id;
-
-        $cache_key = 'ss_fix_' . md5($path . '|' . json_encode($query));
+        // Note: some Sportmonks endpoints don't accept filters (e.g. livescores/inplay).
+        // To keep this widget reliable, we fetch and filter by league server-side.
+        $cache_key = 'ss_fix_' . md5($path . '|' . json_encode([$league_csv, $query]));
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
         $res = $this->client()->get($path, $query, 15);
-        if (!$res['ok']) return new WP_Error('sportmonks_error', $res['error'] ?? 'error', ['status' => 502]);
+        if (!$res['ok']) {
+            $status = !empty($res['status']) ? (int)$res['status'] : 502;
+            return new WP_Error('sportmonks_error', $res['error'] ?? 'Sportmonks error', ['status' => $status]);
+        }
 
         $payload = $res['data'];
+
+        if (!empty($league_ids) && isset($payload['data']) && is_array($payload['data'])) {
+            $payload['data'] = array_values(array_filter($payload['data'], function($fx) use ($league_ids) {
+                $lid = isset($fx['league_id']) ? (int)$fx['league_id'] : 0;
+                return $lid && in_array($lid, $league_ids, true);
+            }));
+        }
+
         if (!empty($s['cache_enabled'])) {
             Sawah_Sports_Cache::set($cache_key, $payload, (int)$s['ttl_fixtures']);
         }
-
         return rest_ensure_response($payload);
     }
 
@@ -152,9 +188,16 @@ final class Sawah_Sports_REST {
         if ($season_id <= 0) return new WP_Error('bad_request', 'season_id required', ['status' => 400]);
 
         $include = $req->get_param('include');
-        if (empty($include)) $include = 'participant';
+        // Include options include: participant, details, form. We request details.type so we can map fields.
+        if (empty($include)) $include = 'participant;details.type;form';
 
         $query = ['include' => sanitize_text_field($include)];
+
+        $wp_locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+        $sm_locale = strtolower(substr((string)$wp_locale, 0, 2));
+        if (!empty($sm_locale) && $sm_locale !== 'en') {
+            $query['locale'] = $sm_locale;
+        }
 
         $cache_key = 'ss_std_' . md5($season_id . '|' . json_encode($query));
         if (!empty($s['cache_enabled'])) {
@@ -162,9 +205,11 @@ final class Sawah_Sports_REST {
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // Standings endpoint pattern varies; common v3 is /standings/seasons/{id}
-        $res = $this->client()->get('standings/seasons/' . $season_id, $query, 15);
-        if (!$res['ok']) return new WP_Error('sportmonks_error', $res['error'] ?? 'error', ['status' => 502]);
+        $res = $this->client()->get('standings/seasons/' . rawurlencode((string)$season_id), $query, 15);
+        if (!$res['ok']) {
+            $status = !empty($res['status']) ? (int)$res['status'] : 502;
+            return new WP_Error('sportmonks_error', $res['error'] ?? 'Sportmonks error', ['status' => $status]);
+        }
 
         $payload = $res['data'];
         if (!empty($s['cache_enabled'])) {

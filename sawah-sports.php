@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sawah Sports
  * Description: Premium football widgets for Elementor powered by Sportmonks (live matches, fixtures, standings).
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Sawah Solutions
  * Text Domain: sawah-sports
  * Domain Path: /languages
@@ -12,7 +12,7 @@
 
 if (!defined('ABSPATH')) { exit; }
 
-define('SAWAH_SPORTS_VERSION', '0.1.0');
+define('SAWAH_SPORTS_VERSION', '0.1.1');
 define('SAWAH_SPORTS_PATH', plugin_dir_path(__FILE__));
 define('SAWAH_SPORTS_URL', plugin_dir_url(__FILE__));
 define('SAWAH_SPORTS_OPTION_KEY', 'sawah_sports_settings');
