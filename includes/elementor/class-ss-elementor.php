@@ -2,8 +2,8 @@
 if (!defined('ABSPATH')) { exit; }
 
 /**
- * Complete Elementor Integration - All 15 Widgets
- * Stage 3: Full widget collection
+ * Complete Elementor Integration - v4.0 Premium
+ * Premium Sofascore-inspired widgets with images
  */
 final class Sawah_Sports_Elementor {
     private static $instance = null;
@@ -27,6 +27,9 @@ final class Sawah_Sports_Elementor {
     }
 
     public function register_widgets($widgets_manager) {
+        // v4.0: Premium Today's Matches widget
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-todays-matches.php';
+        
         // Stage 1: Core widgets
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-live-matches.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings.php';
@@ -49,6 +52,7 @@ final class Sawah_Sports_Elementor {
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-live-ticker.php';
 
         // Register all widgets
+        $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches()); // v4.0 Premium
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_Standings());
         $widgets_manager->register(new \Sawah_Sports_Widget_League_Fixtures());
@@ -67,10 +71,11 @@ final class Sawah_Sports_Elementor {
     }
 
     public function frontend_assets() {
-        wp_register_style('sawah-sports', SAWAH_SPORTS_URL . 'assets/css/sawah-sports.css', [], SAWAH_SPORTS_VERSION);
-        wp_register_script('sawah-sports-live', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-live.js', [], SAWAH_SPORTS_VERSION, true);
+        // v4.0: Enqueue premium redesigned assets
+        wp_enqueue_style('sawah-sports-premium', SAWAH_SPORTS_URL . 'assets/css/sawah-sports-premium.css', [], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-sports-premium', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-premium.js', [], SAWAH_SPORTS_VERSION, true);
 
-        wp_localize_script('sawah-sports-live', 'SawahSports', [
+        wp_localize_script('sawah-sports-premium', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
             'i18n' => [

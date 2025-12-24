@@ -95,7 +95,7 @@ final class Sawah_Sports_API_Client {
      * Get fixtures by date
      */
     public function get_fixtures_by_date(string $date, array $params = []): array {
-        $defaults = ['include' => 'participants;league;scores;state'];
+        $defaults = ['include' => 'participants;league.country;scores;state'];
         $params = array_merge($defaults, $params);
         return $this->get('fixtures/date/' . rawurlencode($date), $params, 15);
     }

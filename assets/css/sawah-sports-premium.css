@@ -1,0 +1,630 @@
+/**
+ * Sawah Sports Premium - Sofascore-Inspired Design
+ * v4.0.0 - Complete Visual Redesign
+ */
+
+/* =====================================
+   VARIABLES & THEME
+   ===================================== */
+:root {
+  --ss-primary: #1a1a1a;
+  --ss-secondary: #2d2d2d;
+  --ss-accent: #3b82f6;
+  --ss-live: #ef4444;
+  --ss-success: #22c55e;
+  --ss-text: #ffffff;
+  --ss-text-muted: #9ca3af;
+  --ss-border: #374151;
+  --ss-card-bg: #1f1f1f;
+  --ss-hover: #2d2d2d;
+  
+  --ss-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --ss-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --ss-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  --ss-radius: 12px;
+  --ss-radius-sm: 8px;
+  --ss-transition: all 0.2s ease;
+}
+
+/* =====================================
+   BASE WIDGET STRUCTURE
+   ===================================== */
+.ss-widget {
+  background: var(--ss-primary);
+  border-radius: var(--ss-radius);
+  overflow: hidden;
+  box-shadow: var(--ss-shadow-lg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ss-text);
+}
+
+.ss-header {
+  padding: 16px 20px;
+  background: var(--ss-secondary);
+  border-bottom: 1px solid var(--ss-border);
+}
+
+.ss-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ss-text);
+}
+
+.ss-body {
+  padding: 0;
+  min-height: 100px;
+}
+
+/* =====================================
+   DATE NAVIGATION
+   ===================================== */
+.ss-date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ss-nav-btn {
+  background: transparent;
+  border: 1px solid var(--ss-border);
+  color: var(--ss-text);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ss-radius-sm);
+  font-size: 20px;
+  cursor: pointer;
+  transition: var(--ss-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ss-nav-btn:hover {
+  background: var(--ss-hover);
+  border-color: var(--ss-accent);
+}
+
+.ss-date-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ss-today-btn {
+  background: var(--ss-accent);
+  border: none;
+  color: white;
+  padding: 6px 12px;
+  border-radius: var(--ss-radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--ss-transition);
+}
+
+.ss-today-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* =====================================
+   LOADING & EMPTY STATES
+   ===================================== */
+.ss-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 12px;
+}
+
+.ss-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--ss-border);
+  border-top-color: var(--ss-accent);
+  border-radius: 50%;
+  animation: ss-spin 0.8s linear infinite;
+}
+
+@keyframes ss-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ss-loading-text {
+  color: var(--ss-text-muted);
+  font-size: 14px;
+}
+
+.ss-empty, .ss-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ss-text-muted);
+  font-size: 14px;
+}
+
+.ss-error {
+  color: var(--ss-live);
+}
+
+/* =====================================
+   IMAGES & LOGOS
+   ===================================== */
+.ss-team-logo, .ss-player-photo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.ss-team-logo-fallback, .ss-player-photo-fallback {
+  width: 32px;
+  height: 32px;
+  background: var(--ss-secondary);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ss-text-muted);
+}
+
+.ss-league-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.ss-country-flag {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* =====================================
+   TODAY'S MATCHES / MATCHES CONTAINER
+   ===================================== */
+.ss-matches-container {
+  padding: 0;
+}
+
+.ss-league-group {
+  border-bottom: 1px solid var(--ss-border);
+}
+
+.ss-league-group:last-child {
+  border-bottom: none;
+}
+
+.ss-league-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--ss-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ss-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ss-league-name {
+  flex: 1;
+}
+
+.ss-matches-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-match-card {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ss-border);
+  transition: var(--ss-transition);
+  cursor: pointer;
+}
+
+.ss-match-card:hover {
+  background: var(--ss-hover);
+}
+
+.ss-match-card:last-child {
+  border-bottom: none;
+}
+
+/* Match status styles */
+.ss-match-live {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, transparent 100%);
+}
+
+.ss-match-finished {
+  opacity: 0.6;
+}
+
+/* Time/Status column */
+.ss-match-time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ss-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ss-live);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ss-live-dot {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  animation: ss-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ss-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.ss-finished-badge {
+  color: var(--ss-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ss-time-badge {
+  color: var(--ss-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Teams column */
+.ss-match-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ss-team-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ss-team-row .ss-team-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ss-text);
+}
+
+/* Score column */
+.ss-match-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ss-score-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ss-text);
+  min-width: 24px;
+  text-align: center;
+}
+
+.ss-score-separator {
+  color: var(--ss-text-muted);
+  font-size: 16px;
+}
+
+/* =====================================
+   STANDINGS TABLE
+   ===================================== */
+.ss-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ss-standings-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ss-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--ss-border);
+  background: var(--ss-secondary);
+}
+
+.ss-standings-table td {
+  padding: 14px 16px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--ss-border);
+}
+
+.ss-standings-table tr:hover {
+  background: var(--ss-hover);
+}
+
+.ss-standings-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ss-standings-table .ss-pos {
+  font-weight: 700;
+  color: var(--ss-text);
+  width: 40px;
+}
+
+.ss-standings-table .ss-team-cell {
+  width: auto;
+}
+
+.ss-team-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ss-team-info .ss-team-name {
+  font-weight: 500;
+  color: var(--ss-text);
+}
+
+.ss-standings-table .ss-points {
+  font-weight: 700;
+  color: var(--ss-accent);
+}
+
+.ss-top-four {
+  border-left: 3px solid var(--ss-accent);
+}
+
+/* =====================================
+   TEAM PROFILE
+   ===================================== */
+.ss-team-profile {
+  padding: 24px;
+}
+
+.ss-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ss-border);
+}
+
+.ss-profile-header .ss-team-logo {
+  width: 80px;
+  height: 80px;
+}
+
+.ss-profile-info {
+  flex: 1;
+}
+
+.ss-profile-name {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ss-text);
+}
+
+.ss-profile-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--ss-text-muted);
+  font-size: 14px;
+}
+
+.ss-venue-info {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--ss-secondary);
+  border-radius: var(--ss-radius-sm);
+  font-size: 14px;
+}
+
+.ss-venue-info strong {
+  color: var(--ss-text);
+}
+
+/* =====================================
+   TOP SCORERS
+   ===================================== */
+.ss-topscorers-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-scorer-card {
+  display: grid;
+  grid-template-columns: 40px 1fr 60px;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ss-border);
+  transition: var(--ss-transition);
+  cursor: pointer;
+}
+
+.ss-scorer-card:hover {
+  background: var(--ss-hover);
+}
+
+.ss-scorer-card:last-child {
+  border-bottom: none;
+}
+
+.ss-scorer-card .ss-rank {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ss-text-muted);
+  text-align: center;
+}
+
+.ss-player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ss-player-info .ss-player-photo,
+.ss-player-info .ss-player-photo-fallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.ss-player-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ss-player-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ss-text);
+}
+
+.ss-scorer-card .ss-team-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ss-text-muted);
+}
+
+.ss-scorer-card .ss-team-name .ss-team-logo {
+  width: 16px;
+  height: 16px;
+}
+
+.ss-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ss-text);
+  text-align: center;
+}
+
+/* =====================================
+   RESPONSIVE DESIGN
+   ===================================== */
+@media (max-width: 768px) {
+  .ss-match-card {
+    grid-template-columns: 50px 1fr 70px;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .ss-team-row .ss-team-name {
+    font-size: 14px;
+  }
+  
+  .ss-score-number {
+    font-size: 18px;
+  }
+  
+  .ss-profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .ss-profile-meta {
+    justify-content: center;
+  }
+  
+  .ss-standings-table th,
+  .ss-standings-table td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ss-header {
+    padding: 12px 16px;
+  }
+  
+  .ss-date-nav {
+    gap: 8px;
+  }
+  
+  .ss-nav-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .ss-date-display {
+    font-size: 14px;
+  }
+  
+  .ss-match-card {
+    grid-template-columns: 45px 1fr 60px;
+    gap: 8px;
+  }
+  
+  .ss-league-header {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+}
+
+/* =====================================
+   LIGHT THEME (Optional)
+   ===================================== */
+.ss-widget.ss-light {
+  --ss-primary: #ffffff;
+  --ss-secondary: #f3f4f6;
+  --ss-text: #1f2937;
+  --ss-text-muted: #6b7280;
+  --ss-border: #e5e7eb;
+  --ss-card-bg: #ffffff;
+  --ss-hover: #f9fafb;
+}
+
+/* =====================================
+   UTILITIES
+   ===================================== */
+.ss-hidden {
+  display: none !important;
+}
+
+.ss-text-center {
+  text-align: center;
+}
+
+.ss-text-muted {
+  color: var(--ss-text-muted);
+}
+
+.ss-mt-0 { margin-top: 0; }
+.ss-mb-0 { margin-bottom: 0; }
+.ss-p-0 { padding: 0; }
