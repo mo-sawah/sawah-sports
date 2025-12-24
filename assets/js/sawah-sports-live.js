@@ -289,9 +289,12 @@ const Widgets={
       const fixtureId=root.getAttribute('data-fixture');
       const body=root.querySelector('.ss-match-header .ss-body');
       try{
-        const data=await API.get(`/fixture/${fixtureId}`);
-        const fx=data?.data;
-        if(!fx){DOM.showEmpty(body,'Match not found');return;}
+        const response=await API.get(`/fixture/${fixtureId}`);
+        const fx=response?.data?.data || response?.data;
+        if(!fx || !fx.participants){
+          DOM.showEmpty(body,'Match not found');
+          return;
+        }
         
         const participants=fx?.participants||[];
         const home=Team.fromParticipants(participants,'home');
@@ -311,6 +314,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(header);
       }catch(error){
+        console.error('Match Center Error:', error);
         DOM.showError(body,'Unable to load match');
       }
     }
@@ -322,9 +326,12 @@ const Widgets={
       const fixtureId=root.getAttribute('data-fixture');
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/xg/${fixtureId}`);
-        const xgData=data?.data||[];
-        if(!xgData.length){DOM.showEmpty(body,'xG data unavailable');return;}
+        const response=await API.get(`/xg/${fixtureId}`);
+        const xgData=response?.data?.data || response?.data || [];
+        if(!Array.isArray(xgData) || xgData.length===0){
+          DOM.showEmpty(body,'xG data unavailable');
+          return;
+        }
         
         const home=xgData.find(x=>x.location==='home')||{data:{value:0}};
         const away=xgData.find(x=>x.location==='away')||{data:{value:0}};
@@ -347,6 +354,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(viz);
       }catch(error){
+        console.error('xG Match Error:', error);
         DOM.showError(body,'xG data unavailable');
       }
     }
@@ -358,9 +366,13 @@ const Widgets={
       const teamId=root.getAttribute('data-team');
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/team/${teamId}`);
-        const team=data?.data;
-        if(!team){DOM.showEmpty(body,'Team not found');return;}
+        const response=await API.get(`/team/${teamId}`);
+        // Sportmonks returns {data: {...team...}, subscription: {...}}
+        const team=response?.data?.data || response?.data;
+        if(!team || !team.name){
+          DOM.showEmpty(body,'Team not found');
+          return;
+        }
         
         const profile=DOM.el('div',{class:'ss-team-header'},[
           Team.logo(team)?DOM.el('img',{class:'ss-team-logo-large',src:Team.logo(team),alt:team.name}):null,
@@ -371,6 +383,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(profile);
       }catch(error){
+        console.error('Team Profile Error:', error);
         DOM.showError(body,'Unable to load team');
       }
     }
@@ -382,9 +395,12 @@ const Widgets={
       const playerId=root.getAttribute('data-player');
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/player/${playerId}`);
-        const player=data?.data;
-        if(!player){DOM.showEmpty(body,'Player not found');return;}
+        const response=await API.get(`/player/${playerId}`);
+        const player=response?.data?.data || response?.data;
+        if(!player || !player.name){
+          DOM.showEmpty(body,'Player not found');
+          return;
+        }
         
         const profile=DOM.el('div',{class:'ss-player-info'},[
           DOM.el('h2',{text:player.name}),
@@ -395,6 +411,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(profile);
       }catch(error){
+        console.error('Player Profile Error:', error);
         DOM.showError(body,'Unable to load player');
       }
     }
@@ -406,9 +423,12 @@ const Widgets={
       const fixtureId=root.getAttribute('data-fixture');
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/odds/${fixtureId}`);
-        const odds=data?.data||[];
-        if(!odds.length){DOM.showEmpty(body,'Odds unavailable');return;}
+        const response=await API.get(`/odds/${fixtureId}`);
+        const odds=response?.data?.data || response?.data || [];
+        if(!Array.isArray(odds) || odds.length===0){
+          DOM.showEmpty(body,'Odds unavailable');
+          return;
+        }
         
         const grid=DOM.el('div',{class:'ss-odds-grid'});
         odds.slice(0,5).forEach(odd=>{
@@ -421,6 +441,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(grid);
       }catch(error){
+        console.error('Odds Error:', error);
         DOM.showError(body,'Odds unavailable');
       }
     }
@@ -432,8 +453,9 @@ const Widgets={
       const fixtureId=root.getAttribute('data-fixture');
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/predictions/${fixtureId}`);
-        const pred=data?.data?.predictions||{};
+        const response=await API.get(`/predictions/${fixtureId}`);
+        const data=response?.data?.data || response?.data;
+        const pred=data?.predictions||{};
         
         const viz=DOM.el('div',{class:'ss-predictions-grid'},[
           DOM.el('div',{class:'ss-pred-item'},[
@@ -453,6 +475,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(viz);
       }catch(error){
+        console.error('Predictions Error:', error);
         DOM.showError(body,'Predictions unavailable');
       }
     }
@@ -465,9 +488,12 @@ const Widgets={
       const type=root.getAttribute('data-type')||'goals';
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/topscorers/${seasonId}`,{type});
-        const scorers=data?.data||[];
-        if(!scorers.length){DOM.showEmpty(body,'No data');return;}
+        const response=await API.get(`/topscorers/${seasonId}`,{type});
+        const scorers=response?.data?.data || response?.data || [];
+        if(!Array.isArray(scorers) || scorers.length===0){
+          DOM.showEmpty(body,'No data');
+          return;
+        }
         
         const list=DOM.el('div',{class:'ss-topscorers-list'});
         scorers.slice(0,10).forEach((s,i)=>{
@@ -482,6 +508,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(list);
       }catch(error){
+        console.error('Top Scorers Error:', error);
         DOM.showError(body,'Unable to load data');
       }
     }
@@ -494,9 +521,12 @@ const Widgets={
       const team2=root.getAttribute('data-team2');
       const body=root.querySelector('.ss-body');
       try{
-        const data=await API.get(`/h2h/${team1}/${team2}`);
-        const matches=data?.data||[];
-        if(!matches.length){DOM.showEmpty(body,'No matches found');return;}
+        const response=await API.get(`/h2h/${team1}/${team2}`);
+        const matches=response?.data?.data || response?.data || [];
+        if(!Array.isArray(matches) || matches.length===0){
+          DOM.showEmpty(body,'No matches found');
+          return;
+        }
         
         const list=DOM.el('div',{class:'ss-h2h-list'});
         matches.slice(0,10).forEach(fx=>{
@@ -510,6 +540,7 @@ const Widgets={
         DOM.clear(body);
         body.appendChild(list);
       }catch(error){
+        console.error('H2H Error:', error);
         DOM.showError(body,'Unable to load matches');
       }
     }
