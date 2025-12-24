@@ -154,7 +154,7 @@ final class Sawah_Sports_API_Client {
      */
     public function get_team(int $team_id, array $includes = []): array {
         $include_str = empty($includes)
-            ? 'country;venue;coach;sidelined;statistics'
+            ? 'country;venue'
             : implode(';', $includes);
         return $this->get('teams/' . $team_id, ['include' => $include_str], 12);
     }
