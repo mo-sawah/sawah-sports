@@ -1,9 +1,9 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget Styles
- * v1.2 - Fixed alignment, backgrounds, separator
+ * v1.3 - VERTICAL scores with horizontal separator
  */
 
-/* Container - User's custom width */
+/* Container */
 .ss-mobile-matches {
   max-width: 940px;
   margin: 0 auto;
@@ -247,26 +247,26 @@
   text-align: left;
 }
 
-/* RIGHT: Score + Status */
+/* RIGHT: Score Column - VERTICAL SCORES */
 .ssm-score-column {
   grid-row: 1;
   grid-column: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 0;
 }
 
-/* Score Box - WITH SEPARATOR LINE */
+/* Score Box - VERTICAL (stacked) with horizontal separator */
 .ssm-score {
   display: flex;
-  flex-direction: row; /* Horizontal for separator */
+  flex-direction: column; /* VERTICAL! */
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
-  gap: 8px; /* Space for separator */
+  padding: 8px 14px;
+  gap: 4px;
   min-width: 50px;
-  background: transparent; /* Default: no background */
+  background: transparent;
   border-radius: 8px;
 }
 
@@ -281,18 +281,18 @@
 }
 
 .ssm-score-num {
-  font-size: 16px; /* Smaller font */
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
   line-height: 1;
 }
 
-/* Separator between scores */
+/* Horizontal separator between vertical scores */
 .ssm-score-separator {
-  font-size: 14px;
-  font-weight: 400;
-  color: #6c757d;
-  opacity: 0.5;
+  width: 24px;
+  height: 1px;
+  background: #d1d5db;
+  margin: 2px 0;
 }
 
 .ssm-score.live .ssm-score-num,
@@ -300,27 +300,7 @@
   color: #000;
 }
 
-/* Status below score */
-.ssm-status {
-  font-size: 11px;
-  text-align: center;
-  margin-top: 2px;
-}
-
-.ssm-status.live {
-  color: #10b981 !important; /* Green for live minutes */
-  font-weight: 600;
-}
-
-.ssm-status.finished {
-  color: #6c757d;
-}
-
-.ssm-status.upcoming {
-  color: #6c757d;
-}
-
-/* Bottom row: Watch Live + Time on SAME LINE */
+/* Bottom row: FT + Watch Live on SAME LINE */
 .ssm-bottom-row {
   grid-row: 2;
   grid-column: 1 / -1;
@@ -329,6 +309,17 @@
   justify-content: center;
   gap: 12px;
   margin-top: 10px;
+}
+
+/* Status (FT, time, etc) - on same line as watch */
+.ssm-status-inline {
+  font-size: 11px;
+  color: #6c757d;
+}
+
+.ssm-status-inline.live {
+  color: #10b981 !important;
+  font-weight: 600;
 }
 
 /* Watch Link */
@@ -349,12 +340,6 @@
 
 .ssm-watch-link i {
   font-size: 11px;
-}
-
-/* Time text (on same line) */
-.ssm-time-inline {
-  font-size: 11px;
-  color: #6c757d;
 }
 
 /* ===================================

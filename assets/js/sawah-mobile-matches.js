@@ -1,6 +1,6 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget
- * v1.2 - Fixed scores, separator, layout
+ * v1.3 - VERTICAL scores, FT + Watch on same line
  */
 (function ($) {
   "use strict";
@@ -333,7 +333,7 @@
         </div>
       `);
 
-      // RIGHT: Score + Status
+      // RIGHT: Score VERTICAL with horizontal separator
       const scoreClass = isLive
         ? "ssm-score live"
         : isFinished
@@ -341,33 +341,34 @@
         : "ssm-score";
       const $scoreCol = $('<div class="ssm-score-column"></div>');
 
-      // Score with separator
+      // Vertical score with horizontal line separator
       $scoreCol.append(`
         <div class="${scoreClass}">
           <div class="ssm-score-num">${score.home}</div>
-          <div class="ssm-score-separator">|</div>
+          <div class="ssm-score-separator"></div>
           <div class="ssm-score-num">${score.away}</div>
         </div>
       `);
 
-      // Status below score
+      $match.append($teams).append($scoreCol);
+
+      // Bottom row: FT + Watch Live on SAME LINE
+      const $bottomRow = $('<div class="ssm-bottom-row"></div>');
+
+      // Status (FT, time, etc)
       if (isLive) {
-        $scoreCol.append(`<div class="ssm-status live">${status.text}</div>`);
-      } else if (isFinished) {
-        $scoreCol.append(
-          `<div class="ssm-status finished">${status.text}</div>`
+        $bottomRow.append(
+          `<span class="ssm-status-inline live">${status.text}</span>`
         );
+      } else if (isFinished) {
+        $bottomRow.append(`<span class="ssm-status-inline finished">FT</span>`);
       } else if (isUpcoming) {
-        $scoreCol.append(
-          `<div class="ssm-status upcoming">${status.text}</div>`
+        $bottomRow.append(
+          `<span class="ssm-status-inline upcoming">${status.text}</span>`
         );
       }
 
-      $match.append($teams).append($scoreCol);
-
-      // Bottom row: Watch Live + Time on SAME LINE
-      const $bottomRow = $('<div class="ssm-bottom-row"></div>');
-
+      // Watch Live
       if (channels && channels.length > 0) {
         const $watchLink = $(`
           <a href="#" class="ssm-watch-link">
@@ -378,17 +379,6 @@
         `);
         $watchLink.data("channels", channels);
         $bottomRow.append($watchLink);
-      }
-
-      // Add time/status on same line
-      if (isUpcoming) {
-        $bottomRow.append(
-          `<span class="ssm-time-inline">${status.text}</span>`
-        );
-      } else if (isLive) {
-        $bottomRow.append(
-          `<span class="ssm-time-inline" style="color:#10b981;">${status.text}</span>`
-        );
       }
 
       if ($bottomRow.children().length > 0) {
@@ -442,7 +432,6 @@
       const scores = fx.scores || [];
       if (!scores.length) return { home: "-", away: "-" };
 
-      // Priority list
       const priorities = [
         "CURRENT",
         "FT_SCORE",
@@ -458,7 +447,6 @@
 
       let scoreObj = null;
 
-      // Try priorities
       for (const priority of priorities) {
         scoreObj = scores.find((s) => {
           const desc = (s.description || "").toUpperCase();
@@ -477,7 +465,6 @@
         }
       }
 
-      // Fallback: last non-zero score
       if (!scoreObj) {
         const nonZeroScores = scores.filter((s) => {
           if (!s.score) return false;
@@ -493,7 +480,6 @@
         }
       }
 
-      // Extract values
       if (scoreObj && scoreObj.score) {
         const scoreData = scoreObj.score;
 
