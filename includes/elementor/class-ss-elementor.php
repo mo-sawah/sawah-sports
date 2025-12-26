@@ -27,6 +27,9 @@ final class Sawah_Sports_Elementor {
     }
 
     public function register_widgets($widgets_manager) {
+        // v5.0: Stats Center - Premier League Style
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-stats-center.php';
+        
         // v4.0: Premium Today's Matches widget
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-todays-matches.php';
         
@@ -52,6 +55,7 @@ final class Sawah_Sports_Elementor {
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-live-ticker.php';
 
         // Register all widgets
+        $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center()); // v5.0 Stats Center
         $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches()); // v4.0 Premium
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_Standings());

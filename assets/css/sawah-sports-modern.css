@@ -12,40 +12,42 @@
   --ss-primary: #ffffff;
   --ss-secondary: #f8fafc;
   --ss-tertiary: #f1f5f9;
-  
+
   /* Accent Colors - Vibrant but Professional */
-  --ss-accent: #3b82f6;       /* Blue - Primary actions */
+  --ss-accent: #3b82f6; /* Blue - Primary actions */
   --ss-accent-hover: #2563eb;
-  --ss-success: #10b981;       /* Green - Success states */
-  --ss-warning: #f59e0b;       /* Amber - Warnings */
-  --ss-danger: #ef4444;        /* Red - Errors/Live */
-  
+  --ss-success: #10b981; /* Green - Success states */
+  --ss-warning: #f59e0b; /* Amber - Warnings */
+  --ss-danger: #ef4444; /* Red - Errors/Live */
+
   /* Text Colors */
   --ss-text-primary: #0f172a;
   --ss-text-secondary: #475569;
   --ss-text-muted: #94a3b8;
   --ss-text-inverse: #ffffff;
-  
+
   /* Border & Divider */
   --ss-border: #e2e8f0;
   --ss-border-hover: #cbd5e1;
-  
+
   /* Shadows - Subtle depth */
   --ss-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --ss-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-  --ss-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --ss-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
+  --ss-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --ss-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
   /* Interactive States */
   --ss-hover-bg: #f8fafc;
   --ss-active-bg: #f1f5f9;
-  
+
   /* Spacing */
   --ss-radius: 12px;
   --ss-radius-sm: 8px;
   --ss-radius-lg: 16px;
   --ss-spacing: 16px;
-  
+
   /* Transitions */
   --ss-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --ss-transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -66,7 +68,8 @@
   border-radius: var(--ss-radius);
   overflow: hidden;
   box-shadow: var(--ss-shadow-md);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", sans-serif;
   color: var(--ss-text-primary);
   font-size: 14px;
   line-height: 1.5;
@@ -212,7 +215,9 @@
 }
 
 @keyframes ss-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .ss-loading-text {
@@ -235,7 +240,12 @@
 }
 
 .ss-skeleton {
-  background: linear-gradient(90deg, var(--ss-secondary) 25%, var(--ss-tertiary) 50%, var(--ss-secondary) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--ss-secondary) 25%,
+    var(--ss-tertiary) 50%,
+    var(--ss-secondary) 75%
+  );
   background-size: 200% 100%;
   animation: ss-skeleton-loading 1.5s ease-in-out infinite;
   border-radius: 8px;
@@ -243,8 +253,12 @@
 }
 
 @keyframes ss-skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* =====================================
@@ -362,7 +376,11 @@
 
 /* Match State Variations */
 .ss-match-live {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.03) 0%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(239, 68, 68, 0.03) 0%,
+    transparent 100%
+  );
   border-left: 3px solid var(--ss-danger);
   padding-left: 17px;
 }
@@ -407,8 +425,15 @@
 }
 
 @keyframes ss-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.95); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
 }
 
 .ss-finished-badge {
@@ -842,50 +867,50 @@
   .ss-header {
     padding: 16px 20px;
   }
-  
+
   .ss-title {
     font-size: 18px;
   }
-  
+
   .ss-match-card {
     grid-template-columns: 60px 1fr 80px;
     gap: 16px;
     padding: 14px 16px;
   }
-  
+
   .ss-team-row .ss-team-name {
     font-size: 14px;
   }
-  
+
   .ss-score-number {
     font-size: 20px;
     min-width: 24px;
   }
-  
+
   .ss-profile-header {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .ss-profile-meta {
     justify-content: center;
   }
-  
+
   .ss-profile-name {
     font-size: 26px;
   }
-  
+
   .ss-standings-table th,
   .ss-standings-table td {
     padding: 12px 14px;
     font-size: 13px;
   }
-  
+
   .ss-standings-table th:first-child,
   .ss-standings-table td:first-child {
     padding-left: 16px;
   }
-  
+
   .ss-standings-table th:last-child,
   .ss-standings-table td:last-child {
     padding-right: 16px;
@@ -896,71 +921,71 @@
   .ss-header {
     padding: 12px 16px;
   }
-  
+
   .ss-title {
     font-size: 16px;
   }
-  
+
   .ss-date-nav {
     gap: 8px;
   }
-  
+
   .ss-nav-btn {
     width: 36px;
     height: 36px;
     font-size: 18px;
   }
-  
+
   .ss-date-display {
     font-size: 14px;
     min-width: 160px;
   }
-  
+
   .ss-today-btn {
     padding: 6px 12px;
     font-size: 12px;
   }
-  
+
   .ss-match-card {
     grid-template-columns: 55px 1fr 70px;
     gap: 12px;
     padding: 12px;
   }
-  
+
   .ss-team-logo,
   .ss-team-logo-fallback {
     width: 28px;
     height: 28px;
   }
-  
+
   .ss-team-row .ss-team-name {
     font-size: 13px;
   }
-  
+
   .ss-score-number {
     font-size: 18px;
   }
-  
+
   .ss-league-header {
     padding: 10px 16px;
     font-size: 11px;
   }
-  
+
   .ss-scorer-card {
     grid-template-columns: 40px 1fr 60px;
     gap: 12px;
   }
-  
+
   .ss-player-info .ss-player-photo,
   .ss-player-info .ss-player-photo-fallback {
     width: 40px;
     height: 40px;
   }
-  
+
   .ss-player-name {
     font-size: 14px;
   }
-  
+
   .ss-stat-value {
     font-size: 18px;
   }
@@ -985,20 +1010,44 @@
   color: var(--ss-text-primary) !important;
 }
 
-.ss-mt-0 { margin-top: 0 !important; }
-.ss-mt-1 { margin-top: 8px !important; }
-.ss-mt-2 { margin-top: 16px !important; }
-.ss-mt-3 { margin-top: 24px !important; }
+.ss-mt-0 {
+  margin-top: 0 !important;
+}
+.ss-mt-1 {
+  margin-top: 8px !important;
+}
+.ss-mt-2 {
+  margin-top: 16px !important;
+}
+.ss-mt-3 {
+  margin-top: 24px !important;
+}
 
-.ss-mb-0 { margin-bottom: 0 !important; }
-.ss-mb-1 { margin-bottom: 8px !important; }
-.ss-mb-2 { margin-bottom: 16px !important; }
-.ss-mb-3 { margin-bottom: 24px !important; }
+.ss-mb-0 {
+  margin-bottom: 0 !important;
+}
+.ss-mb-1 {
+  margin-bottom: 8px !important;
+}
+.ss-mb-2 {
+  margin-bottom: 16px !important;
+}
+.ss-mb-3 {
+  margin-bottom: 24px !important;
+}
 
-.ss-p-0 { padding: 0 !important; }
-.ss-p-1 { padding: 8px !important; }
-.ss-p-2 { padding: 16px !important; }
-.ss-p-3 { padding: 24px !important; }
+.ss-p-0 {
+  padding: 0 !important;
+}
+.ss-p-1 {
+  padding: 8px !important;
+}
+.ss-p-2 {
+  padding: 16px !important;
+}
+.ss-p-3 {
+  padding: 24px !important;
+}
 
 /* =====================================
    DARK MODE OVERRIDE (Optional)
@@ -1015,4 +1064,433 @@
     --ss-hover-bg: #1e293b;
     --ss-active-bg: #334155;
   }
+}
+/**
+ * Stats Center Widget Styles
+ * Premier League Style - White Theme
+ */
+
+/* =====================================
+   STATS CENTER CONTAINER
+   ===================================== */
+.ss-stats-center {
+  background: var(--ss-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    sans-serif;
+}
+
+/* =====================================
+   HEADER & TITLE
+   ===================================== */
+.ss-stats-header {
+  background: linear-gradient(
+    135deg,
+    var(--stats-accent, #3b82f6) 0%,
+    #2563eb 100%
+  );
+  padding: 48px 32px 32px;
+  color: white;
+}
+
+.ss-stats-title {
+  margin: 0 0 32px 0;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: white;
+  font-style: italic;
+}
+
+/* =====================================
+   NAVIGATION TABS
+   ===================================== */
+.ss-stats-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ss-stats-tab {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+}
+
+.ss-stats-tab:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.ss-stats-tab.active {
+  background: white;
+  color: var(--stats-accent, #3b82f6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================================
+   TAB CONTENT
+   ===================================== */
+.ss-stats-content {
+  padding: 40px 32px;
+  background: var(--ss-secondary);
+  min-height: 600px;
+}
+
+.ss-stats-tab-content {
+  display: none;
+}
+
+.ss-stats-tab-content.active {
+  display: block;
+}
+
+/* =====================================
+   SECTION HEADERS
+   ===================================== */
+.ss-stats-section {
+  margin-bottom: 48px;
+}
+
+.ss-stats-section-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ss-text-primary);
+  margin: 0 0 32px 0;
+  letter-spacing: -0.02em;
+}
+
+/* =====================================
+   STATS GRID LAYOUT
+   ===================================== */
+.ss-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+/* =====================================
+   STAT CARD
+   ===================================== */
+.ss-stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.ss-stat-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+/* Stat Card Header */
+.ss-stat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--ss-border);
+}
+
+.ss-stat-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ss-text-primary);
+  flex: 1;
+}
+
+.ss-stat-card-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--stats-accent, #3b82f6);
+}
+
+/* =====================================
+   STAT ITEMS (Player/Team List)
+   ===================================== */
+.ss-stat-items {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ss-stat-item {
+  display: grid;
+  grid-template-columns: 32px 56px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.ss-stat-item:hover {
+  background: var(--ss-hover-bg);
+}
+
+/* Rank */
+.ss-stat-rank {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ss-text-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-stat-item:nth-child(1) .ss-stat-rank {
+  color: #fbbf24; /* Gold */
+}
+
+.ss-stat-item:nth-child(2) .ss-stat-rank {
+  color: #94a3b8; /* Silver */
+}
+
+.ss-stat-item:nth-child(3) .ss-stat-rank {
+  color: #fb923c; /* Bronze */
+}
+
+/* Player/Team Photo */
+.ss-stat-photo {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--ss-tertiary);
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ss-stat-photo-fallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--ss-tertiary);
+  border: 2px solid var(--ss-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ss-text-secondary);
+}
+
+/* Club Badge (Square) */
+.ss-stat-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: var(--ss-tertiary);
+  padding: 8px;
+}
+
+.ss-stat-badge-fallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: var(--ss-tertiary);
+  border: 2px solid var(--ss-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ss-text-secondary);
+}
+
+/* Details */
+.ss-stat-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ss-stat-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ss-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ss-stat-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ss-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ss-stat-team-badge {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Value */
+.ss-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ss-text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 50px;
+  text-align: right;
+}
+
+/* =====================================
+   VIEW MORE BUTTON
+   ===================================== */
+.ss-view-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 24px;
+  background: transparent;
+  border: 2px solid var(--stats-accent, #3b82f6);
+  border-radius: 24px;
+  color: var(--stats-accent, #3b82f6);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ss-view-more:hover {
+  background: var(--stats-accent, #3b82f6);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* =====================================
+   RESPONSIVE DESIGN
+   ===================================== */
+@media (max-width: 1024px) {
+  .ss-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .ss-stats-header {
+    padding: 32px 24px 24px;
+  }
+
+  .ss-stats-title {
+    font-size: 32px;
+    margin-bottom: 24px;
+  }
+
+  .ss-stats-content {
+    padding: 24px 16px;
+  }
+
+  .ss-stats-section-title {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+
+  .ss-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .ss-stat-card {
+    padding: 20px;
+  }
+
+  .ss-stat-item {
+    grid-template-columns: 28px 48px 1fr auto;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .ss-stat-photo,
+  .ss-stat-photo-fallback,
+  .ss-stat-badge,
+  .ss-stat-badge-fallback {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ss-stat-name {
+    font-size: 14px;
+  }
+
+  .ss-stat-value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ss-stats-tabs {
+    gap: 6px;
+  }
+
+  .ss-stats-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .ss-stats-title {
+    font-size: 28px;
+  }
+
+  .ss-stat-item {
+    grid-template-columns: 24px 40px 1fr auto;
+    gap: 8px;
+  }
+
+  .ss-stat-photo,
+  .ss-stat-photo-fallback,
+  .ss-stat-badge,
+  .ss-stat-badge-fallback {
+    width: 40px;
+    height: 40px;
+  }
+
+  .ss-stat-rank {
+    font-size: 14px;
+  }
+
+  .ss-stat-value {
+    font-size: 18px;
+    min-width: 40px;
+  }
+}
+
+/* =====================================
+   LOADING & EMPTY STATES
+   ===================================== */
+.ss-stats-center .ss-loading,
+.ss-stats-center .ss-empty {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.ss-stats-center .ss-loading-text {
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ss-text-secondary);
 }
