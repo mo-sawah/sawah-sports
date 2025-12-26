@@ -1,6 +1,6 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget Styles
- * v1.3 - VERTICAL scores with horizontal separator
+ * v1.4 - Compact score, correct layout, fixed live data
  */
 
 /* Container */
@@ -200,8 +200,9 @@
 }
 
 /* ===================================
-   MATCH LAYOUT
-   Teams (LEFT) | Score (RIGHT)
+   MATCH LAYOUT - 3 rows
+   Row 1: Teams | Score
+   Row 2: Watch | FT (same line)
    =================================== */
 .ssm-match {
   display: grid;
@@ -209,7 +210,7 @@
   grid-template-rows: auto auto;
   padding: 14px 16px;
   border-bottom: 1px solid #f1f1f1;
-  gap: 0 16px;
+  gap: 10px 16px;
   align-items: start;
 }
 
@@ -217,7 +218,7 @@
   border-bottom: none;
 }
 
-/* LEFT: Teams */
+/* Row 1, Col 1: Teams (LEFT) */
 .ssm-teams {
   grid-row: 1;
   grid-column: 1;
@@ -247,25 +248,25 @@
   text-align: left;
 }
 
-/* RIGHT: Score Column - VERTICAL SCORES */
+/* Row 1, Col 2: Score (RIGHT) - COMPACT */
 .ssm-score-column {
   grid-row: 1;
   grid-column: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
+  gap: 4px;
 }
 
-/* Score Box - VERTICAL (stacked) with horizontal separator */
+/* Score Box - COMPACT PADDING */
 .ssm-score {
   display: flex;
-  flex-direction: column; /* VERTICAL! */
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 14px;
+  padding: 6px 10px; /* Compact: reduced from 8px 14px */
   gap: 4px;
-  min-width: 50px;
+  min-width: 40px; /* Reduced from 50px */
   background: transparent;
   border-radius: 8px;
 }
@@ -289,7 +290,7 @@
 
 /* Horizontal separator between vertical scores */
 .ssm-score-separator {
-  width: 24px;
+  width: 20px; /* Reduced from 24px */
   height: 1px;
   background: #d1d5db;
   margin: 2px 0;
@@ -300,29 +301,14 @@
   color: #000;
 }
 
-/* Bottom row: FT + Watch Live on SAME LINE */
-.ssm-bottom-row {
+/* Row 2, Col 1: Watch Live (BELOW teams) */
+.ssm-watch-cell {
   grid-row: 2;
-  grid-column: 1 / -1;
+  grid-column: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 10px;
 }
 
-/* Status (FT, time, etc) - on same line as watch */
-.ssm-status-inline {
-  font-size: 11px;
-  color: #6c757d;
-}
-
-.ssm-status-inline.live {
-  color: #10b981 !important;
-  font-weight: 600;
-}
-
-/* Watch Link */
 .ssm-watch-link {
   display: flex;
   align-items: center;
@@ -340,6 +326,33 @@
 
 .ssm-watch-link i {
   font-size: 11px;
+}
+
+/* Row 2, Col 2: FT/Status (BELOW score) */
+.ssm-status-cell {
+  grid-row: 2;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ssm-status {
+  font-size: 11px;
+  text-align: center;
+}
+
+.ssm-status.live {
+  color: #10b981 !important;
+  font-weight: 600;
+}
+
+.ssm-status.finished {
+  color: #6c757d;
+}
+
+.ssm-status.upcoming {
+  color: #6c757d;
 }
 
 /* ===================================

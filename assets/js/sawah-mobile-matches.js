@@ -1,6 +1,6 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget
- * v1.3 - VERTICAL scores, FT + Watch on same line
+ * v1.4 - Fixed layout + DEBUG live scores
  */
 (function ($) {
   "use strict";
@@ -23,6 +23,7 @@
   };
 
   const DEFAULT_PRIORITY = 999;
+  const DEBUG = true; // Enable debug logging
 
   class MobileTodaysMatches {
     constructor(container) {
@@ -221,6 +222,14 @@
         ).length;
         this.$el.find(".ssm-live-count").text(`(${liveCount})`);
 
+        if (DEBUG)
+          console.log(
+            "Mobile: Loaded fixtures:",
+            rawData.length,
+            "Live:",
+            liveCount
+          );
+
         this.renderMatches();
       } catch (err) {
         console.error("Mobile Widget Error:", err);
@@ -313,9 +322,22 @@
       const isFinished = status.class === "finished";
       const isUpcoming = status.class === "upcoming";
 
+      if (DEBUG && isLive) {
+        console.log(
+          "Mobile LIVE match:",
+          home?.name,
+          "vs",
+          away?.name,
+          "Score:",
+          score,
+          "Status:",
+          status
+        );
+      }
+
       const $match = $('<div class="ssm-match"></div>');
 
-      // LEFT: Teams
+      // Row 1, Col 1: Teams
       const $teams = $(`
         <div class="ssm-teams">
           <div class="ssm-team-row">
@@ -333,7 +355,7 @@
         </div>
       `);
 
-      // RIGHT: Score VERTICAL with horizontal separator
+      // Row 1, Col 2: Score (vertical with separator)
       const scoreClass = isLive
         ? "ssm-score live"
         : isFinished
@@ -341,7 +363,6 @@
         : "ssm-score";
       const $scoreCol = $('<div class="ssm-score-column"></div>');
 
-      // Vertical score with horizontal line separator
       $scoreCol.append(`
         <div class="${scoreClass}">
           <div class="ssm-score-num">${score.home}</div>
@@ -352,24 +373,9 @@
 
       $match.append($teams).append($scoreCol);
 
-      // Bottom row: FT + Watch Live on SAME LINE
-      const $bottomRow = $('<div class="ssm-bottom-row"></div>');
-
-      // Status (FT, time, etc)
-      if (isLive) {
-        $bottomRow.append(
-          `<span class="ssm-status-inline live">${status.text}</span>`
-        );
-      } else if (isFinished) {
-        $bottomRow.append(`<span class="ssm-status-inline finished">FT</span>`);
-      } else if (isUpcoming) {
-        $bottomRow.append(
-          `<span class="ssm-status-inline upcoming">${status.text}</span>`
-        );
-      }
-
-      // Watch Live
+      // Row 2, Col 1: Watch Live
       if (channels && channels.length > 0) {
+        const $watchCell = $('<div class="ssm-watch-cell"></div>');
         const $watchLink = $(`
           <a href="#" class="ssm-watch-link">
             <i class="eicon-play"></i>
@@ -378,12 +384,28 @@
           </a>
         `);
         $watchLink.data("channels", channels);
-        $bottomRow.append($watchLink);
+        $watchCell.append($watchLink);
+        $match.append($watchCell);
+      } else {
+        $match.append('<div class="ssm-watch-cell"></div>'); // Empty cell
       }
 
-      if ($bottomRow.children().length > 0) {
-        $match.append($bottomRow);
+      // Row 2, Col 2: FT/Status
+      const $statusCell = $('<div class="ssm-status-cell"></div>');
+
+      if (isLive) {
+        $statusCell.append(
+          `<span class="ssm-status live">${status.text}</span>`
+        );
+      } else if (isFinished) {
+        $statusCell.append(`<span class="ssm-status finished">FT</span>`);
+      } else if (isUpcoming) {
+        $statusCell.append(
+          `<span class="ssm-status upcoming">${status.text}</span>`
+        );
       }
+
+      $match.append($statusCell);
 
       return $match;
     }
@@ -394,9 +416,20 @@
 
     isLive(fx) {
       const s = fx.state?.short_name || "";
-      return ["LIVE", "HT", "ET", "PEN_LIVE", "1ST_HALF", "2ND_HALF"].includes(
-        s
-      );
+      const isLiveMatch = [
+        "LIVE",
+        "HT",
+        "ET",
+        "PEN_LIVE",
+        "1ST_HALF",
+        "2ND_HALF",
+      ].includes(s);
+
+      if (DEBUG && isLiveMatch) {
+        console.log("Mobile: Live match detected -", s, fx);
+      }
+
+      return isLiveMatch;
     }
 
     getTVChannels(fx) {
@@ -420,6 +453,17 @@
     getScore(fx) {
       const state = fx.state?.short_name || "";
 
+      if (DEBUG) {
+        console.log("Mobile getScore:", {
+          teams:
+            this.getTeam(fx, "home")?.name +
+            " vs " +
+            this.getTeam(fx, "away")?.name,
+          state: state,
+          scores: fx.scores,
+        });
+      }
+
       // Upcoming - return dashes
       if (
         ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
@@ -430,8 +474,12 @@
       }
 
       const scores = fx.scores || [];
-      if (!scores.length) return { home: "-", away: "-" };
+      if (!scores.length) {
+        if (DEBUG) console.warn("Mobile: No scores array found");
+        return { home: "-", away: "-" };
+      }
 
+      // Priority list (same as desktop)
       const priorities = [
         "CURRENT",
         "FT_SCORE",
@@ -447,6 +495,7 @@
 
       let scoreObj = null;
 
+      // Try priorities
       for (const priority of priorities) {
         scoreObj = scores.find((s) => {
           const desc = (s.description || "").toUpperCase();
@@ -460,26 +509,40 @@
             scoreObj.score.goals !== undefined ||
             scoreObj.score.participant !== undefined;
 
-          if (hasValidScore) break;
-          else scoreObj = null;
+          if (hasValidScore) {
+            if (DEBUG)
+              console.log(
+                "Mobile: Found score with priority:",
+                priority,
+                scoreObj
+              );
+            break;
+          } else scoreObj = null;
         }
       }
 
+      // Fallback
       if (!scoreObj) {
         const nonZeroScores = scores.filter((s) => {
           if (!s.score) return false;
-          const h = s.score.home ?? s.score.home_score ?? s.score.goals ?? 0;
-          const a = s.score.away ?? s.score.away_score ?? s.score.goals ?? 0;
+          const h =
+            s.score.home ?? s.score.home_score ?? s.score.goals?.home ?? 0;
+          const a =
+            s.score.away ?? s.score.away_score ?? s.score.goals?.away ?? 0;
           return h > 0 || a > 0;
         });
 
         if (nonZeroScores.length > 0) {
           scoreObj = nonZeroScores[nonZeroScores.length - 1];
+          if (DEBUG)
+            console.log("Mobile: Using last non-zero score:", scoreObj);
         } else {
           scoreObj = scores[0];
+          if (DEBUG) console.log("Mobile: Using first score:", scoreObj);
         }
       }
 
+      // Extract values
       if (scoreObj && scoreObj.score) {
         const scoreData = scoreObj.score;
 
@@ -499,9 +562,27 @@
           (scoreData.participant === "away" ? scoreData.goals : null) ??
           0;
 
+        if (DEBUG) {
+          console.log("Mobile: Extracted score:", {
+            home,
+            away,
+            description: scoreObj.description,
+          });
+        }
+
+        // Warn about 0:0 for finished matches
+        if (["FT", "AET", "FT_PEN", "FINISHED"].includes(state)) {
+          if (home === 0 && away === 0) {
+            if (DEBUG)
+              console.warn("Mobile: Finished match showing 0:0 - check data");
+          }
+        }
+
         return { home, away };
       }
 
+      if (DEBUG)
+        console.warn("Mobile: Could not extract score, using fallback");
       return { home: "-", away: "-" };
     }
 
