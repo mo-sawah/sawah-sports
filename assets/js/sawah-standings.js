@@ -24,7 +24,12 @@
       };
 
       this.currentType = "all";
-      this.standingsData = null;
+      this.rawStandingsData = null;
+      this.standingsByType = {
+        all: [],
+        home: [],
+        away: [],
+      };
 
       this.init();
     }
@@ -108,21 +113,64 @@
 
           // Handle Sportmonks API structure: { data: [...] }
           if (data.data && Array.isArray(data.data)) {
-            this.standingsData = data.data;
+            this.rawStandingsData = data.data; // Store ALL standings
           } else if (Array.isArray(data)) {
-            this.standingsData = data;
+            this.rawStandingsData = data;
           } else {
             console.error("Unexpected data structure:", data);
             this.showError("Invalid standings data format");
             return;
           }
 
-          if (!this.standingsData || this.standingsData.length === 0) {
+          if (!this.rawStandingsData || this.rawStandingsData.length === 0) {
             this.showError("No standings data available for this season");
             return;
           }
 
-          console.log("Parsed standings data:", this.standingsData);
+          console.log("Parsed standings data:", this.rawStandingsData);
+
+          // Group standings by type (overall, home, away)
+          this.standingsByType = {
+            all: [],
+            home: [],
+            away: [],
+          };
+
+          this.rawStandingsData.forEach((standing) => {
+            const typeName = (
+              standing.type_name ||
+              standing.type?.name ||
+              ""
+            ).toLowerCase();
+
+            // Sportmonks usually has separate standing types
+            if (typeName.includes("home")) {
+              this.standingsByType.home.push(standing);
+            } else if (typeName.includes("away")) {
+              this.standingsByType.away.push(standing);
+            } else {
+              // Default to overall/all
+              this.standingsByType.all.push(standing);
+            }
+          });
+
+          // If no home/away specific data, use all for everything
+          if (this.standingsByType.all.length === 0) {
+            this.standingsByType.all = this.rawStandingsData;
+          }
+          if (this.standingsByType.home.length === 0) {
+            this.standingsByType.home = this.rawStandingsData;
+          }
+          if (this.standingsByType.away.length === 0) {
+            this.standingsByType.away = this.rawStandingsData;
+          }
+
+          console.log("Standings by type:", {
+            all: this.standingsByType.all.length,
+            home: this.standingsByType.home.length,
+            away: this.standingsByType.away.length,
+          });
+
           this.renderTable();
         },
         error: (xhr) => {
@@ -137,25 +185,30 @@
     }
 
     renderTable() {
-      console.log("renderTable called with data:", this.standingsData);
+      console.log("renderTable called for type:", this.currentType);
 
-      if (!this.standingsData || !this.standingsData.length) {
-        console.warn("No standings data or empty array");
+      if (!this.standingsByType || !this.standingsByType[this.currentType]) {
+        console.warn("No standings data for type:", this.currentType);
         this.showEmpty();
         return;
       }
 
-      // The standings data is already an array of team standings
-      // Each item represents a team's position in the table
-      // We don't need to filter by type here - the API returns overall, home, away separately
+      const standings = this.standingsByType[this.currentType];
 
-      // For now, use the standings data directly
-      // TODO: Implement proper home/away filtering when API supports it
-      const details = this.standingsData;
+      if (!standings || standings.length === 0) {
+        console.warn("Empty standings array for type:", this.currentType);
+        this.showEmpty();
+        return;
+      }
 
-      console.log("Building table with", details.length, "teams");
+      console.log(
+        "Building table with",
+        standings.length,
+        "teams for",
+        this.currentType
+      );
 
-      const html = this.buildTableHTML(details);
+      const html = this.buildTableHTML(standings);
       this.$el.find(".ss-standings-table-wrapper").html(html);
     }
 
@@ -259,51 +312,150 @@
         return stats;
       }
 
-      teamStanding.details.forEach((detail) => {
-        const typeName = detail.type?.name?.toLowerCase() || "";
-        const value = detail.value || 0;
+      // Log first team's details to see actual field names
+      if (teamStanding.position === 1) {
+        console.log("First team details for debugging:", teamStanding.details);
+      }
 
-        if (typeName.includes("played")) stats.played = value;
-        else if (typeName.includes("won")) stats.won = value;
-        else if (typeName.includes("draw")) stats.draw = value;
-        else if (typeName.includes("lost")) stats.lost = value;
-        else if (
+      teamStanding.details.forEach((detail) => {
+        const typeId = detail.type?.id;
+        const typeName = detail.type?.name?.toLowerCase() || "";
+        const value = parseInt(detail.value) || 0;
+
+        // Match by type ID (more reliable) or name
+        // Common Sportmonks type IDs:
+        // 129 = games played, 130 = won, 131 = draw, 132 = lost
+        // 133 = goals for, 134 = goals against
+
+        if (
+          typeId === 129 ||
+          typeName.includes("played") ||
+          typeName.includes("games")
+        ) {
+          stats.played = value;
+        } else if (
+          typeId === 130 ||
+          typeName.includes("won") ||
+          typeName.includes("win")
+        ) {
+          stats.won = value;
+        } else if (
+          typeId === 131 ||
+          typeName.includes("draw") ||
+          typeName === "draws"
+        ) {
+          stats.draw = value;
+        } else if (
+          typeId === 132 ||
+          typeName.includes("lost") ||
+          typeName.includes("loss")
+        ) {
+          stats.lost = value;
+        } else if (
+          typeId === 133 ||
           typeName.includes("goals_for") ||
-          typeName.includes("goalsfor")
-        )
+          typeName.includes("goalsfor") ||
+          typeName === "goals for"
+        ) {
           stats.goalsFor = value;
-        else if (
+        } else if (
+          typeId === 134 ||
           typeName.includes("goals_against") ||
-          typeName.includes("goalsagainst")
-        )
+          typeName.includes("goalsagainst") ||
+          typeName === "goals against"
+        ) {
           stats.goalsAgainst = value;
+        }
       });
 
       stats.diff = stats.goalsFor - stats.goalsAgainst;
+
+      // Log if stats still zero (debugging)
+      if (teamStanding.position === 1 && stats.played === 0) {
+        console.warn(
+          "⚠️ Stats extraction failed for first team. Available type names:",
+          teamStanding.details.map((d) => d.type?.name).join(", ")
+        );
+      }
+
       return stats;
     }
 
     renderForm(formData) {
-      if (!formData || !Array.isArray(formData)) return "—";
+      if (!formData || !Array.isArray(formData) || formData.length === 0) {
+        return "—";
+      }
 
-      // Take last N matches
+      // Log form data for first team to debug
+      if (window.sawahDebugForm !== true) {
+        console.log("Sample form data structure:", formData[0]);
+        window.sawahDebugForm = true;
+      }
+
+      // Take last N matches and reverse to show most recent first
       const recent = formData.slice(-this.formCount).reverse();
 
       let html = '<div class="ss-form-badges">';
-      recent.forEach((result) => {
-        const outcome = result.outcome?.toLowerCase() || "";
+      recent.forEach((match, index) => {
+        // Try different possible field names for outcome
+        const outcome = (
+          match.outcome ||
+          match.result ||
+          match.status ||
+          ""
+        ).toLowerCase();
+
         let badge = "draw";
         let letter = "D";
 
-        if (outcome.includes("win")) {
+        // Check for win
+        if (
+          outcome.includes("win") ||
+          outcome.includes("won") ||
+          outcome === "w"
+        ) {
           badge = "win";
           letter = "W";
-        } else if (outcome.includes("loss") || outcome.includes("lost")) {
+        }
+        // Check for loss
+        else if (
+          outcome.includes("loss") ||
+          outcome.includes("lost") ||
+          outcome.includes("lose") ||
+          outcome === "l"
+        ) {
           badge = "loss";
           letter = "L";
         }
+        // Check for draw
+        else if (
+          outcome.includes("draw") ||
+          outcome.includes("drew") ||
+          outcome === "d"
+        ) {
+          badge = "draw";
+          letter = "D";
+        }
+        // If no outcome, try to determine from match result
+        else if (
+          match.score_home !== undefined &&
+          match.score_away !== undefined
+        ) {
+          if (match.score_home > match.score_away) {
+            badge = "win";
+            letter = "W";
+          } else if (match.score_home < match.score_away) {
+            badge = "loss";
+            letter = "L";
+          } else {
+            badge = "draw";
+            letter = "D";
+          }
+        }
 
-        html += `<span class="ss-form-badge ${badge}">${letter}</span>`;
+        html += `<span class="ss-form-badge ${badge}" title="${this.escapeHtml(
+          outcome || "Unknown"
+        )}">${letter}</span>`;
       });
       html += "</div>";
 
