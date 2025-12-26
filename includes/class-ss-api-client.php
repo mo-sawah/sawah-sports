@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) { exit; }
 
 /**
  * Enhanced Sportmonks API Client
- * Supports all v3 endpoints with better error handling and logging
+ * v5.2 - Improved score data fetching
  */
 final class Sawah_Sports_API_Client {
     private $base_url = 'https://api.sportmonks.com/v3/football/';
@@ -92,10 +92,13 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get fixtures by date
+     * Get fixtures by date - ENHANCED VERSION
+     * Now includes periods for better score tracking
      */
     public function get_fixtures_by_date(string $date, array $params = []): array {
-        $defaults = ['include' => 'participants;league.country;scores;state'];
+        $defaults = [
+            'include' => 'participants;league.country;scores;state;periods'
+        ];
         $params = array_merge($defaults, $params);
         return $this->get('fixtures/date/' . rawurlencode($date), $params, 15);
     }
@@ -106,7 +109,7 @@ final class Sawah_Sports_API_Client {
     public function get_fixture(int $fixture_id, array $includes = []): array {
         // Expanded includes for v5.0 features
         $include_str = empty($includes) 
-            ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation'
+            ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation;periods'
             : implode(';', $includes);
         return $this->get('fixtures/' . $fixture_id, ['include' => $include_str], 15);
     }
@@ -122,7 +125,6 @@ final class Sawah_Sports_API_Client {
 
     /**
      * Get Teams Stats by Season (New for v5.0 Stats Center)
-     * Fetches all teams in a season including their aggregated statistics
      */
     public function get_teams_by_season(int $season_id): array {
         return $this->get('teams/seasons/' . $season_id, [
@@ -188,9 +190,6 @@ final class Sawah_Sports_API_Client {
      * Get topscorers for a season
      */
     public function get_topscorers(int $season_id, string $type = 'goals'): array {
-        // SportMonks v3 Topscorers types (NOT the same as statistic type IDs)
-        // 208 = goals, 209 = assists, 210 = cards
-        // Docs: Topscorers use seasonTopscorerTypes filter.
         $type = strtolower(trim($type));
 
         $type_map = [

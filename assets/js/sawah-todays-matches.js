@@ -1,7 +1,7 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
  * Features: Date Slider, Priority Sorting, Search, Live Filter
- * v5.1.2 - Fixes Data Loading Crash & 0:0 Score Issue
+ * v5.2.0 - Enhanced Score Detection & Debugging
  */
 (function ($) {
   "use strict";
@@ -36,6 +36,7 @@
   };
 
   const DEFAULT_PRIORITY = 999;
+  const DEBUG = false; // Set to true to enable console logging
 
   class TodaysMatches {
     constructor(container) {
@@ -141,13 +142,20 @@
         const dateStr = this.state.date.toISOString().split("T")[0];
         const url = `${SawahSports.restUrl}/fixtures?date=${dateStr}`;
 
+        if (DEBUG) console.log("Fetching fixtures for:", dateStr);
+
         const res = await $.ajax({
           url: url,
           headers: { "X-WP-Nonce": SawahSports.nonce },
         });
 
-        // --- CRITICAL FIX: Safe Data Extraction ---
-        // Ensures fixtures is always an Array to prevent .filter() crash
+        if (DEBUG) {
+          console.log("API Response:", res);
+          console.log("Response type:", typeof res);
+          console.log("Is array:", Array.isArray(res));
+        }
+
+        // --- ENHANCED DATA EXTRACTION ---
         let rawData = [];
 
         if (Array.isArray(res)) {
@@ -156,6 +164,14 @@
           rawData = res.data;
         } else if (res && res.data && Array.isArray(res.data.data)) {
           rawData = res.data.data;
+        }
+
+        if (DEBUG) {
+          console.log("Extracted fixtures count:", rawData.length);
+          if (rawData.length > 0) {
+            console.log("Sample fixture:", rawData[0]);
+            console.log("Sample scores:", rawData[0].scores);
+          }
         }
 
         this.state.fixtures = rawData;
@@ -169,7 +185,9 @@
         this.renderMatches();
       } catch (err) {
         console.error("Sawah Sports Load Error:", err);
-        $wrapper.html('<div class="ss-empty">Unable to load matches.</div>');
+        $wrapper.html(
+          '<div class="ss-empty">Unable to load matches. Check console for details.</div>'
+        );
       }
     }
 
@@ -236,7 +254,7 @@
                         }" onerror="this.style.display='none'">
                         <div class="ss-premium-league-info">
                             <span class="ss-premium-league-name">${
-                              group.league?.name
+                              group.league?.name || "Unknown League"
                             }</span>
                             <span class="ss-premium-league-country">${
                               group.league?.country?.name || ""
@@ -250,6 +268,16 @@
           const away = this.getTeam(fx, "away");
           const score = this.getScore(fx);
           const status = this.getStatus(fx);
+
+          if (DEBUG && score.home !== "-" && score.home !== 0) {
+            console.log("Match with score:", {
+              home: home?.name,
+              away: away?.name,
+              score: score,
+              state: fx.state,
+              scores: fx.scores,
+            });
+          }
 
           const $match = $(`
                         <div class="ss-premium-match">
@@ -314,68 +342,143 @@
     }
 
     /**
-     * ROBUST Score Getter
-     * Scans all score entries to ensure we don't return 0:0 for finished games.
+     * ENHANCED Score Getter with Multiple Fallbacks
+     * Handles various Sportmonks API score formats
      */
     getScore(fx) {
-      const state = fx.state?.short_name;
+      const state = fx.state?.short_name || "";
+
       // 1. Not Started?
-      if (["NS", "TBA", "INT", "POST"].includes(state)) {
+      if (
+        ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
+          state
+        )
+      ) {
         return { home: "-", away: "-" };
       }
 
       const scores = fx.scores || [];
-      if (!scores.length) return { home: 0, away: 0 };
+      if (!scores.length) {
+        if (DEBUG) console.log("No scores array for fixture:", fx.id);
+        return { home: "-", away: "-" };
+      }
 
-      // 2. Try Standard Priorities first
-      const priorities = ["CURRENT", "EXTRA_TIME", "2ND_HALF", "1ST_HALF"];
-      let s = null;
+      if (DEBUG && fx.id) {
+        console.log("Processing scores for fixture:", fx.id, {
+          state: state,
+          scores: scores,
+        });
+      }
 
-      for (const type of priorities) {
-        s = scores.find((x) => x.description === type);
-        if (
-          s &&
-          (s.score.home !== undefined || s.score.home_score !== undefined)
-        ) {
-          // Found a valid score object
-          break;
-        } else {
-          s = null; // Reset if found but empty
+      // 2. Priority list - Sportmonks uses various descriptions
+      const priorities = [
+        "CURRENT", // Live/Current score
+        "FT_SCORE", // Full-time score
+        "FULLTIME", // Full-time (alternative)
+        "FINAL", // Final score
+        "EXTRA_TIME", // After extra time
+        "AET", // After extra time
+        "2ND_HALF", // Second half
+        "HALFTIME", // Half-time
+        "HT_SCORE", // Half-time score
+        "1ST_HALF", // First half
+      ];
+
+      let scoreObj = null;
+
+      // Try each priority
+      for (const priority of priorities) {
+        scoreObj = scores.find((s) => {
+          const desc = (s.description || "").toUpperCase();
+          return desc === priority || desc.includes(priority);
+        });
+
+        if (scoreObj && scoreObj.score) {
+          const hasValidScore =
+            scoreObj.score.home !== undefined ||
+            scoreObj.score.home_score !== undefined ||
+            scoreObj.score.goals !== undefined ||
+            scoreObj.score.participant !== undefined;
+
+          if (hasValidScore) {
+            if (DEBUG)
+              console.log("Found score with priority:", priority, scoreObj);
+            break;
+          } else {
+            scoreObj = null;
+          }
         }
       }
 
-      // 3. Fallback: If no standard label found, search for ANY valid score with numbers
-      if (!s) {
-        // Try to find the entry with the highest numbers (likely the final score)
-        s = scores.reduce((max, curr) => {
-          const h = curr.score?.home ?? curr.score?.home_score ?? 0;
-          const maxH = max?.score?.home ?? max?.score?.home_score ?? 0;
-          return h > maxH ? curr : max;
-        }, scores[0]);
+      // 3. Fallback: Get the last non-zero score entry
+      if (!scoreObj) {
+        const nonZeroScores = scores.filter((s) => {
+          if (!s.score) return false;
+          const h = s.score.home ?? s.score.home_score ?? s.score.goals ?? 0;
+          const a = s.score.away ?? s.score.away_score ?? s.score.goals ?? 0;
+          return h > 0 || a > 0;
+        });
+
+        if (nonZeroScores.length > 0) {
+          scoreObj = nonZeroScores[nonZeroScores.length - 1];
+          if (DEBUG) console.log("Using last non-zero score:", scoreObj);
+        } else {
+          // Last resort: use first score object
+          scoreObj = scores[0];
+          if (DEBUG) console.log("Using first score object:", scoreObj);
+        }
       }
 
-      // 4. Extract values safely
-      if (s && s.score) {
-        const h =
-          s.score.home !== undefined
-            ? s.score.home
-            : s.score.home_score !== undefined
-            ? s.score.home_score
-            : 0;
-        const a =
-          s.score.away !== undefined
-            ? s.score.away
-            : s.score.away_score !== undefined
-            ? s.score.away_score
-            : 0;
-        return { home: h, away: a };
+      // 4. Extract values with multiple field name support
+      if (scoreObj && scoreObj.score) {
+        const scoreData = scoreObj.score;
+
+        // Try various field names that Sportmonks might use
+        const home =
+          scoreData.home ??
+          scoreData.home_score ??
+          scoreData.goals?.home ??
+          scoreData.participant?.home ??
+          (scoreData.participant === "home" ? scoreData.goals : null) ??
+          0;
+
+        const away =
+          scoreData.away ??
+          scoreData.away_score ??
+          scoreData.goals?.away ??
+          scoreData.participant?.away ??
+          (scoreData.participant === "away" ? scoreData.goals : null) ??
+          0;
+
+        if (DEBUG) {
+          console.log("Extracted score:", {
+            home,
+            away,
+            description: scoreObj.description,
+            rawScore: scoreData,
+          });
+        }
+
+        // For finished matches, don't show 0:0 if it's likely wrong
+        if (["FT", "AET", "FT_PEN", "FINISHED"].includes(state)) {
+          if (home === 0 && away === 0) {
+            if (DEBUG)
+              console.warn(
+                "Finished match showing 0:0 - this might be incorrect data"
+              );
+          }
+        }
+
+        return { home: home, away: away };
       }
 
-      return { home: 0, away: 0 };
+      // 5. Ultimate fallback
+      if (DEBUG) console.warn("Could not extract score, using fallback");
+      return { home: "-", away: "-" };
     }
 
     getStatus(fx) {
-      const s = fx.state?.short_name;
+      const s = fx.state?.short_name || "";
       const min = fx.state?.minute;
 
       if (this.isLive(fx)) {
@@ -390,7 +493,7 @@
         const m = String(d.getMinutes()).padStart(2, "0");
         return { text: `${h}:${m}`, class: "upcoming" };
       }
-      return { text: s, class: "" };
+      return { text: s || "—", class: "" };
     }
   }
 
