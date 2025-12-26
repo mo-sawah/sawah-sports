@@ -432,6 +432,15 @@ final class Sawah_Sports_REST {
 
         $data = $res['data'];
         
+        // CRITICAL FIX: Sort by total (descending)
+        if (isset($data['data']) && is_array($data['data'])) {
+            usort($data['data'], function($a, $b) {
+                $a_total = (int)($a['total'] ?? 0);
+                $b_total = (int)($b['total'] ?? 0);
+                return $b_total - $a_total; // Descending order
+            });
+        }
+        
         if (!empty($s['cache_enabled'])) {
             Sawah_Sports_Cache::set($cache_key, $data, (int)$s['ttl_statistics']);
         }
