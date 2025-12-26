@@ -1,7 +1,6 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget
- * Fixed alignment + Modal popup for channels
- * v1.1 - Professional Layout
+ * v1.2 - Fixed scores, separator, layout
  */
 (function ($) {
   "use strict";
@@ -45,7 +44,6 @@
     }
 
     createModal() {
-      // Create modal HTML if not exists
       if (!$("#ssm-channels-modal").length) {
         const modalHTML = `
           <div id="ssm-channels-modal" class="ssm-modal">
@@ -61,7 +59,6 @@
         `;
         $("body").append(modalHTML);
 
-        // Close modal events
         $(document).on(
           "click",
           ".ssm-modal-close, .ssm-modal-overlay",
@@ -137,7 +134,6 @@
         }
       });
 
-      // Watch Live click handler
       $(document).on("click", ".ssm-watch-link", (e) => {
         e.preventDefault();
         const channels = $(e.currentTarget).data("channels");
@@ -241,7 +237,6 @@
         return;
       }
 
-      // Filter
       let filtered = this.state.fixtures.filter((fx) => {
         if (this.state.filter === "live" && !this.isLive(fx)) return false;
         if (this.state.search) {
@@ -260,7 +255,6 @@
         return;
       }
 
-      // Group by League
       const groups = {};
       filtered.forEach((fx) => {
         const lid = fx.league?.id || 0;
@@ -270,7 +264,6 @@
         groups[lid].matches.push(fx);
       });
 
-      // Sort Leagues
       const sortedIDs = Object.keys(groups).sort((a, b) => {
         const pA = PRIORITY_MAP[a] || DEFAULT_PRIORITY;
         const pB = PRIORITY_MAP[b] || DEFAULT_PRIORITY;
@@ -280,7 +273,6 @@
         return nameA.localeCompare(nameB);
       });
 
-      // Render
       sortedIDs.forEach((lid) => {
         const group = groups[lid];
         const $leagueGroup = $('<div class="ssm-league-group"></div>');
@@ -342,17 +334,26 @@
       `);
 
       // RIGHT: Score + Status
-      const scoreClass = isLive ? "ssm-score live" : "ssm-score";
+      const scoreClass = isLive
+        ? "ssm-score live"
+        : isFinished
+        ? "ssm-score finished"
+        : "ssm-score";
       const $scoreCol = $('<div class="ssm-score-column"></div>');
 
+      // Score with separator
       $scoreCol.append(`
         <div class="${scoreClass}">
           <div class="ssm-score-num">${score.home}</div>
+          <div class="ssm-score-separator">|</div>
           <div class="ssm-score-num">${score.away}</div>
         </div>
       `);
 
-      if (isFinished) {
+      // Status below score
+      if (isLive) {
+        $scoreCol.append(`<div class="ssm-status live">${status.text}</div>`);
+      } else if (isFinished) {
         $scoreCol.append(
           `<div class="ssm-status finished">${status.text}</div>`
         );
@@ -360,13 +361,13 @@
         $scoreCol.append(
           `<div class="ssm-status upcoming">${status.text}</div>`
         );
-      } else if (isLive) {
-        $scoreCol.append(`<div class="ssm-status live">${status.text}</div>`);
       }
 
       $match.append($teams).append($scoreCol);
 
-      // Watch Link (if has channels)
+      // Bottom row: Watch Live + Time on SAME LINE
+      const $bottomRow = $('<div class="ssm-bottom-row"></div>');
+
       if (channels && channels.length > 0) {
         const $watchLink = $(`
           <a href="#" class="ssm-watch-link">
@@ -375,9 +376,23 @@
             <i class="eicon-arrow-right"></i>
           </a>
         `);
-
         $watchLink.data("channels", channels);
-        $match.append($watchLink);
+        $bottomRow.append($watchLink);
+      }
+
+      // Add time/status on same line
+      if (isUpcoming) {
+        $bottomRow.append(
+          `<span class="ssm-time-inline">${status.text}</span>`
+        );
+      } else if (isLive) {
+        $bottomRow.append(
+          `<span class="ssm-time-inline" style="color:#10b981;">${status.text}</span>`
+        );
+      }
+
+      if ($bottomRow.children().length > 0) {
+        $match.append($bottomRow);
       }
 
       return $match;
@@ -415,6 +430,7 @@
     getScore(fx) {
       const state = fx.state?.short_name || "";
 
+      // Upcoming - return dashes
       if (
         ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
           state
@@ -426,6 +442,7 @@
       const scores = fx.scores || [];
       if (!scores.length) return { home: "-", away: "-" };
 
+      // Priority list
       const priorities = [
         "CURRENT",
         "FT_SCORE",
@@ -440,22 +457,62 @@
       ];
 
       let scoreObj = null;
+
+      // Try priorities
       for (const priority of priorities) {
         scoreObj = scores.find((s) => {
           const desc = (s.description || "").toUpperCase();
           return desc === priority || desc.includes(priority);
         });
-        if (scoreObj && scoreObj.score) break;
+
+        if (scoreObj && scoreObj.score) {
+          const hasValidScore =
+            scoreObj.score.home !== undefined ||
+            scoreObj.score.home_score !== undefined ||
+            scoreObj.score.goals !== undefined ||
+            scoreObj.score.participant !== undefined;
+
+          if (hasValidScore) break;
+          else scoreObj = null;
+        }
       }
 
-      if (!scoreObj) scoreObj = scores[0];
+      // Fallback: last non-zero score
+      if (!scoreObj) {
+        const nonZeroScores = scores.filter((s) => {
+          if (!s.score) return false;
+          const h = s.score.home ?? s.score.home_score ?? s.score.goals ?? 0;
+          const a = s.score.away ?? s.score.away_score ?? s.score.goals ?? 0;
+          return h > 0 || a > 0;
+        });
 
+        if (nonZeroScores.length > 0) {
+          scoreObj = nonZeroScores[nonZeroScores.length - 1];
+        } else {
+          scoreObj = scores[0];
+        }
+      }
+
+      // Extract values
       if (scoreObj && scoreObj.score) {
         const scoreData = scoreObj.score;
+
         const home =
-          scoreData.home ?? scoreData.home_score ?? scoreData.goals?.home ?? 0;
+          scoreData.home ??
+          scoreData.home_score ??
+          scoreData.goals?.home ??
+          scoreData.participant?.home ??
+          (scoreData.participant === "home" ? scoreData.goals : null) ??
+          0;
+
         const away =
-          scoreData.away ?? scoreData.away_score ?? scoreData.goals?.away ?? 0;
+          scoreData.away ??
+          scoreData.away_score ??
+          scoreData.goals?.away ??
+          scoreData.participant?.away ??
+          (scoreData.participant === "away" ? scoreData.goals : null) ??
+          0;
+
         return { home, away };
       }
 
@@ -482,7 +539,6 @@
     }
   }
 
-  // Initialize mobile widget
   $(document).ready(function () {
     $(".ss-mobile-matches").each(function () {
       new MobileTodaysMatches(this);
