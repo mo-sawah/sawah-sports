@@ -1529,8 +1529,8 @@
   window.SawahStatsCenter = StatsCenter;
 })();
 /**
- * Stats Center JavaScript - FIXED VERSION
- * With proper error handling and debugging
+ * Stats Center JavaScript - FINAL VERSION
+ * Works with Sportmonks topscorers endpoint
  */
 
 (function () {
@@ -1539,12 +1539,16 @@
   const StatsCenter = {
     // Initialize Stats Center
     init: (root) => {
-      const leagueId = root.getAttribute("data-league");
       const seasonId = root.getAttribute("data-season");
       const leagueName = root.getAttribute("data-league-name");
       const defaultTab = root.getAttribute("data-default-tab") || "dashboard";
 
-      console.log("[Stats Center] Init:", { leagueId, seasonId, leagueName });
+      console.log(
+        "[Stats Center] Init - Season:",
+        seasonId,
+        "League:",
+        leagueName
+      );
 
       // Setup tab switching
       StatsCenter.setupTabs(root);
@@ -1604,21 +1608,19 @@
         </div>
       `;
 
-      console.log("[Stats Center] Loading dashboard for season:", seasonId);
-
       try {
-        // Fetch player stats
-        console.log("[Stats Center] Fetching goals...");
-        const goals = await StatsCenter.fetchTopScorers(seasonId, "goals");
-        console.log("[Stats Center] Goals data:", goals);
+        // Fetch all stats in parallel
+        const [goals, assists, cleanSheets] = await Promise.all([
+          StatsCenter.fetchTopScorers(seasonId, "goals"),
+          StatsCenter.fetchTopScorers(seasonId, "assists"),
+          StatsCenter.fetchTopScorers(seasonId, "cleansheets"),
+        ]);
 
-        console.log("[Stats Center] Fetching assists...");
-        const assists = await StatsCenter.fetchTopScorers(seasonId, "assists");
-        console.log("[Stats Center] Assists data:", assists);
-
-        // For now, skip passes and cleansheets as they might not be available
-        const passes = [];
-        const cleanSheets = [];
+        console.log("[Stats Center] Data loaded:", {
+          goals: goals.length,
+          assists: assists.length,
+          cleanSheets: cleanSheets.length,
+        });
 
         // Build dashboard HTML
         const dashboardHTML = `
@@ -1629,12 +1631,6 @@
               ${StatsCenter.buildStatCard("Goals", goals, "player", "⚽")}
               ${StatsCenter.buildStatCard("Assists", assists, "player", "🎯")}
               ${StatsCenter.buildStatCard(
-                "Total Passes",
-                passes,
-                "player",
-                "📊"
-              )}
-              ${StatsCenter.buildStatCard(
                 "Clean Sheets",
                 cleanSheets,
                 "player",
@@ -1642,27 +1638,15 @@
               )}
             </div>
           </div>
-          
-          <!-- Club Stats Section -->
-          <div class="ss-stats-section">
-            <h2 class="ss-stats-section-title">${leagueName} 2024/25 Club Stats</h2>
-            <div class="ss-stats-grid">
-              ${StatsCenter.buildStatCard("Goals", [], "team", "⚽")}
-              ${StatsCenter.buildStatCard("Tackles Won", [], "team", "💪")}
-              ${StatsCenter.buildStatCard("Blocks", [], "team", "🛡️")}
-              ${StatsCenter.buildStatCard("Total Passes", [], "team", "📊")}
-            </div>
-          </div>
         `;
 
         content.innerHTML = dashboardHTML;
       } catch (error) {
-        console.error("[Stats Center] Dashboard Error:", error);
+        console.error("[Stats Center] Error:", error);
         content.innerHTML = `
           <div class="ss-error">
             <p>Unable to load statistics.</p>
-            <p style="font-size: 13px; margin-top: 8px;">Error: ${error.message}</p>
-            <p style="font-size: 12px; margin-top: 8px; color: #64748b;">Check browser console for details.</p>
+            <p style="font-size: 13px; margin-top: 8px; color: #64748b;">Error: ${error.message}</p>
           </div>
         `;
       }
@@ -1672,27 +1656,19 @@
     fetchTopScorers: async (seasonId, type = "goals") => {
       try {
         const url = `${SawahSports.restUrl}/topscorers/${seasonId}?type=${type}`;
-        console.log("[Stats Center] Fetching:", url);
 
         const response = await fetch(url, {
           headers: { "X-WP-Nonce": SawahSports.nonce },
         });
 
-        console.log("[Stats Center] Response status:", response.status);
-
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("[Stats Center] API Error:", errorText);
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("[Stats Center] Raw response:", data);
 
-        // Handle different response structures
+        // Handle nested data structure
         let scorers = [];
-
-        // Try different data paths
         if (data?.data?.data) {
           scorers = data.data.data;
         } else if (data?.data) {
@@ -1701,7 +1677,7 @@
           scorers = data;
         }
 
-        console.log("[Stats Center] Processed scorers:", scorers);
+        console.log(`[Stats Center] ${type}:`, scorers.length, "players");
 
         return Array.isArray(scorers) ? scorers.slice(0, 10) : [];
       } catch (error) {
@@ -1719,7 +1695,7 @@
               <h3 class="ss-stat-card-title">${title}</h3>
               <span class="ss-stat-card-icon">${icon}</span>
             </div>
-            <div class="ss-empty" style="padding: 40px 20px; text-align: center; color: var(--ss-text-muted);">
+            <div class="ss-empty" style="padding: 40px 20px; text-align: center; color: #94a3b8;">
               No data available
             </div>
           </div>
@@ -1728,11 +1704,7 @@
 
       const itemsHTML = items
         .map((item, index) => {
-          if (entityType === "player") {
-            return StatsCenter.buildPlayerItem(item, index + 1);
-          } else {
-            return StatsCenter.buildTeamItem(item, index + 1);
-          }
+          return StatsCenter.buildPlayerItem(item, index + 1);
         })
         .join("");
 
@@ -1751,16 +1723,14 @@
 
     // Build player item HTML
     buildPlayerItem: (item, rank) => {
-      console.log("[Stats Center] Building player item:", item);
-
       const player = item.player || {};
       const team = item.participant || {};
-      const value = item.total || item.value || 0;
+      const value = item.total || 0;
 
-      const playerName = player.name || player.display_name || "Unknown Player";
+      const playerName = player.display_name || player.name || "Unknown Player";
       const teamName = team.name || team.short_code || "";
-      const playerPhoto = player.image_path || player.photo_path || "";
-      const teamBadge = team.image_path || team.logo_path || "";
+      const playerPhoto = player.image_path || "";
+      const teamBadge = team.image_path || "";
 
       const photoHTML = playerPhoto
         ? `<img src="${playerPhoto}" alt="${playerName}" class="ss-stat-photo" loading="lazy" 
@@ -1773,7 +1743,7 @@
           )}</div>`;
 
       const teamBadgeHTML = teamBadge
-        ? `<img src="${teamBadge}" alt="${teamName}" class="ss-stat-team-badge">`
+        ? `<img src="${teamBadge}" alt="${teamName}" class="ss-stat-team-badge" loading="lazy">`
         : "";
 
       return `
@@ -1786,36 +1756,6 @@
               ${teamBadgeHTML}
               <span>${teamName}</span>
             </div>
-          </div>
-          <div class="ss-stat-value">${value}</div>
-        </div>
-      `;
-    },
-
-    // Build team item HTML
-    buildTeamItem: (item, rank) => {
-      const team = item.team || item.participant || {};
-      const value = item.total || item.value || 0;
-
-      const teamName = team.name || team.short_code || "Unknown Team";
-      const teamBadge = team.image_path || team.logo_path || "";
-
-      const badgeHTML = teamBadge
-        ? `<img src="${teamBadge}" alt="${teamName}" class="ss-stat-badge" loading="lazy"
-             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-           <div class="ss-stat-badge-fallback" style="display:none;">${StatsCenter.getInitials(
-             teamName
-           )}</div>`
-        : `<div class="ss-stat-badge-fallback">${StatsCenter.getInitials(
-            teamName
-          )}</div>`;
-
-      return `
-        <div class="ss-stat-item">
-          <div class="ss-stat-rank">${rank}</div>
-          <div>${badgeHTML}</div>
-          <div class="ss-stat-details">
-            <div class="ss-stat-name">${teamName}</div>
           </div>
           <div class="ss-stat-value">${value}</div>
         </div>
@@ -1838,10 +1778,7 @@
 
   // Initialize all Stats Centers when DOM is ready
   function initStatsCenters() {
-    console.log("[Stats Center] Initializing...");
-    const centers = document.querySelectorAll(".ss-stats-center");
-    console.log("[Stats Center] Found", centers.length, "widgets");
-    centers.forEach((root) => {
+    document.querySelectorAll(".ss-stats-center").forEach((root) => {
       StatsCenter.init(root);
     });
   }

@@ -33,36 +33,20 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
             'tab' => \Elementor\Controls_Manager::TAB_CONTENT,
         ]);
 
-        // League Selector (Readable)
-        $this->add_control('league_select', [
-            'label' => __('Select League', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::SELECT,
-            'default' => 'cyprus_first',
-            'options' => [
-                'cyprus_first' => __('Cyprus 1. Division', 'sawah-sports'),
-                'cyprus_cup' => __('Cyprus Cup', 'sawah-sports'),
-                'premier_league' => __('Premier League', 'sawah-sports'),
-                'champions_league' => __('Champions League', 'sawah-sports'),
-                'europa_league' => __('Europa League', 'sawah-sports'),
-                'ligue1' => __('Ligue 1', 'sawah-sports'),
-                'bundesliga' => __('Bundesliga', 'sawah-sports'),
-                'serie_a' => __('Serie A', 'sawah-sports'),
-                'la_liga' => __('La Liga', 'sawah-sports'),
-                'super_league_greece' => __('Super League (Greece)', 'sawah-sports'),
-            ],
-            'description' => __('Choose the league for statistics', 'sawah-sports'),
+        // Season ID (Simple input)
+        $this->add_control('season_id', [
+            'label' => __('Season ID', 'sawah-sports'),
+            'type' => \Elementor\Controls_Manager::NUMBER,
+            'default' => 25995,
+            'description' => __('Enter the Sportmonks Season ID (e.g., 25995 for Cyprus 2024/25)', 'sawah-sports'),
         ]);
 
-        // Season Selector (Readable)
-        $this->add_control('season_select', [
-            'label' => __('Select Season', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::SELECT,
-            'default' => 'current',
-            'options' => [
-                'current' => __('2024/25 (Current)', 'sawah-sports'),
-                '2023' => __('2023/24', 'sawah-sports'),
-                '2022' => __('2022/23', 'sawah-sports'),
-            ],
+        // League Name
+        $this->add_control('league_name', [
+            'label' => __('League Name', 'sawah-sports'),
+            'type' => \Elementor\Controls_Manager::TEXT,
+            'default' => 'Cyprus 1. Division',
+            'description' => __('Display name for the league', 'sawah-sports'),
         ]);
 
         // Default Tab
@@ -97,51 +81,10 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
 
     protected function render() {
         $settings = $this->get_settings_for_display();
-        $league = $settings['league_select'] ?? 'cyprus_first';
-        $season = $settings['season_select'] ?? 'current';
+        $season_id = $settings['season_id'] ?? 25995;
+        $league_name = $settings['league_name'] ?? 'Cyprus 1. Division';
         $default_tab = $settings['default_tab'] ?? 'dashboard';
         $accent_color = $settings['accent_color'] ?? '#3b82f6';
-        
-        // Map readable league names to IDs
-        $league_map = [
-            'cyprus_first' => 253,
-            'cyprus_cup' => 259,
-            'premier_league' => 8,
-            'champions_league' => 2,
-            'europa_league' => 5,
-            'ligue1' => 301,
-            'bundesliga' => 82,
-            'serie_a' => 384,
-            'la_liga' => 564,
-            'super_league_greece' => 325,
-        ];
-        
-        $league_id = $league_map[$league] ?? 253;
-        
-        // Map seasons to season IDs (you'll need to adjust these)
-        $season_map = [
-            'current' => 23032, // Cyprus 2024/25 - adjust this
-            '2023' => 22032,
-            '2022' => 21032,
-        ];
-        
-        $season_id = $season_map[$season] ?? 23032;
-        
-        // League display names
-        $league_names = [
-            'cyprus_first' => 'Cyprus 1. Division',
-            'cyprus_cup' => 'Cyprus Cup',
-            'premier_league' => 'Premier League',
-            'champions_league' => 'Champions League',
-            'europa_league' => 'Europa League',
-            'ligue1' => 'Ligue 1',
-            'bundesliga' => 'Bundesliga',
-            'serie_a' => 'Serie A',
-            'la_liga' => 'La Liga',
-            'super_league_greece' => 'Super League',
-        ];
-        
-        $league_name = $league_names[$league] ?? 'Cyprus 1. Division';
         
         wp_enqueue_style('sawah-sports-modern');
         wp_enqueue_script('sawah-sports-modern');
@@ -150,7 +93,6 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
         ?>
         <div id="<?php echo $id; ?>" 
              class="ss-stats-center" 
-             data-league="<?php echo esc_attr($league_id); ?>"
              data-season="<?php echo esc_attr($season_id); ?>"
              data-league-name="<?php echo esc_attr($league_name); ?>"
              data-default-tab="<?php echo esc_attr($default_tab); ?>"

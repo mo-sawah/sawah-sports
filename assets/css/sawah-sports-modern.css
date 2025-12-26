@@ -1494,3 +1494,38 @@
   font-weight: 600;
   color: var(--ss-text-secondary);
 }
+/* Info Box for Stats Center */
+.ss-info-box {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 32px;
+}
+
+.ss-info-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.ss-info-box p {
+  margin: 8px 0;
+  color: #1e3a8a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ss-info-box p:first-of-type {
+  margin-top: 0;
+}
+
+.ss-info-box p:last-child {
+  margin-bottom: 0;
+}
+
+.ss-info-box strong {
+  color: #1e40af;
+  font-weight: 700;
+}
