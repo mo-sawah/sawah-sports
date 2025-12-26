@@ -1,7 +1,7 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
- * Features: Date Slider, Priority Sorting, Search, Live Filter
- * v5.2.0 - Enhanced Score Detection & Debugging
+ * Features: Date Slider, Priority Sorting, Search, Live Filter, TV Channels
+ * v5.3.0 - Added TV Stations/Streaming Channels Support
  */
 (function ($) {
   "use strict";
@@ -170,7 +170,7 @@
           console.log("Extracted fixtures count:", rawData.length);
           if (rawData.length > 0) {
             console.log("Sample fixture:", rawData[0]);
-            console.log("Sample scores:", rawData[0].scores);
+            console.log("Sample TV stations:", rawData[0].tvstations);
           }
         }
 
@@ -268,6 +268,7 @@
           const away = this.getTeam(fx, "away");
           const score = this.getScore(fx);
           const status = this.getStatus(fx);
+          const channels = this.getTVChannels(fx);
 
           if (DEBUG && score.home !== "-" && score.home !== 0) {
             console.log("Match with score:", {
@@ -275,7 +276,7 @@
               away: away?.name,
               score: score,
               state: fx.state,
-              scores: fx.scores,
+              channels: channels,
             });
           }
 
@@ -312,11 +313,7 @@
                             </div>
 
                             <div class="ss-pm-tv">
-                                ${
-                                  status.class === "live"
-                                    ? '<span class="ss-live-dot"></span>'
-                                    : '<i class="eicon-arrow-right" style="color:#cbd5e1"></i>'
-                                }
+                                ${this.renderTVChannels(channels, status.class)}
                             </div>
                         </div>
                     `);
@@ -342,8 +339,91 @@
     }
 
     /**
+     * Get TV Channels/Streaming Information
+     */
+    getTVChannels(fx) {
+      const tvstations = fx.tvstations || [];
+      const channels = [];
+
+      if (Array.isArray(tvstations)) {
+        tvstations.forEach((tv) => {
+          // Handle both nested and flat structures
+          const station = tv.tvstation || tv;
+
+          if (station && station.name) {
+            channels.push({
+              id: station.id,
+              name: station.name,
+              url: station.url || null,
+              image: station.image_path || station.logo_path || null,
+              type: station.type || "TV",
+            });
+          }
+        });
+      }
+
+      return channels;
+    }
+
+    /**
+     * Render TV Channels HTML
+     */
+    renderTVChannels(channels, statusClass) {
+      if (!channels || channels.length === 0) {
+        // No channels - show default icon
+        if (statusClass === "live") {
+          return '<span class="ss-live-dot"></span>';
+        } else {
+          return '<i class="eicon-arrow-right" style="color:#cbd5e1"></i>';
+        }
+      }
+
+      // Has channels - show "Watch Live" button
+      const channelsList = channels
+        .slice(0, 3) // Show max 3 channels
+        .map((ch) => {
+          const img = ch.image
+            ? `<img src="${ch.image}" alt="${ch.name}" onerror="this.style.display='none'">`
+            : "";
+          return `
+                    <div class="ss-channel-item" title="${ch.name}">
+                        ${img}
+                        <span class="ss-channel-name">${ch.name}</span>
+                    </div>
+                `;
+        })
+        .join("");
+
+      const moreCount = channels.length > 3 ? channels.length - 3 : 0;
+      const moreText = moreCount > 0 ? `+${moreCount}` : "";
+
+      return `
+                <div class="ss-tv-channels">
+                    <button class="ss-watch-live-btn" type="button">
+                        <i class="eicon-play"></i>
+                        <span>${
+                          SawahSports.i18n.watchLive || "Watch Live"
+                        }</span>
+                    </button>
+                    <div class="ss-channels-dropdown">
+                        <div class="ss-channels-header">
+                            ${SawahSports.i18n.availableOn || "Available on"}
+                        </div>
+                        ${channelsList}
+                        ${
+                          moreText
+                            ? `<div class="ss-channels-more">${moreText} ${
+                                SawahSports.i18n.moreChannels || "more"
+                              }</div>`
+                            : ""
+                        }
+                    </div>
+                </div>
+            `;
+    }
+
+    /**
      * ENHANCED Score Getter with Multiple Fallbacks
-     * Handles various Sportmonks API score formats
      */
     getScore(fx) {
       const state = fx.state?.short_name || "";
@@ -370,23 +450,22 @@
         });
       }
 
-      // 2. Priority list - Sportmonks uses various descriptions
+      // 2. Priority list
       const priorities = [
-        "CURRENT", // Live/Current score
-        "FT_SCORE", // Full-time score
-        "FULLTIME", // Full-time (alternative)
-        "FINAL", // Final score
-        "EXTRA_TIME", // After extra time
-        "AET", // After extra time
-        "2ND_HALF", // Second half
-        "HALFTIME", // Half-time
-        "HT_SCORE", // Half-time score
-        "1ST_HALF", // First half
+        "CURRENT",
+        "FT_SCORE",
+        "FULLTIME",
+        "FINAL",
+        "EXTRA_TIME",
+        "AET",
+        "2ND_HALF",
+        "HALFTIME",
+        "HT_SCORE",
+        "1ST_HALF",
       ];
 
       let scoreObj = null;
 
-      // Try each priority
       for (const priority of priorities) {
         scoreObj = scores.find((s) => {
           const desc = (s.description || "").toUpperCase();
@@ -410,7 +489,7 @@
         }
       }
 
-      // 3. Fallback: Get the last non-zero score entry
+      // 3. Fallback
       if (!scoreObj) {
         const nonZeroScores = scores.filter((s) => {
           if (!s.score) return false;
@@ -423,17 +502,15 @@
           scoreObj = nonZeroScores[nonZeroScores.length - 1];
           if (DEBUG) console.log("Using last non-zero score:", scoreObj);
         } else {
-          // Last resort: use first score object
           scoreObj = scores[0];
           if (DEBUG) console.log("Using first score object:", scoreObj);
         }
       }
 
-      // 4. Extract values with multiple field name support
+      // 4. Extract values
       if (scoreObj && scoreObj.score) {
         const scoreData = scoreObj.score;
 
-        // Try various field names that Sportmonks might use
         const home =
           scoreData.home ??
           scoreData.home_score ??
@@ -459,7 +536,6 @@
           });
         }
 
-        // For finished matches, don't show 0:0 if it's likely wrong
         if (["FT", "AET", "FT_PEN", "FINISHED"].includes(state)) {
           if (home === 0 && away === 0) {
             if (DEBUG)
@@ -472,7 +548,6 @@
         return { home: home, away: away };
       }
 
-      // 5. Ultimate fallback
       if (DEBUG) console.warn("Could not extract score, using fallback");
       return { home: "-", away: "-" };
     }
@@ -497,9 +572,30 @@
     }
   }
 
+  // Initialize on document ready
   $(document).ready(function () {
     $(".ss-todays-matches-premium").each(function () {
       new TodaysMatches(this);
+    });
+
+    // TV Channels dropdown toggle
+    $(document).on("click", ".ss-watch-live-btn", function (e) {
+      e.stopPropagation();
+      const $dropdown = $(this).siblings(".ss-channels-dropdown");
+      const $allDropdowns = $(".ss-channels-dropdown");
+
+      // Close all other dropdowns
+      $allDropdowns.not($dropdown).removeClass("show");
+
+      // Toggle current dropdown
+      $dropdown.toggleClass("show");
+    });
+
+    // Close dropdowns when clicking outside
+    $(document).on("click", function (e) {
+      if (!$(e.target).closest(".ss-tv-channels").length) {
+        $(".ss-channels-dropdown").removeClass("show");
+      }
     });
   });
 })(jQuery);

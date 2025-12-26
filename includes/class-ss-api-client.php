@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) { exit; }
 
 /**
  * Enhanced Sportmonks API Client
- * v5.2 - Improved score data fetching
+ * v5.3 - Added TV Stations/Channels Support
  */
 final class Sawah_Sports_API_Client {
     private $base_url = 'https://api.sportmonks.com/v3/football/';
@@ -86,18 +86,18 @@ final class Sawah_Sports_API_Client {
      * Get livescores (in-play matches)
      */
     public function get_livescores(array $params = []): array {
-        $defaults = ['include' => 'participants;league;scores;state;periods'];
+        $defaults = ['include' => 'participants;league;scores;state;periods;tvstations.tvstation'];
         $params = array_merge($defaults, $params);
         return $this->get('livescores/inplay', $params, 12);
     }
 
     /**
-     * Get fixtures by date - ENHANCED VERSION
-     * Now includes periods for better score tracking
+     * Get fixtures by date - ENHANCED VERSION WITH TV STATIONS
+     * Now includes periods and TV stations for complete match info
      */
     public function get_fixtures_by_date(string $date, array $params = []): array {
         $defaults = [
-            'include' => 'participants;league.country;scores;state;periods'
+            'include' => 'participants;league.country;scores;state;periods;tvstations.tvstation'
         ];
         $params = array_merge($defaults, $params);
         return $this->get('fixtures/date/' . rawurlencode($date), $params, 15);
@@ -107,9 +107,9 @@ final class Sawah_Sports_API_Client {
      * Get fixture by ID with full details
      */
     public function get_fixture(int $fixture_id, array $includes = []): array {
-        // Expanded includes for v5.0 features
+        // Expanded includes for v5.0 features + TV stations
         $include_str = empty($includes) 
-            ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation;periods'
+            ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation;periods;tvstations.tvstation'
             : implode(';', $includes);
         return $this->get('fixtures/' . $fixture_id, ['include' => $include_str], 15);
     }
@@ -235,10 +235,11 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get TV stations for a fixture
+     * Get TV stations for a fixture (STANDALONE METHOD)
+     * This is now also included in get_fixtures_by_date
      */
     public function get_tv_stations(int $fixture_id): array {
-        return $this->get('fixtures/' . $fixture_id, ['include' => 'tvStations.tvstation'], 12);
+        return $this->get('fixtures/' . $fixture_id, ['include' => 'tvstations.tvstation'], 12);
     }
 
     /**

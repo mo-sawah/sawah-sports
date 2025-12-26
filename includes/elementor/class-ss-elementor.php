@@ -2,8 +2,8 @@
 if (!defined('ABSPATH')) { exit; }
 
 /**
- * Complete Elementor Integration - v4.0 Premium
- * Premium Sofascore-inspired widgets with images
+ * Complete Elementor Integration - v5.3 Premium
+ * Added TV Channels/Streaming Support
  */
 final class Sawah_Sports_Elementor {
     private static $instance = null;
@@ -75,13 +75,16 @@ final class Sawah_Sports_Elementor {
     }
 
     public function frontend_assets() {
-        // v5.0: Modern Sofascore-inspired redesign
+        // v5.3: Modern Sofascore-inspired redesign with TV Channels
         wp_enqueue_style('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/css/sawah-sports-modern.css', [], SAWAH_SPORTS_VERSION);
+        
+        // TV Channels CSS
+        wp_enqueue_style('sawah-sports-tv-channels', SAWAH_SPORTS_URL . 'assets/css/tv-channels.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
+        
         wp_enqueue_script('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-modern.js', [], SAWAH_SPORTS_VERSION, true);
 
-        // New Matches Widget Script
+        // Matches Widget Script with TV Channels support
         wp_enqueue_script('sawah-matches-widget', SAWAH_SPORTS_URL . 'assets/js/sawah-todays-matches.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
-        //
 
         wp_localize_script('sawah-sports-modern', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
@@ -102,6 +105,13 @@ final class Sawah_Sports_Elementor {
                 'fixturesErr' => __('Unable to load fixtures.', 'sawah-sports'),
                 'standingsErr' => __('Unable to load standings.', 'sawah-sports'),
                 'dataErr' => __('Unable to load data.', 'sawah-sports'),
+                
+                // v5.3: TV Channels/Streaming i18n
+                'watchLive' => __('Watch Live', 'sawah-sports'),
+                'availableOn' => __('Available on', 'sawah-sports'),
+                'moreChannels' => __('more channels', 'sawah-sports'),
+                'streamingOn' => __('Streaming on', 'sawah-sports'),
+                'broadcastOn' => __('Broadcast on', 'sawah-sports'),
             ],
         ]);
     }
