@@ -1,0 +1,530 @@
+/**
+ * Sawah Sports - Premium Standings Widget
+ * Sofascore-inspired design with tabs, form display, and zone highlighting
+ */
+
+/* Main Container */
+.ss-standings-premium {
+  max-width: 100%;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Tabs (Standings/Statistics/Details) */
+.ss-standings-main-tabs {
+  display: flex;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e9ecef;
+  padding: 0;
+}
+
+.ss-main-tab {
+  flex: 1;
+  padding: 16px 20px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+}
+
+.ss-main-tab:hover {
+  color: #1a1a1a;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.ss-main-tab.active {
+  color: #1a1a1a;
+  border-bottom-color: #fbbf24;
+}
+
+/* Content Container */
+.ss-standings-content {
+  padding: 0;
+}
+
+/* Widget Header */
+.ss-standings-content .ss-widget-header {
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.ss-standings-content .ss-widget-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* Home/Away Tabs */
+.ss-standings-tabs {
+  display: flex;
+  gap: 0;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.ss-standings-tab {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 20px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ss-standings-tab:hover {
+  background: #f8f9fa;
+  color: #1a1a1a;
+}
+
+.ss-standings-tab.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+/* Table Wrapper */
+.ss-standings-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Standings Table */
+.ss-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ss-standings-table thead {
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ss-standings-table th {
+  padding: 12px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.ss-standings-table th:first-child {
+  padding-left: 20px;
+  width: 40px;
+}
+
+.ss-standings-table th.ss-team-col {
+  min-width: 180px;
+}
+
+.ss-standings-table th.ss-form-col {
+  text-align: center;
+  min-width: 140px;
+}
+
+.ss-standings-table th.ss-pts-col {
+  text-align: center;
+  font-weight: 700;
+  width: 60px;
+}
+
+.ss-standings-table th.ss-stat-col {
+  text-align: center;
+  width: 45px;
+}
+
+/* Table Body */
+.ss-standings-table tbody tr {
+  border-bottom: 1px solid #f1f3f5;
+  transition: all 0.2s;
+}
+
+.ss-standings-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.ss-standings-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ss-standings-table td {
+  padding: 14px 8px;
+  vertical-align: middle;
+}
+
+.ss-standings-table td:first-child {
+  padding-left: 20px;
+}
+
+/* Position Column */
+.ss-position {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ss-position-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+/* Zone Colors */
+.ss-position-badge.ss-cl {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.ss-position-badge.ss-el {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.ss-position-badge.ss-ecl {
+  background: #10b981;
+  color: #fff;
+}
+
+.ss-position-badge.ss-rel {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Team Column */
+.ss-team-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ss-team-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.ss-team-name {
+  font-weight: 500;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+/* Stats Columns */
+.ss-stat-col {
+  text-align: center;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.ss-stat-col.ss-diff {
+  font-weight: 600;
+}
+
+.ss-stat-col.ss-diff.positive {
+  color: #10b981;
+}
+
+.ss-stat-col.ss-diff.negative {
+  color: #ef4444;
+}
+
+.ss-goals-col {
+  text-align: center;
+  color: #6c757d;
+  font-size: 13px;
+}
+
+/* Form Column */
+.ss-form-col {
+  text-align: center;
+}
+
+.ss-form-badges {
+  display: inline-flex;
+  gap: 3px;
+  justify-content: center;
+}
+
+.ss-form-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ss-form-badge.win {
+  background: #10b981;
+}
+
+.ss-form-badge.draw {
+  background: #9ca3af;
+}
+
+.ss-form-badge.loss {
+  background: #ef4444;
+}
+
+/* Points Column */
+.ss-pts-col {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+
+/* Rules Section */
+.ss-standings-rules {
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.ss-rules-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.ss-rules-header:hover {
+  background: #e9ecef;
+}
+
+.ss-rules-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ss-rules-header i {
+  color: #6c757d;
+  transition: transform 0.3s;
+}
+
+.ss-rules-header.open i {
+  transform: rotate(180deg);
+}
+
+.ss-rules-content {
+  padding: 0 20px 20px;
+}
+
+.ss-rules-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ss-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #1a1a1a;
+}
+
+.ss-rule-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ss-rule-badge.ss-cl {
+  background: #4f46e5;
+}
+
+.ss-rule-badge.ss-el {
+  background: #f59e0b;
+}
+
+.ss-rule-badge.ss-ecl {
+  background: #10b981;
+}
+
+.ss-rule-badge.ss-rel {
+  background: #ef4444;
+}
+
+.ss-rules-text {
+  margin: 0;
+  font-size: 13px;
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* Loading State */
+.ss-standings-table-wrapper .ss-loading {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.ss-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e9ecef;
+  border-top-color: #fbbf24;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.ss-standings-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* Error State */
+.ss-standings-error {
+  padding: 40px 20px;
+  text-align: center;
+  color: #ef4444;
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ss-main-tab {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .ss-standings-tabs {
+    padding: 10px 12px;
+  }
+
+  .ss-standings-tab {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .ss-standings-table {
+    font-size: 13px;
+  }
+
+  .ss-standings-table th,
+  .ss-standings-table td {
+    padding: 10px 6px;
+  }
+
+  .ss-standings-table th:first-child,
+  .ss-standings-table td:first-child {
+    padding-left: 12px;
+  }
+
+  .ss-team-logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ss-team-name {
+    font-size: 13px;
+  }
+
+  .ss-form-badge {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+
+  .ss-rules-header,
+  .ss-rules-content {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Hide less important columns on very small screens */
+  .ss-standings-table th.ss-goals-col,
+  .ss-standings-table td.ss-goals-col {
+    display: none;
+  }
+
+  .ss-team-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .ss-position {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ss-team-cell {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ss-form-badges {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ss-rule-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ss-standings-table th,
+[dir="rtl"] .ss-standings-table td {
+  text-align: right;
+}
+
+[dir="rtl"] .ss-standings-table th:first-child,
+[dir="rtl"] .ss-standings-table td:first-child {
+  padding-right: 20px;
+  padding-left: 8px;
+}
+
+[dir="rtl"] .ss-stat-col,
+[dir="rtl"] .ss-goals-col,
+[dir="rtl"] .ss-form-col,
+[dir="rtl"] .ss-pts-col {
+  text-align: center;
+}

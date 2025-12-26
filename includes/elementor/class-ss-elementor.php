@@ -36,6 +36,7 @@ final class Sawah_Sports_Elementor {
         // Stage 1: Core widgets
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-live-matches.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings.php';
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings-premium.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-league-fixtures.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-mobile-matches.php';
         
@@ -55,11 +56,15 @@ final class Sawah_Sports_Elementor {
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-match-comparison.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-live-ticker.php';
 
+        // v7.0: League Hub (SofaScore-style page)
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-league-hub.php';
+
         // Register all widgets
         $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center()); // v5.0 Stats Center
         $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches()); // v4.0 Premium
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_Standings());
+        $widgets_manager->register(new \Sawah_Sports_Widget_Standings_Premium());
         $widgets_manager->register(new \Sawah_Sports_Widget_League_Fixtures());
         $widgets_manager->register(new \Sawah_Sports_Widget_Match_Center());
         $widgets_manager->register(new \Sawah_Sports_Widget_XG_Match());
@@ -74,6 +79,7 @@ final class Sawah_Sports_Elementor {
         $widgets_manager->register(new \Sawah_Sports_Widget_Match_Comparison());
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Ticker());
         $widgets_manager->register(new \Sawah_Sports_Widget_Mobile_Matches());
+        $widgets_manager->register(new \Sawah_Sports_Widget_League_Hub()); // v7.0 League Hub
     }
 
     public function frontend_assets() {
@@ -82,6 +88,9 @@ final class Sawah_Sports_Elementor {
         
         // TV Channels CSS - Mobile Optimized
         wp_enqueue_style('sawah-sports-tv-channels', SAWAH_SPORTS_URL . 'assets/css/tv-channels.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
+        
+        // Premium Standings CSS
+        wp_enqueue_style('sawah-sports-standings', SAWAH_SPORTS_URL . 'assets/css/sawah-standings.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
         
         wp_enqueue_script('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-modern.js', [], SAWAH_SPORTS_VERSION, true);
 
@@ -102,6 +111,31 @@ final class Sawah_Sports_Elementor {
             SAWAH_SPORTS_URL . 'assets/js/sawah-mobile-matches.js', 
             ['jquery'], 
             SAWAH_SPORTS_VERSION, 
+            true
+        );
+
+        // Premium Standings JS
+        wp_enqueue_script(
+            'sawah-standings', 
+            SAWAH_SPORTS_URL . 'assets/js/sawah-standings.js', 
+            ['jquery', 'sawah-sports-modern'], 
+            SAWAH_SPORTS_VERSION, 
+            true
+        );
+
+        // League Hub (SofaScore-style) assets
+        wp_enqueue_style(
+            'sawah-league-hub',
+            SAWAH_SPORTS_URL . 'assets/css/sawah-league-hub.css',
+            ['sawah-sports-modern'],
+            SAWAH_SPORTS_VERSION
+        );
+
+        wp_enqueue_script(
+            'sawah-league-hub',
+            SAWAH_SPORTS_URL . 'assets/js/sawah-league-hub.js',
+            ['jquery', 'sawah-sports-modern'],
+            SAWAH_SPORTS_VERSION,
             true
         );
 
