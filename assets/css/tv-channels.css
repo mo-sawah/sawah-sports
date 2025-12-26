@@ -1,0 +1,254 @@
+/**
+ * TV Channels / Streaming Stations Styles
+ * RTL-compatible design
+ */
+
+/* TV Channels Container */
+.ss-tv-channels {
+  position: relative;
+  display: inline-block;
+}
+
+/* Watch Live Button */
+.ss-watch-live-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.ss-watch-live-btn:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.ss-watch-live-btn:active {
+  transform: translateY(0);
+}
+
+.ss-watch-live-btn i {
+  font-size: 14px;
+}
+
+/* Channels Dropdown */
+.ss-channels-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  max-width: 280px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  padding: 8px 0;
+}
+
+/* RTL Support */
+[dir="rtl"] .ss-channels-dropdown {
+  right: auto;
+  left: 0;
+}
+
+.ss-channels-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Dropdown Header */
+.ss-channels-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b7280;
+  border-bottom: 1px solid #f3f4f6;
+  letter-spacing: 0.5px;
+}
+
+/* Channel Item */
+.ss-channel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ss-channel-item:hover {
+  background: #f9fafb;
+}
+
+.ss-channel-item img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #f3f4f6;
+  padding: 2px;
+}
+
+.ss-channel-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  flex: 1;
+}
+
+/* More Channels Indicator */
+.ss-channels-more {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  border-top: 1px solid #f3f4f6;
+  font-weight: 500;
+}
+
+/* Alternative: Inline Channels Display (no dropdown) */
+.ss-tv-channels-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ss-channel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.ss-channel-badge:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.ss-channel-badge img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* TV Icon for matches without channel data */
+.ss-pm-tv .ss-tv-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #9ca3af;
+  font-size: 18px;
+}
+
+/* Live indicator with channels */
+.ss-tv-channels .ss-live-dot {
+  display: none; /* Hide when showing watch button */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ss-watch-live-btn span {
+    display: none; /* Show only icon on mobile */
+  }
+
+  .ss-watch-live-btn {
+    padding: 8px 10px;
+  }
+
+  .ss-channels-dropdown {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    min-width: 240px;
+  }
+
+  .ss-channels-dropdown.show {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .ss-channels-dropdown {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .ss-channels-header {
+    color: #9ca3af;
+    border-bottom-color: #374151;
+  }
+
+  .ss-channel-item:hover {
+    background: #374151;
+  }
+
+  .ss-channel-name {
+    color: #f3f4f6;
+  }
+
+  .ss-channel-badge {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+  .ss-channel-badge:hover {
+    background: #4b5563;
+  }
+}
+
+/* Animation for channel icons */
+@keyframes channelPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.ss-channel-item img {
+  animation: channelPulse 2s ease-in-out infinite;
+}
+
+.ss-channel-item:hover img {
+  animation: none;
+}
+
+/* Improved positioning for premium match layout */
+.ss-premium-match .ss-pm-tv {
+  min-width: 140px; /* Ensure enough space for button */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+[dir="rtl"] .ss-premium-match .ss-pm-tv {
+  justify-content: flex-start;
+}
