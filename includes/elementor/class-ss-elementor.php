@@ -37,6 +37,7 @@ final class Sawah_Sports_Elementor {
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-live-matches.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-league-fixtures.php';
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-mobile-matches.php';
         
         // Stage 2: Advanced widgets
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-match-center.php';
@@ -72,6 +73,7 @@ final class Sawah_Sports_Elementor {
         $widgets_manager->register(new \Sawah_Sports_Widget_Season_Stats());
         $widgets_manager->register(new \Sawah_Sports_Widget_Match_Comparison());
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Ticker());
+        $widgets_manager->register(new \Sawah_Sports_Widget_Mobile_Matches());
     }
 
     public function frontend_assets() {
@@ -85,6 +87,23 @@ final class Sawah_Sports_Elementor {
 
         // Matches Widget Script with TV Channels support
         wp_enqueue_script('sawah-matches-widget', SAWAH_SPORTS_URL . 'assets/js/sawah-todays-matches.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+
+        // Mobile widget CSS
+        wp_enqueue_style(
+            'sawah-mobile-matches', 
+            SAWAH_SPORTS_URL . 'assets/css/sawah-mobile-matches.css', 
+            [], 
+            SAWAH_SPORTS_VERSION
+        );
+
+        // Mobile widget JS
+        wp_enqueue_script(
+            'sawah-mobile-matches', 
+            SAWAH_SPORTS_URL . 'assets/js/sawah-mobile-matches.js', 
+            ['jquery'], 
+            SAWAH_SPORTS_VERSION, 
+            true
+        );
 
         wp_localize_script('sawah-sports-modern', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),

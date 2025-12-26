@@ -1,0 +1,386 @@
+/**
+ * Sawah Sports - MOBILE ONLY Widget Styles
+ * Vertical layout - Yellow ONLY for live matches
+ * v1.0
+ */
+
+/* Container */
+.ss-mobile-matches {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f8f9fa;
+  padding: 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Widget Header */
+.ssm-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+}
+
+/* Date Slider */
+.ssm-date-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ssm-date-slider {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ssm-date-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.ssm-date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+  padding: 8px 4px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ssm-date-item.active {
+  background: #fbbf24;
+  color: #000;
+}
+
+.ssm-date-day {
+  font-size: 10px;
+  color: #6c757d;
+  margin-bottom: 2px;
+}
+
+.ssm-date-item.active .ssm-date-day {
+  color: #000;
+  font-weight: 600;
+}
+
+.ssm-date-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ssm-prev,
+.ssm-next,
+.ssm-calendar-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6c757d;
+}
+
+.ssm-prev:hover,
+.ssm-next:hover,
+.ssm-calendar-btn:hover {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.ssm-date-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Search Bar */
+.ssm-search-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.ssm-search-wrapper i {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+}
+
+.ssm-match-search {
+  width: 100%;
+  padding: 10px 10px 10px 32px;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  background: #f8f9fa;
+  font-size: 14px;
+  outline: none;
+}
+
+.ssm-match-search:focus {
+  border-color: #fbbf24;
+  background: #fff;
+}
+
+/* Filter Buttons */
+.ssm-filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ssm-filter-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 20px;
+  background: #e9ecef;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ssm-filter-btn.active {
+  background: #fbbf24;
+  color: #000;
+}
+
+/* League Groups */
+.ssm-league-group {
+  background: #fff;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.ssm-league-header {
+  padding: 12px 16px;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.ssm-league-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.ssm-league-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ssm-league-country {
+  font-size: 10px;
+  color: #6c757d;
+  display: block;
+}
+
+/* ===================================
+   MATCH LAYOUT - Vertical
+   Teams (right) | Score (left)
+   =================================== */
+.ssm-match {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f1f1;
+  gap: 0;
+  align-items: start;
+}
+
+.ssm-match:last-child {
+  border-bottom: none;
+}
+
+/* Teams Column (Right) */
+.ssm-teams {
+  grid-row: 1;
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.ssm-team-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row-reverse;
+}
+
+.ssm-team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-align: right;
+}
+
+.ssm-team-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Score Column (Left) */
+.ssm-score {
+  grid-row: 1;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  gap: 4px;
+  min-width: 50px;
+  background: transparent; /* DEFAULT: No background */
+}
+
+/* LIVE MATCHES ONLY - Yellow background */
+.ssm-score.live {
+  background: #fbbf24 !important;
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+
+.ssm-score-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.ssm-score.live .ssm-score-num {
+  color: #000;
+}
+
+/* Status/Time (Below scores) */
+.ssm-status {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: #6c757d;
+  text-align: center;
+  margin-top: 8px;
+  padding: 4px 0;
+}
+
+.ssm-status.finished {
+  color: #6c757d;
+}
+
+.ssm-status.upcoming {
+  color: #6c757d;
+}
+
+/* Watch Link (Bottom) */
+.ssm-watch-link {
+  grid-row: 3;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px;
+  font-size: 12px;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.ssm-watch-link:hover {
+  color: #2563eb;
+}
+
+.ssm-channel-logo {
+  height: 18px;
+  object-fit: contain;
+}
+
+/* RTL Support */
+[dir="rtl"] .ssm-teams {
+  align-items: flex-end;
+}
+
+[dir="rtl"] .ssm-team-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ssm-search-wrapper i {
+  left: auto;
+  right: 20px;
+}
+
+[dir="rtl"] .ssm-match-search {
+  padding: 10px 32px 10px 10px;
+}
+
+/* Loading */
+.ssm-loading {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.ssm-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e9ecef;
+  border-top-color: #fbbf24;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.ssm-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* Utilities */
+.ssm-filter-btn,
+.ssm-date-item,
+.ssm-prev,
+.ssm-next,
+.ssm-calendar-btn {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
