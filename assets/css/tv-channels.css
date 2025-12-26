@@ -1,7 +1,6 @@
 /**
- * Sawah Sports - Mobile-First Professional Design
- * App-style experience for mobile devices
- * v6.0 - Complete Mobile Redesign
+ * Sawah Sports - Fixed Layout (Matches Screenshot)
+ * v6.1 - Proper layout with search below date slider
  */
 
 /* =====================================
@@ -24,73 +23,367 @@
 }
 
 /* =====================================
-   DESKTOP LAYOUT (Default)
+   DATE SLIDER (Top)
    ===================================== */
+.ss-date-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px !important; /* Space before search bar */
+  background: #fff;
+  padding: 10px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
 
-/* Grid Layout */
+.ss-date-slider {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px;
+}
+
+.ss-date-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.ss-date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: 10px 5px;
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.ss-date-item:hover {
+  background: #f8fafc;
+}
+
+.ss-date-item.active {
+  background: #fbbf24;
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.ss-date-day {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.ss-date-item.active .ss-date-day {
+  color: #000;
+  font-weight: 600;
+}
+
+.ss-date-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ss-date-nav-btn,
+.ss-date-picker-trigger {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ss-date-nav-btn:hover,
+.ss-date-picker-trigger:hover {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.ss-date-input-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* =====================================
+   FILTER BAR - REDESIGNED
+   ALL + LIVE on left, Search on right
+   ===================================== */
+.ss-filter-bar {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  background: #fff !important;
+  padding: 10px 15px !important;
+  border-radius: 16px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+  gap: 15px !important;
+}
+
+/* Left side: ALL + LIVE buttons */
+.ss-filter-buttons {
+  display: flex !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.ss-filter-btn {
+  padding: 8px 24px !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  white-space: nowrap !important;
+}
+
+.ss-filter-btn.active {
+  background: #fbbf24 !important;
+  color: #000 !important;
+}
+
+.ss-filter-btn:hover {
+  background: #e2e8f0 !important;
+}
+
+.ss-filter-btn.active:hover {
+  background: #fbbf24 !important;
+}
+
+/* Right side: Search bar */
+.ss-search-wrapper {
+  position: relative !important;
+  flex: 1 !important;
+  max-width: none !important; /* Full width available */
+}
+
+.ss-search-wrapper i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.ss-match-search {
+  width: 100% !important;
+  padding: 10px 12px 10px 36px !important;
+  border-radius: 20px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  font-size: 14px !important;
+  outline: none !important;
+  transition: border 0.2s !important;
+}
+
+.ss-match-search:focus {
+  border-color: #fbbf24 !important;
+  background: #fff !important;
+}
+
+/* =====================================
+   LEAGUE GROUPS
+   ===================================== */
+.ss-premium-league-group {
+  background: #fff !important;
+  border-radius: 16px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+}
+
+.ss-premium-league-header {
+  padding: 15px 20px !important;
+  background: #f8fafc !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.ss-premium-league-logo {
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain !important;
+}
+
+.ss-premium-league-info {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ss-premium-league-name {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.ss-premium-league-country {
+  font-size: 11px !important;
+  color: #64748b !important;
+}
+
+/* =====================================
+   MATCH LAYOUT - HORIZONTAL
+   Status | Home Team+Logo | Score | Logo+Away Team | Watch
+   ===================================== */
 .ss-premium-match {
   display: grid !important;
-  grid-template-columns: 80px 1fr 60px 1fr 120px !important;
+  grid-template-columns: 60px 1fr auto 1fr 100px !important;
   align-items: center !important;
   padding: 15px 20px !important;
   border-bottom: 1px solid #f1f5f9 !important;
   cursor: pointer !important;
   transition: background 0.1s !important;
-  gap: 10px !important;
+  gap: 12px !important;
   position: relative !important;
 }
 
-.ss-premium-match:hover {
-  z-index: 100 !important;
-  background: #fdfdfd !important;
+.ss-premium-match:last-child {
+  border-bottom: none !important;
 }
 
-/* TV Column */
-.ss-premium-match .ss-pm-tv {
+.ss-premium-match:hover {
+  background: #fdfdfd !important;
+  z-index: 100 !important;
+}
+
+/* Column 1: Status/Time */
+.ss-pm-status {
+  font-size: 12px !important;
+  color: #64748b !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+.ss-pm-status.live {
+  color: #ef4444 !important;
+  font-weight: bold !important;
+}
+
+.ss-pm-status.finished {
+  color: #94a3b8 !important;
+}
+
+/* Column 2: Home Team (Name + Logo) */
+.ss-pm-team.home {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  text-align: right !important;
+}
+
+.ss-pm-team-name {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+}
+
+.ss-pm-team-logo {
+  width: 28px !important;
+  height: 28px !important;
+  object-fit: contain !important;
+  flex-shrink: 0 !important;
+}
+
+/* Column 3: Score */
+.ss-pm-score-box {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  background: #f8fafc !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  min-width: 60px !important;
+}
+
+.ss-pm-score-box.live {
+  background: #fef2f2 !important;
+  color: #ef4444 !important;
+}
+
+/* Column 4: Away Team (Logo + Name) */
+.ss-pm-team.away {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
+  text-align: left !important;
+}
+
+/* Column 5: Watch Button - COMPACT DESIGN */
+.ss-pm-tv {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
 }
 
-/* Watch Button - Desktop */
+.ss-tv-channels {
+  position: relative !important;
+  display: inline-block !important;
+}
+
+/* Compact Watch Button */
 .ss-watch-live-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
-  padding: 7px 14px !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
   background: linear-gradient(135deg, #101214 0%, #1a212e 100%) !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 8px !important;
-  font-size: 12px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  box-shadow: 0 2px 6px rgba(16, 18, 20, 0.25) !important;
+  box-shadow: 0 2px 4px rgba(16, 18, 20, 0.2) !important;
   white-space: nowrap !important;
-  width: 100% !important;
-  max-width: 110px !important;
 }
 
 .ss-watch-live-btn:hover {
   background: linear-gradient(135deg, #1a212e 0%, #2a3142 100%) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 10px rgba(16, 18, 20, 0.35) !important;
+  box-shadow: 0 3px 8px rgba(16, 18, 20, 0.3) !important;
+}
+
+.ss-watch-live-btn:active {
+  transform: translateY(0) !important;
 }
 
 .ss-watch-live-btn i {
-  font-size: 13px !important;
+  font-size: 12px !important;
 }
 
-/* Channels Dropdown */
-.ss-tv-channels {
-  position: relative !important;
-  display: inline-block !important;
-  width: 100% !important;
-}
-
+/* TV Channels Dropdown */
 .ss-channels-dropdown {
   position: absolute !important;
   top: calc(100% + 8px) !important;
@@ -178,45 +471,41 @@
   font-weight: 500 !important;
 }
 
-/* =====================================
-   MOBILE APP-STYLE REDESIGN
-   ===================================== */
+/* Hide arrow icon when no channels */
+.ss-pm-tv .eicon-arrow-right {
+  color: #cbd5e1 !important;
+  font-size: 16px !important;
+}
 
-/* Tablet - 900px and below */
-@media (max-width: 900px) {
-  .ss-premium-match {
-    grid-template-columns: 70px 1fr 55px 1fr 90px !important;
-    padding: 12px 16px !important;
-    gap: 8px !important;
+/* Live dot */
+.ss-live-dot {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  background: #ef4444 !important;
+  border-radius: 50% !important;
+  animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
   }
-
-  .ss-watch-live-btn {
-    max-width: 80px !important;
-    font-size: 11px !important;
-    padding: 6px 10px !important;
+  50% {
+    opacity: 0.5;
   }
 }
 
-/* Mobile - 768px and below */
+/* =====================================
+   RESPONSIVE - MOBILE
+   ===================================== */
 @media (max-width: 768px) {
-  /* === HEADER & NAVIGATION === */
-
-  /* Widget Title */
-  .ss-widget-header h2 {
-    font-size: 20px !important;
-    margin-bottom: 16px !important;
-  }
-
-  /* === DATE SLIDER - MOBILE OPTIMIZED === */
+  /* Date slider */
   .ss-date-slider-wrapper {
     padding: 8px !important;
     gap: 8px !important;
-    margin-bottom: 16px !important;
-    border-radius: 12px !important;
-  }
-
-  .ss-date-slider {
-    gap: 6px !important;
+    margin-bottom: 12px !important;
   }
 
   .ss-date-item {
@@ -232,64 +521,29 @@
     font-size: 16px !important;
   }
 
-  .ss-date-nav-btn,
-  .ss-date-picker-trigger {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 8px !important;
-  }
-
-  /* === FILTER BAR - MOBILE OPTIMIZED === */
+  /* Filter bar - stack vertically */
   .ss-filter-bar {
-    padding: 10px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     gap: 10px !important;
-    margin-bottom: 16px !important;
-    border-radius: 12px !important;
+    padding: 10px !important;
   }
 
   .ss-filter-buttons {
-    gap: 6px !important;
-    flex: 1 !important;
-  }
-
-  .ss-filter-btn {
-    padding: 7px 16px !important;
-    font-size: 13px !important;
-    flex: 1 !important; /* Equal width buttons */
-  }
-
-  /* === SEARCH - MOBILE OPTIMIZED === */
-  .ss-search-wrapper {
-    flex: 1 !important;
-    max-width: 100% !important; /* Full width on mobile */
     width: 100% !important;
   }
 
-  .ss-match-search {
-    padding: 8px 10px 8px 32px !important;
-    font-size: 13px !important;
-    border-radius: 12px !important;
-  }
-
-  /* === LEAGUE GROUPS - MOBILE === */
-  .ss-premium-league-group {
-    margin-bottom: 16px !important;
-    border-radius: 12px !important;
-  }
-
-  .ss-premium-league-header {
-    padding: 12px 14px !important;
-  }
-
-  .ss-premium-league-name {
+  .ss-filter-btn {
+    flex: 1 !important;
+    padding: 8px 12px !important;
     font-size: 13px !important;
   }
 
-  .ss-premium-league-country {
-    font-size: 10px !important;
+  .ss-search-wrapper {
+    width: 100% !important;
   }
 
-  /* === MATCH ROW - MOBILE STACKED LAYOUT === */
+  /* Match layout - mobile stacked */
   .ss-premium-match {
     display: flex !important;
     flex-direction: column !important;
@@ -298,96 +552,51 @@
     gap: 10px !important;
   }
 
-  /* Row 1: Status + Time */
   .ss-pm-status {
-    font-size: 11px !important;
     text-align: left !important;
-    order: 1 !important;
     margin-bottom: 4px !important;
   }
 
-  /* Row 2: Teams + Score (Horizontal) */
   .ss-pm-team.home,
   .ss-pm-team.away {
-    order: 2 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    flex: 1 !important;
-  }
-
-  .ss-pm-team.home {
     justify-content: flex-start !important;
     text-align: left !important;
   }
 
-  .ss-pm-team.away {
-    justify-content: flex-start !important;
-    text-align: left !important;
-  }
-
-  /* Team Names - NO TRUNCATION */
   .ss-pm-team-name {
     font-size: 13px !important;
     font-weight: 600 !important;
-    white-space: normal !important; /* Allow wrapping */
-    overflow: visible !important;
-    text-overflow: clip !important;
-    flex: 1 !important;
-    line-height: 1.3 !important;
   }
 
   .ss-pm-team-logo {
     width: 24px !important;
     height: 24px !important;
-    flex-shrink: 0 !important;
   }
 
-  /* Score Box - Between Teams */
   .ss-pm-score-box {
-    order: 3 !important;
     font-size: 18px !important;
-    padding: 8px 12px !important;
-    border-radius: 10px !important;
-    min-width: 70px !important;
-    margin: 4px 0 !important;
+    padding: 8px !important;
     align-self: center !important;
+    margin: 4px 0 !important;
   }
 
-  /* Watch Button - Bottom Row */
   .ss-pm-tv {
-    order: 4 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     margin-top: 6px !important;
     padding-top: 10px !important;
     border-top: 1px solid #f1f5f9 !important;
   }
 
   .ss-watch-live-btn {
-    max-width: 100% !important; /* Full width on mobile */
     width: 100% !important;
     padding: 10px 16px !important;
     font-size: 13px !important;
-    border-radius: 10px !important;
   }
 
-  .ss-watch-live-btn span {
-    display: inline !important; /* Show text on mobile */
-  }
-
-  .ss-watch-live-btn i {
-    font-size: 14px !important;
-  }
-
-  /* Dropdown on Mobile - Full Width */
   .ss-channels-dropdown {
     left: 0 !important;
     right: 0 !important;
     transform: translateY(-10px) !important;
     min-width: 100% !important;
-    max-width: 100% !important;
   }
 
   .ss-channels-dropdown.show {
@@ -395,91 +604,11 @@
   }
 }
 
-/* Very Small Mobile - 480px and below */
-@media (max-width: 480px) {
-  /* Even more compact */
-  .ss-widget-header h2 {
-    font-size: 18px !important;
-  }
-
-  .ss-date-item {
-    min-width: 55px !important;
-    padding: 6px 3px !important;
-  }
-
-  .ss-date-num {
-    font-size: 15px !important;
-  }
-
-  .ss-filter-btn {
-    padding: 6px 12px !important;
-    font-size: 12px !important;
-  }
-
-  .ss-pm-team-name {
-    font-size: 12px !important;
-  }
-
-  .ss-pm-score-box {
-    font-size: 16px !important;
-    padding: 6px 10px !important;
-  }
-
-  .ss-premium-league-name {
-    font-size: 12px !important;
-  }
-}
-
-/* === BETTER MOBILE TOUCH TARGETS === */
-@media (max-width: 768px) {
-  /* Larger touch targets */
-  .ss-date-item,
-  .ss-filter-btn,
-  .ss-watch-live-btn,
-  .ss-channel-item {
-    min-height: 44px !important; /* iOS recommended touch target */
-  }
-
-  /* Prevent accidental taps */
-  .ss-premium-match {
-    cursor: default !important;
-  }
-
-  /* Better spacing between matches */
-  .ss-premium-match {
-    margin-bottom: 2px !important;
-  }
-}
-
-/* === RTL SUPPORT === */
-[dir="rtl"] .ss-channels-dropdown {
-  left: 50% !important;
-  right: auto !important;
-}
-
-@media (max-width: 768px) {
-  [dir="rtl"] .ss-channels-dropdown {
-    left: 0 !important;
-    right: 0 !important;
-  }
-
-  [dir="rtl"] .ss-pm-team.home,
-  [dir="rtl"] .ss-pm-team.away {
-    flex-direction: row-reverse !important;
-  }
-}
-
-/* === DARK MODE === */
+/* Dark mode */
 @media (prefers-color-scheme: dark) {
   .ss-channels-dropdown {
     background: #1f2937 !important;
     border-color: #374151 !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
-  }
-
-  .ss-channels-header {
-    color: #9ca3af !important;
-    border-bottom-color: #374151 !important;
   }
 
   .ss-channel-item:hover {
@@ -491,65 +620,11 @@
   }
 }
 
-/* === LOADING & EMPTY STATES === */
-.ss-loading,
-.ss-empty {
-  padding: 40px 20px !important;
-}
-
-@media (max-width: 768px) {
-  .ss-loading,
-  .ss-empty {
-    padding: 30px 16px !important;
-    font-size: 14px !important;
-  }
-}
-
-/* === ANIMATIONS === */
-@keyframes dropdownSlide {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  @keyframes dropdownSlide {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
-
-.ss-channels-dropdown.show {
-  animation: dropdownSlide 0.3s ease !important;
-}
-
-/* === PREVENT TEXT SELECTION === */
+/* Prevent text selection */
 .ss-watch-live-btn,
 .ss-filter-btn,
 .ss-date-item {
   user-select: none !important;
   -webkit-user-select: none !important;
-  -moz-user-select: none !important;
   -webkit-tap-highlight-color: transparent !important;
-}
-
-/* === SMOOTH SCROLLING === */
-.ss-date-slider {
-  -webkit-overflow-scrolling: touch !important;
-}
-
-/* === HIDE ARROWS ON MOBILE === */
-.ss-pm-tv .eicon-arrow-right {
-  display: none !important;
 }
