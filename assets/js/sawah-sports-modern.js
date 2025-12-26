@@ -1528,3 +1528,330 @@
   // Export for global access if needed
   window.SawahStatsCenter = StatsCenter;
 })();
+/**
+ * Stats Center JavaScript - FIXED VERSION
+ * With proper error handling and debugging
+ */
+
+(function () {
+  "use strict";
+
+  const StatsCenter = {
+    // Initialize Stats Center
+    init: (root) => {
+      const leagueId = root.getAttribute("data-league");
+      const seasonId = root.getAttribute("data-season");
+      const leagueName = root.getAttribute("data-league-name");
+      const defaultTab = root.getAttribute("data-default-tab") || "dashboard";
+
+      console.log("[Stats Center] Init:", { leagueId, seasonId, leagueName });
+
+      // Setup tab switching
+      StatsCenter.setupTabs(root);
+
+      // Load default tab content
+      if (defaultTab === "dashboard") {
+        StatsCenter.loadDashboard(root, seasonId, leagueName);
+      }
+    },
+
+    // Setup tab switching
+    setupTabs: (root) => {
+      const tabs = root.querySelectorAll(".ss-stats-tab");
+      const contents = root.querySelectorAll(".ss-stats-tab-content");
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const tabName = tab.getAttribute("data-tab");
+
+          // Update active tab
+          tabs.forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+
+          // Update active content
+          contents.forEach((c) => c.classList.remove("active"));
+          const content = root.querySelector(`[data-content="${tabName}"]`);
+          if (content) {
+            content.classList.add("active");
+
+            // Load content if needed
+            const seasonId = root.getAttribute("data-season");
+            const leagueName = root.getAttribute("data-league-name");
+
+            if (
+              tabName === "dashboard" &&
+              !content.hasAttribute("data-loaded")
+            ) {
+              StatsCenter.loadDashboard(root, seasonId, leagueName);
+            }
+          }
+        });
+      });
+    },
+
+    // Load Dashboard Content
+    loadDashboard: async (root, seasonId, leagueName) => {
+      const content = root.querySelector('[data-content="dashboard"]');
+      if (!content) return;
+
+      content.setAttribute("data-loaded", "true");
+
+      // Show loading
+      content.innerHTML = `
+        <div class="ss-loading">
+          <div class="ss-spinner"></div>
+          <div class="ss-loading-text">Loading statistics...</div>
+        </div>
+      `;
+
+      console.log("[Stats Center] Loading dashboard for season:", seasonId);
+
+      try {
+        // Fetch player stats
+        console.log("[Stats Center] Fetching goals...");
+        const goals = await StatsCenter.fetchTopScorers(seasonId, "goals");
+        console.log("[Stats Center] Goals data:", goals);
+
+        console.log("[Stats Center] Fetching assists...");
+        const assists = await StatsCenter.fetchTopScorers(seasonId, "assists");
+        console.log("[Stats Center] Assists data:", assists);
+
+        // For now, skip passes and cleansheets as they might not be available
+        const passes = [];
+        const cleanSheets = [];
+
+        // Build dashboard HTML
+        const dashboardHTML = `
+          <!-- Player Stats Section -->
+          <div class="ss-stats-section">
+            <h2 class="ss-stats-section-title">${leagueName} 2024/25 Player Stats</h2>
+            <div class="ss-stats-grid">
+              ${StatsCenter.buildStatCard("Goals", goals, "player", "⚽")}
+              ${StatsCenter.buildStatCard("Assists", assists, "player", "🎯")}
+              ${StatsCenter.buildStatCard(
+                "Total Passes",
+                passes,
+                "player",
+                "📊"
+              )}
+              ${StatsCenter.buildStatCard(
+                "Clean Sheets",
+                cleanSheets,
+                "player",
+                "🧤"
+              )}
+            </div>
+          </div>
+          
+          <!-- Club Stats Section -->
+          <div class="ss-stats-section">
+            <h2 class="ss-stats-section-title">${leagueName} 2024/25 Club Stats</h2>
+            <div class="ss-stats-grid">
+              ${StatsCenter.buildStatCard("Goals", [], "team", "⚽")}
+              ${StatsCenter.buildStatCard("Tackles Won", [], "team", "💪")}
+              ${StatsCenter.buildStatCard("Blocks", [], "team", "🛡️")}
+              ${StatsCenter.buildStatCard("Total Passes", [], "team", "📊")}
+            </div>
+          </div>
+        `;
+
+        content.innerHTML = dashboardHTML;
+      } catch (error) {
+        console.error("[Stats Center] Dashboard Error:", error);
+        content.innerHTML = `
+          <div class="ss-error">
+            <p>Unable to load statistics.</p>
+            <p style="font-size: 13px; margin-top: 8px;">Error: ${error.message}</p>
+            <p style="font-size: 12px; margin-top: 8px; color: #64748b;">Check browser console for details.</p>
+          </div>
+        `;
+      }
+    },
+
+    // Fetch Top Scorers
+    fetchTopScorers: async (seasonId, type = "goals") => {
+      try {
+        const url = `${SawahSports.restUrl}/topscorers/${seasonId}?type=${type}`;
+        console.log("[Stats Center] Fetching:", url);
+
+        const response = await fetch(url, {
+          headers: { "X-WP-Nonce": SawahSports.nonce },
+        });
+
+        console.log("[Stats Center] Response status:", response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[Stats Center] API Error:", errorText);
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log("[Stats Center] Raw response:", data);
+
+        // Handle different response structures
+        let scorers = [];
+
+        // Try different data paths
+        if (data?.data?.data) {
+          scorers = data.data.data;
+        } else if (data?.data) {
+          scorers = Array.isArray(data.data) ? data.data : [];
+        } else if (Array.isArray(data)) {
+          scorers = data;
+        }
+
+        console.log("[Stats Center] Processed scorers:", scorers);
+
+        return Array.isArray(scorers) ? scorers.slice(0, 10) : [];
+      } catch (error) {
+        console.error(`[Stats Center] Error fetching ${type}:`, error);
+        return [];
+      }
+    },
+
+    // Build a stat card
+    buildStatCard: (title, items, entityType, icon) => {
+      if (!Array.isArray(items) || items.length === 0) {
+        return `
+          <div class="ss-stat-card">
+            <div class="ss-stat-card-header">
+              <h3 class="ss-stat-card-title">${title}</h3>
+              <span class="ss-stat-card-icon">${icon}</span>
+            </div>
+            <div class="ss-empty" style="padding: 40px 20px; text-align: center; color: var(--ss-text-muted);">
+              No data available
+            </div>
+          </div>
+        `;
+      }
+
+      const itemsHTML = items
+        .map((item, index) => {
+          if (entityType === "player") {
+            return StatsCenter.buildPlayerItem(item, index + 1);
+          } else {
+            return StatsCenter.buildTeamItem(item, index + 1);
+          }
+        })
+        .join("");
+
+      return `
+        <div class="ss-stat-card">
+          <div class="ss-stat-card-header">
+            <h3 class="ss-stat-card-title">${title}</h3>
+            <span class="ss-stat-card-icon">${icon}</span>
+          </div>
+          <div class="ss-stat-items">
+            ${itemsHTML}
+          </div>
+        </div>
+      `;
+    },
+
+    // Build player item HTML
+    buildPlayerItem: (item, rank) => {
+      console.log("[Stats Center] Building player item:", item);
+
+      const player = item.player || {};
+      const team = item.participant || {};
+      const value = item.total || item.value || 0;
+
+      const playerName = player.name || player.display_name || "Unknown Player";
+      const teamName = team.name || team.short_code || "";
+      const playerPhoto = player.image_path || player.photo_path || "";
+      const teamBadge = team.image_path || team.logo_path || "";
+
+      const photoHTML = playerPhoto
+        ? `<img src="${playerPhoto}" alt="${playerName}" class="ss-stat-photo" loading="lazy" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+           <div class="ss-stat-photo-fallback" style="display:none;">${StatsCenter.getInitials(
+             playerName
+           )}</div>`
+        : `<div class="ss-stat-photo-fallback">${StatsCenter.getInitials(
+            playerName
+          )}</div>`;
+
+      const teamBadgeHTML = teamBadge
+        ? `<img src="${teamBadge}" alt="${teamName}" class="ss-stat-team-badge">`
+        : "";
+
+      return `
+        <div class="ss-stat-item">
+          <div class="ss-stat-rank">${rank}</div>
+          <div>${photoHTML}</div>
+          <div class="ss-stat-details">
+            <div class="ss-stat-name">${playerName}</div>
+            <div class="ss-stat-team">
+              ${teamBadgeHTML}
+              <span>${teamName}</span>
+            </div>
+          </div>
+          <div class="ss-stat-value">${value}</div>
+        </div>
+      `;
+    },
+
+    // Build team item HTML
+    buildTeamItem: (item, rank) => {
+      const team = item.team || item.participant || {};
+      const value = item.total || item.value || 0;
+
+      const teamName = team.name || team.short_code || "Unknown Team";
+      const teamBadge = team.image_path || team.logo_path || "";
+
+      const badgeHTML = teamBadge
+        ? `<img src="${teamBadge}" alt="${teamName}" class="ss-stat-badge" loading="lazy"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+           <div class="ss-stat-badge-fallback" style="display:none;">${StatsCenter.getInitials(
+             teamName
+           )}</div>`
+        : `<div class="ss-stat-badge-fallback">${StatsCenter.getInitials(
+            teamName
+          )}</div>`;
+
+      return `
+        <div class="ss-stat-item">
+          <div class="ss-stat-rank">${rank}</div>
+          <div>${badgeHTML}</div>
+          <div class="ss-stat-details">
+            <div class="ss-stat-name">${teamName}</div>
+          </div>
+          <div class="ss-stat-value">${value}</div>
+        </div>
+      `;
+    },
+
+    // Get initials from name
+    getInitials: (name) => {
+      const words = String(name || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      if (!words.length) return "—";
+      if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+      return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    },
+  };
+
+  // Initialize all Stats Centers when DOM is ready
+  function initStatsCenters() {
+    console.log("[Stats Center] Initializing...");
+    const centers = document.querySelectorAll(".ss-stats-center");
+    console.log("[Stats Center] Found", centers.length, "widgets");
+    centers.forEach((root) => {
+      StatsCenter.init(root);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initStatsCenters);
+  } else {
+    initStatsCenters();
+  }
+
+  // Export for global access
+  window.SawahStatsCenter = StatsCenter;
+})();
