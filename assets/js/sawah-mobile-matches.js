@@ -34,6 +34,10 @@
         filter: "all",
         search: "",
       };
+
+      // Auto-refresh for live matches (today only)
+      this.refreshTimer = null;
+
       this.init();
     }
 
@@ -103,6 +107,205 @@
       $modal.addClass("show");
     }
 
+    isTodaySelected() {
+      const selected = new Date(this.state.date);
+      const today = new Date();
+      return selected.toDateString() === today.toDateString();
+    }
+
+    setupAutoRefresh() {
+      const hasLive = Array.isArray(this.state.fixtures)
+        ? this.state.fixtures.some((f) => this.isLive(f))
+        : false;
+
+      if (this.isTodaySelected() && hasLive) {
+        this.startAutoRefresh();
+      } else {
+        this.stopAutoRefresh();
+      }
+    }
+
+    startAutoRefresh() {
+      if (this.refreshTimer) return;
+
+      this.refreshTimer = setInterval(() => {
+        this.refreshDataSilently();
+      }, 30000);
+    }
+
+    stopAutoRefresh() {
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer);
+        this.refreshTimer = null;
+      }
+    }
+
+    async refreshDataSilently() {
+      try {
+        const dateStr = this.state.date.toISOString().split("T")[0];
+        const url = `${SawahSports.restUrl}/fixtures?date=${dateStr}&nocache=1`;
+
+        const res = await $.ajax({
+          url: url,
+          headers: { "X-WP-Nonce": SawahSports.nonce },
+        });
+
+        let rawData = [];
+        if (Array.isArray(res)) rawData = res;
+        else if (res && Array.isArray(res.data)) rawData = res.data;
+        else if (res && res.data && Array.isArray(res.data.data))
+          rawData = res.data.data;
+
+        this.state.fixtures = rawData;
+
+        const liveCount = this.state.fixtures.filter((f) =>
+          this.isLive(f)
+        ).length;
+        this.$el.find(".ssm-live-count").text(`(${liveCount})`);
+
+        this.renderMatches();
+        this.setupAutoRefresh();
+      } catch (e) {
+        if (DEBUG) console.warn("Mobile silent refresh failed:", e);
+      }
+    }
+
+    getLiveMinute(fx) {
+      const candidates = [
+        fx.state?.minute,
+        fx.state?.current_minute,
+        fx.time?.minute,
+        fx.time?.minutes,
+        fx.time?.added_time,
+        fx.periods?.[0]?.minute,
+        fx.periods?.[0]?.minutes,
+      ];
+
+      for (const c of candidates) {
+        const n = Number(c);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+
+      const s = fx.state?.short_name || "";
+      if (
+        fx.starting_at &&
+        ["LIVE", "1ST_HALF", "2ND_HALF", "ET", "PEN_LIVE", "HT"].includes(s)
+      ) {
+        const start = new Date(fx.starting_at).getTime();
+        const now = Date.now();
+        if (Number.isFinite(start) && start > 0) {
+          const mins = Math.floor((now - start) / 60000);
+          if (mins > 0 && mins < 200) return mins;
+        }
+      }
+
+      return null;
+    }
+
+    extractGoalsFromScoreItem(item) {
+      const s = item?.score;
+
+      if (typeof s === "number") return s;
+
+      const directCandidates = [
+        s?.goals,
+        s?.goal,
+        s?.score,
+        s?.value,
+        item?.goals,
+        item?.score,
+        item?.value,
+      ];
+
+      for (const c of directCandidates) {
+        if (typeof c === "number") return c;
+        if (typeof c === "string" && c.trim() !== "" && !isNaN(Number(c)))
+          return Number(c);
+      }
+
+      if (s && typeof s === "object") {
+        if (typeof s.goals === "number") return s.goals;
+        if (typeof s.home === "number" || typeof s.away === "number")
+          return null;
+        if (
+          typeof s.home_score === "number" ||
+          typeof s.away_score === "number"
+        )
+          return null;
+      }
+
+      return null;
+    }
+
+    computeScoreFromItems(items, fx) {
+      if (!Array.isArray(items) || items.length === 0) return null;
+
+      const bothSides = items.find((it) => {
+        const sc = it?.score;
+        return (
+          sc &&
+          (sc.home !== undefined ||
+            sc.away !== undefined ||
+            sc.home_score !== undefined ||
+            sc.away_score !== undefined ||
+            (sc.goals && typeof sc.goals === "object"))
+        );
+      });
+
+      if (bothSides && bothSides.score) {
+        const sc = bothSides.score;
+        const home =
+          sc.home ??
+          sc.home_score ??
+          sc.goals?.home ??
+          sc.participant?.home ??
+          0;
+
+        const away =
+          sc.away ??
+          sc.away_score ??
+          sc.goals?.away ??
+          sc.participant?.away ??
+          0;
+
+        return { home, away };
+      }
+
+      const homeId = this.getTeam(fx, "home")?.id;
+      const awayId = this.getTeam(fx, "away")?.id;
+
+      let home = null;
+      let away = null;
+
+      items.forEach((it) => {
+        const goals = this.extractGoalsFromScoreItem(it);
+        if (goals === null) return;
+
+        const pid =
+          it.participant_id ??
+          it.participant?.id ??
+          it.score?.participant_id ??
+          it.score?.participant?.id ??
+          null;
+
+        const side =
+          it.score?.participant === "home" || it.participant === "home"
+            ? "home"
+            : it.score?.participant === "away" || it.participant === "away"
+            ? "away"
+            : null;
+
+        if (pid && homeId && pid === homeId) home = goals;
+        else if (pid && awayId && pid === awayId) away = goals;
+        else if (side === "home") home = goals;
+        else if (side === "away") away = goals;
+      });
+
+      if (home === null && away === null) return null;
+
+      return { home: home ?? 0, away: away ?? 0 };
+    }
+
     getChannelSearchUrl(channelName) {
       const query = encodeURIComponent(
         `${channelName} live stream watch online`
@@ -117,11 +320,13 @@
         $btn.addClass("active");
         this.state.filter = $btn.data("filter");
         this.renderMatches();
+        this.setupAutoRefresh();
       });
 
       this.$el.find(".ssm-match-search").on("keyup", (e) => {
         this.state.search = e.target.value.toLowerCase();
         this.renderMatches();
+        this.setupAutoRefresh();
       });
 
       this.$el.find(".ssm-prev").on("click", () => this.changeDate(-1));
@@ -231,6 +436,7 @@
           );
 
         this.renderMatches();
+        this.setupAutoRefresh();
       } catch (err) {
         console.error("Mobile Widget Error:", err);
         $wrapper.html('<div class="ssm-empty">Unable to load matches.</div>');
@@ -453,18 +659,6 @@
     getScore(fx) {
       const state = fx.state?.short_name || "";
 
-      if (DEBUG) {
-        console.log("Mobile getScore:", {
-          teams:
-            this.getTeam(fx, "home")?.name +
-            " vs " +
-            this.getTeam(fx, "away")?.name,
-          state: state,
-          scores: fx.scores,
-        });
-      }
-
-      // Upcoming - return dashes
       if (
         ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
           state
@@ -479,7 +673,6 @@
         return { home: "-", away: "-" };
       }
 
-      // Priority list (same as desktop)
       const priorities = [
         "CURRENT",
         "FT_SCORE",
@@ -493,102 +686,33 @@
         "1ST_HALF",
       ];
 
-      let scoreObj = null;
-
-      // Try priorities
       for (const priority of priorities) {
-        scoreObj = scores.find((s) => {
+        const items = scores.filter((s) => {
           const desc = (s.description || "").toUpperCase();
           return desc === priority || desc.includes(priority);
         });
 
-        if (scoreObj && scoreObj.score) {
-          const hasValidScore =
-            scoreObj.score.home !== undefined ||
-            scoreObj.score.home_score !== undefined ||
-            scoreObj.score.goals !== undefined ||
-            scoreObj.score.participant !== undefined;
-
-          if (hasValidScore) {
-            if (DEBUG)
-              console.log(
-                "Mobile: Found score with priority:",
-                priority,
-                scoreObj
-              );
-            break;
-          } else scoreObj = null;
-        }
+        const computed = this.computeScoreFromItems(items, fx);
+        if (computed) return computed;
       }
 
-      // Fallback
-      if (!scoreObj) {
-        const nonZeroScores = scores.filter((s) => {
-          if (!s.score) return false;
-          const h =
-            s.score.home ?? s.score.home_score ?? s.score.goals?.home ?? 0;
-          const a =
-            s.score.away ?? s.score.away_score ?? s.score.goals?.away ?? 0;
-          return h > 0 || a > 0;
-        });
-
-        if (nonZeroScores.length > 0) {
-          scoreObj = nonZeroScores[nonZeroScores.length - 1];
-          if (DEBUG)
-            console.log("Mobile: Using last non-zero score:", scoreObj);
-        } else {
-          scoreObj = scores[0];
-          if (DEBUG) console.log("Mobile: Using first score:", scoreObj);
-        }
+      const nonEmpty = scores.filter((s) => s && s.score);
+      if (nonEmpty.length) {
+        const last = nonEmpty[nonEmpty.length - 1];
+        const lastDesc = (last.description || "").toUpperCase();
+        const items = scores.filter(
+          (s) => (s.description || "").toUpperCase() === lastDesc
+        );
+        const computed = this.computeScoreFromItems(items, fx);
+        if (computed) return computed;
       }
 
-      // Extract values
-      if (scoreObj && scoreObj.score) {
-        const scoreData = scoreObj.score;
-
-        const home =
-          scoreData.home ??
-          scoreData.home_score ??
-          scoreData.goals?.home ??
-          scoreData.participant?.home ??
-          (scoreData.participant === "home" ? scoreData.goals : null) ??
-          0;
-
-        const away =
-          scoreData.away ??
-          scoreData.away_score ??
-          scoreData.goals?.away ??
-          scoreData.participant?.away ??
-          (scoreData.participant === "away" ? scoreData.goals : null) ??
-          0;
-
-        if (DEBUG) {
-          console.log("Mobile: Extracted score:", {
-            home,
-            away,
-            description: scoreObj.description,
-          });
-        }
-
-        // Warn about 0:0 for finished matches
-        if (["FT", "AET", "FT_PEN", "FINISHED"].includes(state)) {
-          if (home === 0 && away === 0) {
-            if (DEBUG)
-              console.warn("Mobile: Finished match showing 0:0 - check data");
-          }
-        }
-
-        return { home, away };
-      }
-
-      if (DEBUG)
-        console.warn("Mobile: Could not extract score, using fallback");
       return { home: "-", away: "-" };
     }
 
     getStatus(fx) {
       const s = fx.state?.short_name || "";
-      const min = fx.state?.minute;
+      const min = this.getLiveMinute(fx);
 
       if (this.isLive(fx)) {
         return { text: min ? min + "'" : "LIVE", class: "live" };

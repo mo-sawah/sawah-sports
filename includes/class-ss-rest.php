@@ -171,9 +171,19 @@ final class Sawah_Sports_REST {
 
         $s = Sawah_Sports_Helpers::settings();
         $date = $req->get_param('date') ?: date('Y-m-d');
+
+        // If you're viewing today's fixtures, caching must be short (goals/minute change fast).
+        // You can also force bypass by adding ?nocache=1 from the widget.
+        $nocache = (bool) $req->get_param('nocache');
+        $is_today = ($date === date('Y-m-d'));
+
         $cache_key = 'ss_fix_' . md5($date);
-        
-        if (!empty($s['cache_enabled'])) {
+
+        // Decide TTL: use ttl_live for today, ttl_fixtures otherwise
+        $ttl = $is_today ? (int)($s['ttl_live'] ?? 30) : (int)($s['ttl_fixtures'] ?? 900);
+        if ($ttl < 10) $ttl = 10;
+
+        if (!empty($s['cache_enabled']) && !$nocache) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
@@ -187,7 +197,7 @@ final class Sawah_Sports_REST {
         $data = $res['data'];
         
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $data, (int)$s['ttl_fixtures']);
+            Sawah_Sports_Cache::set($cache_key, $data, $ttl);
         }
 
         return rest_ensure_response($data);
@@ -215,7 +225,7 @@ final class Sawah_Sports_REST {
         $data = $res['data'];
         
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $data, (int)$s['ttl_fixtures']);
+            Sawah_Sports_Cache::set($cache_key, $data, $ttl);
         }
 
         return rest_ensure_response($data);

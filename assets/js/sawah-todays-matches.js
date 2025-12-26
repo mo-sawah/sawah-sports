@@ -48,6 +48,9 @@
         search: "",
       };
 
+      // Auto-refresh for live matches (today only)
+      this.refreshTimer = null;
+
       this.init();
     }
 
@@ -64,11 +67,13 @@
         $btn.addClass("active");
         this.state.filter = $btn.data("filter");
         this.renderMatches();
+        this.setupAutoRefresh();
       });
 
       this.$el.find(".ss-match-search").on("keyup", (e) => {
         this.state.search = e.target.value.toLowerCase();
         this.renderMatches();
+        this.setupAutoRefresh();
       });
 
       this.$el.find(".ss-prev").on("click", () => this.changeDate(-1));
@@ -183,6 +188,7 @@
         this.$el.find(".ss-live-count").text(`(${liveCount})`);
 
         this.renderMatches();
+        this.setupAutoRefresh();
       } catch (err) {
         console.error("Sawah Sports Load Error:", err);
         $wrapper.html(
@@ -327,6 +333,214 @@
 
     // --- Helpers ---
 
+    isTodaySelected() {
+      const selected = new Date(this.state.date);
+      const today = new Date();
+      return selected.toDateString() === today.toDateString();
+    }
+
+    setupAutoRefresh() {
+      // Only auto-refresh for today's fixtures, and only if at least one match is live
+      const hasLive = Array.isArray(this.state.fixtures)
+        ? this.state.fixtures.some((f) => this.isLive(f))
+        : false;
+
+      if (this.isTodaySelected() && hasLive) {
+        this.startAutoRefresh();
+      } else {
+        this.stopAutoRefresh();
+      }
+    }
+
+    startAutoRefresh() {
+      if (this.refreshTimer) return;
+
+      // Refresh every 30s while there are live matches
+      this.refreshTimer = setInterval(() => {
+        this.refreshDataSilently();
+      }, 30000);
+    }
+
+    stopAutoRefresh() {
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer);
+        this.refreshTimer = null;
+      }
+    }
+
+    async refreshDataSilently() {
+      // Avoid spinner/DOM reset; just update state + re-render
+      try {
+        const dateStr = this.state.date.toISOString().split("T")[0];
+        const url = `${SawahSports.restUrl}/fixtures?date=${dateStr}&nocache=1`;
+
+        const res = await $.ajax({
+          url: url,
+          headers: { "X-WP-Nonce": SawahSports.nonce },
+        });
+
+        let rawData = [];
+        if (Array.isArray(res)) rawData = res;
+        else if (res && Array.isArray(res.data)) rawData = res.data;
+        else if (res && res.data && Array.isArray(res.data.data))
+          rawData = res.data.data;
+
+        this.state.fixtures = rawData;
+
+        const liveCount = this.state.fixtures.filter((f) =>
+          this.isLive(f)
+        ).length;
+        this.$el.find(".ss-live-count").text(`(${liveCount})`);
+
+        this.renderMatches();
+
+        // If live ended, stop
+        this.setupAutoRefresh();
+      } catch (e) {
+        if (DEBUG) console.warn("Silent refresh failed:", e);
+      }
+    }
+
+    getLiveMinute(fx) {
+      const candidates = [
+        fx.state?.minute,
+        fx.state?.current_minute,
+        fx.time?.minute,
+        fx.time?.minutes,
+        fx.time?.added_time,
+        fx.periods?.[0]?.minute,
+        fx.periods?.[0]?.minutes,
+      ];
+
+      for (const c of candidates) {
+        const n = Number(c);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+
+      // Fallback: approximate from kick-off time (best-effort)
+      const s = fx.state?.short_name || "";
+      if (
+        fx.starting_at &&
+        ["LIVE", "1ST_HALF", "2ND_HALF", "ET", "PEN_LIVE", "HT"].includes(s)
+      ) {
+        const start = new Date(fx.starting_at).getTime();
+        const now = Date.now();
+        if (Number.isFinite(start) && start > 0) {
+          const mins = Math.floor((now - start) / 60000);
+          if (mins > 0 && mins < 200) return mins;
+        }
+      }
+
+      return null;
+    }
+
+    extractGoalsFromScoreItem(item) {
+      // Returns a number if we can read a single-side goals value from a score item
+      const s = item?.score;
+
+      if (typeof s === "number") return s;
+
+      const directCandidates = [
+        s?.goals,
+        s?.goal,
+        s?.score,
+        s?.value,
+        item?.goals,
+        item?.score,
+        item?.value,
+      ];
+
+      for (const c of directCandidates) {
+        if (typeof c === "number") return c;
+        if (typeof c === "string" && c.trim() !== "" && !isNaN(Number(c)))
+          return Number(c);
+      }
+
+      // Sometimes goals is wrapped
+      if (s && typeof s === "object") {
+        if (typeof s.goals === "number") return s.goals;
+        if (typeof s.home === "number" || typeof s.away === "number")
+          return null; // handled elsewhere
+        if (
+          typeof s.home_score === "number" ||
+          typeof s.away_score === "number"
+        )
+          return null; // handled elsewhere
+      }
+
+      return null;
+    }
+
+    computeScoreFromItems(items, fx) {
+      if (!Array.isArray(items) || items.length === 0) return null;
+
+      // Case A: one item already has both sides
+      const bothSides = items.find((it) => {
+        const sc = it?.score;
+        return (
+          sc &&
+          (sc.home !== undefined ||
+            sc.away !== undefined ||
+            sc.home_score !== undefined ||
+            sc.away_score !== undefined ||
+            (sc.goals && typeof sc.goals === "object"))
+        );
+      });
+
+      if (bothSides && bothSides.score) {
+        const sc = bothSides.score;
+        const home =
+          sc.home ??
+          sc.home_score ??
+          sc.goals?.home ??
+          sc.participant?.home ??
+          0;
+
+        const away =
+          sc.away ??
+          sc.away_score ??
+          sc.goals?.away ??
+          sc.participant?.away ??
+          0;
+
+        return { home, away };
+      }
+
+      // Case B: per-participant items (most common for SportMonks)
+      const homeId = this.getTeam(fx, "home")?.id;
+      const awayId = this.getTeam(fx, "away")?.id;
+
+      let home = null;
+      let away = null;
+
+      items.forEach((it) => {
+        const goals = this.extractGoalsFromScoreItem(it);
+        if (goals === null) return;
+
+        const pid =
+          it.participant_id ??
+          it.participant?.id ??
+          it.score?.participant_id ??
+          it.score?.participant?.id ??
+          null;
+
+        const side =
+          it.score?.participant === "home" || it.participant === "home"
+            ? "home"
+            : it.score?.participant === "away" || it.participant === "away"
+            ? "away"
+            : null;
+
+        if (pid && homeId && pid === homeId) home = goals;
+        else if (pid && awayId && pid === awayId) away = goals;
+        else if (side === "home") home = goals;
+        else if (side === "away") away = goals;
+      });
+
+      if (home === null && away === null) return null;
+
+      return { home: home ?? 0, away: away ?? 0 };
+    }
     getTeam(fx, loc) {
       return fx.participants?.find((p) => p.meta?.location === loc);
     }
@@ -444,12 +658,14 @@
     }
 
     /**
-     * ENHANCED Score Getter with Multiple Fallbacks
+     * ENHANCED Score Getter (robust for SportMonks formats)
+     * - Handles "one object with home/away" AND "two objects (one per participant)"
+     * - Uses description priority ("CURRENT" first for live matches)
      */
     getScore(fx) {
       const state = fx.state?.short_name || "";
 
-      // 1. Not Started?
+      // Not started / postponed -> dashes
       if (
         ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
           state
@@ -464,14 +680,7 @@
         return { home: "-", away: "-" };
       }
 
-      if (DEBUG && fx.id) {
-        console.log("Processing scores for fixture:", fx.id, {
-          state: state,
-          scores: scores,
-        });
-      }
-
-      // 2. Priority list
+      // Priority list (CURRENT first)
       const priorities = [
         "CURRENT",
         "FT_SCORE",
@@ -485,97 +694,37 @@
         "1ST_HALF",
       ];
 
-      let scoreObj = null;
-
+      // Try priorities by grouping items with same description
       for (const priority of priorities) {
-        scoreObj = scores.find((s) => {
+        const items = scores.filter((s) => {
           const desc = (s.description || "").toUpperCase();
           return desc === priority || desc.includes(priority);
         });
 
-        if (scoreObj && scoreObj.score) {
-          const hasValidScore =
-            scoreObj.score.home !== undefined ||
-            scoreObj.score.home_score !== undefined ||
-            scoreObj.score.goals !== undefined ||
-            scoreObj.score.participant !== undefined;
-
-          if (hasValidScore) {
-            if (DEBUG)
-              console.log("Found score with priority:", priority, scoreObj);
-            break;
-          } else {
-            scoreObj = null;
-          }
-        }
+        const computed = this.computeScoreFromItems(items, fx);
+        if (computed) return computed;
       }
 
-      // 3. Fallback
-      if (!scoreObj) {
-        const nonZeroScores = scores.filter((s) => {
-          if (!s.score) return false;
-          const h = s.score.home ?? s.score.home_score ?? s.score.goals ?? 0;
-          const a = s.score.away ?? s.score.away_score ?? s.score.goals ?? 0;
-          return h > 0 || a > 0;
-        });
-
-        if (nonZeroScores.length > 0) {
-          scoreObj = nonZeroScores[nonZeroScores.length - 1];
-          if (DEBUG) console.log("Using last non-zero score:", scoreObj);
-        } else {
-          scoreObj = scores[0];
-          if (DEBUG) console.log("Using first score object:", scoreObj);
-        }
+      // Fallback: try last non-empty description group
+      const nonEmpty = scores.filter((s) => s && s.score);
+      if (nonEmpty.length) {
+        // Try to compute from the last description group first
+        const last = nonEmpty[nonEmpty.length - 1];
+        const lastDesc = (last.description || "").toUpperCase();
+        const items = scores.filter(
+          (s) => (s.description || "").toUpperCase() === lastDesc
+        );
+        const computed = this.computeScoreFromItems(items, fx);
+        if (computed) return computed;
       }
 
-      // 4. Extract values
-      if (scoreObj && scoreObj.score) {
-        const scoreData = scoreObj.score;
-
-        const home =
-          scoreData.home ??
-          scoreData.home_score ??
-          scoreData.goals?.home ??
-          scoreData.participant?.home ??
-          (scoreData.participant === "home" ? scoreData.goals : null) ??
-          0;
-
-        const away =
-          scoreData.away ??
-          scoreData.away_score ??
-          scoreData.goals?.away ??
-          scoreData.participant?.away ??
-          (scoreData.participant === "away" ? scoreData.goals : null) ??
-          0;
-
-        if (DEBUG) {
-          console.log("Extracted score:", {
-            home,
-            away,
-            description: scoreObj.description,
-            rawScore: scoreData,
-          });
-        }
-
-        if (["FT", "AET", "FT_PEN", "FINISHED"].includes(state)) {
-          if (home === 0 && away === 0) {
-            if (DEBUG)
-              console.warn(
-                "Finished match showing 0:0 - this might be incorrect data"
-              );
-          }
-        }
-
-        return { home: home, away: away };
-      }
-
-      if (DEBUG) console.warn("Could not extract score, using fallback");
+      // Last resort
       return { home: "-", away: "-" };
     }
 
     getStatus(fx) {
       const s = fx.state?.short_name || "";
-      const min = fx.state?.minute;
+      const min = this.getLiveMinute(fx);
 
       if (this.isLive(fx)) {
         return { text: min ? min + "'" : "LIVE", class: "live" };
