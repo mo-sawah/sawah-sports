@@ -47,7 +47,7 @@ final class Sawah_Sports_REST {
             'permission_callback' => '__return_true',
             'callback' => [$this, 'get_standings'],
         ]);
-        
+
         // Team Stats by Season (New for Stats Center)
         register_rest_route($namespace, '/season/teams/(?P<season_id>\d+)', [
             'methods' => 'GET',
@@ -248,10 +248,7 @@ final class Sawah_Sports_REST {
 
         return rest_ensure_response($data);
     }
-    
-    /**
-     * New Endpoint: Get Teams Stats for Stats Center
-     */
+
     public function get_season_teams_stats(WP_REST_Request $req) {
         $check = $this->rate_limit_check('team');
         if (is_wp_error($check)) return $check;
@@ -274,7 +271,6 @@ final class Sawah_Sports_REST {
         $data = $res['data'];
         
         if (!empty($s['cache_enabled'])) {
-            // Longer cache for season stats as they don't change as often as live scores
             Sawah_Sports_Cache::set($cache_key, $data, 3600);
         }
 
