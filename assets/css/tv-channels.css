@@ -1,6 +1,7 @@
 /**
  * TV Channels / Streaming Stations Styles
- * RTL-compatible design
+ * RTL-compatible design - FIXED VERSION
+ * v2.0 - Fixed alignment, z-index, and clickability
  */
 
 /* TV Channels Container */
@@ -24,6 +25,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  white-space: nowrap;
 }
 
 .ss-watch-live-btn:hover {
@@ -40,12 +42,12 @@
   font-size: 14px;
 }
 
-/* Channels Dropdown */
+/* Channels Dropdown - FIXED Z-INDEX */
 .ss-channels-dropdown {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 200px;
+  min-width: 220px;
   max-width: 280px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -55,7 +57,7 @@
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 9999; /* FIXED: High z-index to appear above everything */
   padding: 8px 0;
 }
 
@@ -82,18 +84,24 @@
   letter-spacing: 0.5px;
 }
 
-/* Channel Item */
+/* Channel Item - FIXED: Now clickable */
 .ss-channel-item {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
 }
 
 .ss-channel-item:hover {
   background: #f9fafb;
+}
+
+.ss-channel-item:active {
+  background: #f3f4f6;
 }
 
 .ss-channel-item img {
@@ -112,6 +120,19 @@
   flex: 1;
 }
 
+/* External link indicator */
+.ss-channel-item::after {
+  content: "↗";
+  font-size: 12px;
+  color: #9ca3af;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ss-channel-item:hover::after {
+  opacity: 1;
+}
+
 /* More Channels Indicator */
 .ss-channels-more {
   padding: 8px 12px;
@@ -120,38 +141,6 @@
   text-align: center;
   border-top: 1px solid #f3f4f6;
   font-weight: 500;
-}
-
-/* Alternative: Inline Channels Display (no dropdown) */
-.ss-tv-channels-inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.ss-channel-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: #f3f4f6;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #374151;
-  transition: all 0.2s ease;
-}
-
-.ss-channel-badge:hover {
-  background: #e5e7eb;
-  transform: translateY(-1px);
-}
-
-.ss-channel-badge img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
 }
 
 /* TV Icon for matches without channel data */
@@ -170,6 +159,36 @@
   display: none; /* Hide when showing watch button */
 }
 
+/* FIXED: Better alignment for premium match layout */
+.ss-premium-match {
+  position: relative; /* ADDED: For z-index context */
+}
+
+.ss-premium-match .ss-pm-tv {
+  min-width: 140px; /* Ensure enough space for button */
+  max-width: 140px; /* ADDED: Prevent overflow */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px; /* ADDED: Padding to prevent cutoff */
+}
+
+[dir="rtl"] .ss-premium-match .ss-pm-tv {
+  justify-content: flex-start;
+  padding-right: 0;
+  padding-left: 8px;
+}
+
+/* ADDED: Ensure dropdown doesn't get cut off */
+.ss-premium-match:hover {
+  z-index: 10; /* Raise match row when hovering to show dropdown */
+}
+
+.ss-premium-league-group {
+  position: relative;
+  z-index: 1; /* Base z-index for league groups */
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .ss-watch-live-btn span {
@@ -181,10 +200,26 @@
   }
 
   .ss-channels-dropdown {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%) translateY(-10px);
+    right: -40px; /* ADJUSTED: Better positioning on mobile */
     min-width: 240px;
+  }
+
+  [dir="rtl"] .ss-channels-dropdown {
+    left: -40px;
+    right: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .ss-premium-match .ss-pm-tv {
+    min-width: 60px;
+    max-width: 60px;
+  }
+
+  .ss-channels-dropdown {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%) translateY(-10px);
   }
 
   .ss-channels-dropdown.show {
@@ -197,6 +232,7 @@
   .ss-channels-dropdown {
     background: #1f2937;
     border-color: #374151;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
   }
 
   .ss-channels-header {
@@ -208,47 +244,34 @@
     background: #374151;
   }
 
+  .ss-channel-item:active {
+    background: #4b5563;
+  }
+
   .ss-channel-name {
     color: #f3f4f6;
   }
-
-  .ss-channel-badge {
-    background: #374151;
-    color: #f3f4f6;
-  }
-
-  .ss-channel-badge:hover {
-    background: #4b5563;
-  }
 }
 
-/* Animation for channel icons */
-@keyframes channelPulse {
-  0%,
-  100% {
+/* Animation for better UX */
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
     opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
+    transform: translateY(0);
   }
 }
 
-.ss-channel-item img {
-  animation: channelPulse 2s ease-in-out infinite;
+.ss-channels-dropdown.show {
+  animation: dropdownSlide 0.3s ease;
 }
 
-.ss-channel-item:hover img {
-  animation: none;
-}
-
-/* Improved positioning for premium match layout */
-.ss-premium-match .ss-pm-tv {
-  min-width: 140px; /* Ensure enough space for button */
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-[dir="rtl"] .ss-premium-match .ss-pm-tv {
-  justify-content: flex-start;
+/* Prevent text selection on button clicks */
+.ss-watch-live-btn {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
 }

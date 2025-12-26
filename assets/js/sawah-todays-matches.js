@@ -1,7 +1,7 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
  * Features: Date Slider, Priority Sorting, Search, Live Filter, TV Channels
- * v5.3.0 - Added TV Stations/Streaming Channels Support
+ * v5.3.1 - Fixed clickable channels and alignment
  */
 (function ($) {
   "use strict";
@@ -366,7 +366,7 @@
     }
 
     /**
-     * Render TV Channels HTML
+     * Render TV Channels HTML - UPDATED with clickable links
      */
     renderTVChannels(channels, statusClass) {
       if (!channels || channels.length === 0) {
@@ -380,21 +380,30 @@
 
       // Has channels - show "Watch Live" button
       const channelsList = channels
-        .slice(0, 3) // Show max 3 channels
+        .slice(0, 5) // Show up to 5 channels
         .map((ch) => {
           const img = ch.image
             ? `<img src="${ch.image}" alt="${ch.name}" onerror="this.style.display='none'">`
             : "";
+
+          // Make channel clickable if URL exists
+          const url = ch.url || this.getChannelSearchUrl(ch.name);
+          const attrs = url
+            ? `href="${url}" target="_blank" rel="noopener noreferrer"`
+            : "";
+
           return `
-                    <div class="ss-channel-item" title="${ch.name}">
+                    <a ${attrs} class="ss-channel-item" title="${ch.name}${
+            url ? " - Click to visit" : ""
+          }">
                         ${img}
                         <span class="ss-channel-name">${ch.name}</span>
-                    </div>
+                    </a>
                 `;
         })
         .join("");
 
-      const moreCount = channels.length > 3 ? channels.length - 3 : 0;
+      const moreCount = channels.length > 5 ? channels.length - 5 : 0;
       const moreText = moreCount > 0 ? `+${moreCount}` : "";
 
       return `
@@ -420,6 +429,17 @@
                     </div>
                 </div>
             `;
+    }
+
+    /**
+     * Generate search URL for channel if no direct URL available
+     */
+    getChannelSearchUrl(channelName) {
+      // Create a Google search URL for the channel
+      const query = encodeURIComponent(
+        `${channelName} live stream watch online`
+      );
+      return `https://www.google.com/search?q=${query}`;
     }
 
     /**
@@ -596,6 +616,14 @@
       if (!$(e.target).closest(".ss-tv-channels").length) {
         $(".ss-channels-dropdown").removeClass("show");
       }
+    });
+
+    // FIXED: Close dropdown when clicking a channel link
+    $(document).on("click", ".ss-channel-item", function () {
+      // Delay to allow link to open, then close dropdown
+      setTimeout(function () {
+        $(".ss-channels-dropdown").removeClass("show");
+      }, 200);
     });
   });
 })(jQuery);
