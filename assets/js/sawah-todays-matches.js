@@ -1,6 +1,7 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
  * Features: Date Slider, Priority Sorting, Search, Live Filter
+ * v5.1.1 - Fixes 0:0 score issue for past matches
  */
 (function ($) {
   "use strict";
@@ -313,19 +314,55 @@
       );
     }
 
+    /**
+     * Get the correct score to display.
+     * Fixes 0:0 issue by explicitly looking for '2ND_HALF' or 'EXTRA_TIME' for finished games.
+     */
     getScore(fx) {
-      const scores = fx.scores || [];
-      // Try to find CURRENT score
-      let s =
-        scores.find((x) => x.description === "CURRENT") ||
-        scores[scores.length - 1];
-      if (s && s.score) {
-        return {
-          home: s.score.home ?? s.score.home_score ?? 0,
-          away: s.score.away ?? s.score.away_score ?? 0,
-        };
+      // 1. If match hasn't started, return placeholder
+      const state = fx.state?.short_name;
+      if (["NS", "TBA", "INT", "POST"].includes(state)) {
+        return { home: "-", away: "-" };
       }
-      return { home: "-", away: "-" };
+
+      const scores = fx.scores || [];
+
+      // 2. Define priority for finding the score
+      // For live matches: 'CURRENT'
+      // For finished matches: 'EXTRA_TIME' (if exists) > '2ND_HALF' (Standard FT)
+      const priorities = ["CURRENT", "EXTRA_TIME", "2ND_HALF", "1ST_HALF"];
+
+      let s = null;
+      for (const type of priorities) {
+        s = scores.find((x) => x.description === type);
+        if (s) break;
+      }
+
+      // 3. Fallback: If no priority found, try the last available entry
+      if (!s && scores.length > 0) s = scores[scores.length - 1];
+
+      // 4. Extract values safely
+      if (s && s.score) {
+        // We use !== undefined because 0 is a valid score, but null/undefined is not.
+        // Priorities: score.home > score.home_score > 0
+        const h =
+          s.score.home !== undefined
+            ? s.score.home
+            : s.score.home_score !== undefined
+            ? s.score.home_score
+            : 0;
+        const a =
+          s.score.away !== undefined
+            ? s.score.away
+            : s.score.away_score !== undefined
+            ? s.score.away_score
+            : 0;
+
+        return { home: h, away: a };
+      }
+
+      // 5. Default fallback if active/finished but no score data found (should be rare)
+      return { home: 0, away: 0 };
     }
 
     getStatus(fx) {
@@ -338,7 +375,7 @@
       if (["FT", "AET", "FT_PEN", "FINISHED"].includes(s)) {
         return { text: "FT", class: "finished" };
       }
-      if (["NS", "TBA"].includes(s)) {
+      if (["NS", "TBA", "POST"].includes(s)) {
         // Parse time
         const d = new Date(fx.starting_at);
         const h = String(d.getHours()).padStart(2, "0");
