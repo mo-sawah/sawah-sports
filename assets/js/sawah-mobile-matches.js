@@ -1,7 +1,7 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget
- * Vertical layout matching Arabic design
- * v1.0 - Standalone Mobile Widget
+ * Fixed alignment + Modal popup for channels
+ * v1.1 - Professional Layout
  */
 (function ($) {
   "use strict";
@@ -41,6 +41,75 @@
       this.renderDateSlider();
       this.bindEvents();
       this.loadData();
+      this.createModal();
+    }
+
+    createModal() {
+      // Create modal HTML if not exists
+      if (!$("#ssm-channels-modal").length) {
+        const modalHTML = `
+          <div id="ssm-channels-modal" class="ssm-modal">
+            <div class="ssm-modal-overlay"></div>
+            <div class="ssm-modal-content">
+              <div class="ssm-modal-header">
+                <h3>Watch Live</h3>
+                <button class="ssm-modal-close">&times;</button>
+              </div>
+              <div class="ssm-modal-body"></div>
+            </div>
+          </div>
+        `;
+        $("body").append(modalHTML);
+
+        // Close modal events
+        $(document).on(
+          "click",
+          ".ssm-modal-close, .ssm-modal-overlay",
+          function () {
+            $("#ssm-channels-modal").removeClass("show");
+          }
+        );
+      }
+    }
+
+    showChannelsModal(channels) {
+      const $modal = $("#ssm-channels-modal");
+      const $body = $modal.find(".ssm-modal-body");
+
+      $body.empty();
+
+      if (!channels || channels.length === 0) {
+        $body.html(
+          '<p class="ssm-no-channels">No streaming channels available</p>'
+        );
+      } else {
+        channels.forEach((ch) => {
+          const logo = ch.image
+            ? `<img src="${ch.image}" class="ssm-modal-channel-logo">`
+            : '<div class="ssm-modal-channel-icon">📺</div>';
+
+          const url = ch.url || this.getChannelSearchUrl(ch.name);
+
+          const $channel = $(`
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="ssm-modal-channel">
+              ${logo}
+              <span class="ssm-modal-channel-name">${ch.name}</span>
+              <i class="eicon-export"></i>
+            </a>
+          `);
+
+          $body.append($channel);
+        });
+      }
+
+      $modal.addClass("show");
+    }
+
+    getChannelSearchUrl(channelName) {
+      const query = encodeURIComponent(
+        `${channelName} live stream watch online`
+      );
+      return `https://www.google.com/search?q=${query}`;
     }
 
     bindEvents() {
@@ -66,6 +135,13 @@
           this.renderDateSlider();
           this.loadData();
         }
+      });
+
+      // Watch Live click handler
+      $(document).on("click", ".ssm-watch-link", (e) => {
+        e.preventDefault();
+        const channels = $(e.currentTarget).data("channels");
+        this.showChannelsModal(channels);
       });
     }
 
@@ -241,62 +317,67 @@
       const status = this.getStatus(fx);
       const channels = this.getTVChannels(fx);
 
-      // Determine if live (yellow box)
       const isLive = status.class === "live";
       const isFinished = status.class === "finished";
       const isUpcoming = status.class === "upcoming";
 
       const $match = $('<div class="ssm-match"></div>');
 
-      // Teams (right side)
+      // LEFT: Teams
       const $teams = $(`
         <div class="ssm-teams">
           <div class="ssm-team-row">
-            <span class="ssm-team-name">${home?.name || "-"}</span>
             <img class="ssm-team-logo" src="${
               home?.image_path || ""
             }" onerror="this.style.display='none'">
+            <span class="ssm-team-name">${home?.name || "-"}</span>
           </div>
           <div class="ssm-team-row">
-            <span class="ssm-team-name">${away?.name || "-"}</span>
             <img class="ssm-team-logo" src="${
               away?.image_path || ""
             }" onerror="this.style.display='none'">
+            <span class="ssm-team-name">${away?.name || "-"}</span>
           </div>
         </div>
       `);
 
-      // Score (left side) - YELLOW ONLY FOR LIVE
+      // RIGHT: Score + Status
       const scoreClass = isLive ? "ssm-score live" : "ssm-score";
-      const $score = $(`
+      const $scoreCol = $('<div class="ssm-score-column"></div>');
+
+      $scoreCol.append(`
         <div class="${scoreClass}">
           <div class="ssm-score-num">${score.home}</div>
           <div class="ssm-score-num">${score.away}</div>
         </div>
       `);
 
-      $match.append($teams).append($score);
-
-      // Status/Time below
       if (isFinished) {
-        $match.append(`<div class="ssm-status finished">${status.text}</div>`);
+        $scoreCol.append(
+          `<div class="ssm-status finished">${status.text}</div>`
+        );
       } else if (isUpcoming) {
-        $match.append(`<div class="ssm-status upcoming">${status.text}</div>`);
+        $scoreCol.append(
+          `<div class="ssm-status upcoming">${status.text}</div>`
+        );
+      } else if (isLive) {
+        $scoreCol.append(`<div class="ssm-status live">${status.text}</div>`);
       }
 
-      // Watch link
-      if (channels && channels.length > 0) {
-        const firstChannel = channels[0];
-        const logo = firstChannel.image
-          ? `<img src="${firstChannel.image}" class="ssm-channel-logo">`
-          : "";
+      $match.append($teams).append($scoreCol);
 
-        $match.append(`
+      // Watch Link (if has channels)
+      if (channels && channels.length > 0) {
+        const $watchLink = $(`
           <a href="#" class="ssm-watch-link">
-            Watch Live →
-            ${logo}
+            <i class="eicon-play"></i>
+            Watch Live
+            <i class="eicon-arrow-right"></i>
           </a>
         `);
+
+        $watchLink.data("channels", channels);
+        $match.append($watchLink);
       }
 
       return $match;
@@ -322,6 +403,7 @@
           if (station && station.name) {
             channels.push({
               name: station.name,
+              url: station.url || null,
               image: station.image_path || station.logo_path || null,
             });
           }
@@ -333,7 +415,6 @@
     getScore(fx) {
       const state = fx.state?.short_name || "";
 
-      // Upcoming - return dashes
       if (
         ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
           state

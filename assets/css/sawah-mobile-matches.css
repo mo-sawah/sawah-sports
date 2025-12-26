@@ -1,15 +1,12 @@
 /**
  * Sawah Sports - MOBILE ONLY Widget Styles
- * Vertical layout - Yellow ONLY for live matches
- * v1.0
+ * Fixed alignment + Modal popup
+ * v1.1 - Professional Layout
  */
 
 /* Container */
 .ss-mobile-matches {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f8f9fa;
-  padding: 16px;
-  max-width: 480px;
+  max-width: 940px;
   margin: 0 auto;
 }
 
@@ -204,16 +201,16 @@
 }
 
 /* ===================================
-   MATCH LAYOUT - Vertical
-   Teams (right) | Score (left)
+   MATCH LAYOUT - FIXED ALIGNMENT
+   Teams (LEFT) | Score (RIGHT)
    =================================== */
 .ssm-match {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto;
   padding: 14px 16px;
   border-bottom: 1px solid #f1f1f1;
-  gap: 0;
+  gap: 0 16px;
   align-items: start;
 }
 
@@ -221,40 +218,47 @@
   border-bottom: none;
 }
 
-/* Teams Column (Right) */
+/* LEFT Column: Teams */
 .ssm-teams {
   grid-row: 1;
   grid-column: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .ssm-team-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-direction: row-reverse;
-}
-
-.ssm-team-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a1a1a;
-  text-align: right;
 }
 
 .ssm-team-logo {
   width: 24px;
   height: 24px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
-/* Score Column (Left) */
-.ssm-score {
+.ssm-team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  text-align: left;
+}
+
+/* RIGHT Column: Score + Status */
+.ssm-score-column {
   grid-row: 1;
   grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ssm-score {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -262,10 +266,10 @@
   padding: 6px 12px;
   gap: 4px;
   min-width: 50px;
-  background: transparent; /* DEFAULT: No background */
+  background: transparent;
 }
 
-/* LIVE MATCHES ONLY - Yellow background */
+/* LIVE ONLY - Yellow background */
 .ssm-score.live {
   background: #fbbf24 !important;
   border-radius: 8px;
@@ -283,28 +287,25 @@
   color: #000;
 }
 
-/* Status/Time (Below scores) */
+/* Status (Below score) */
 .ssm-status {
-  grid-row: 2;
-  grid-column: 1 / -1;
   font-size: 11px;
   color: #6c757d;
   text-align: center;
-  margin-top: 8px;
-  padding: 4px 0;
+}
+
+.ssm-status.live {
+  color: #10b981;
+  font-weight: 600;
 }
 
 .ssm-status.finished {
-  color: #6c757d;
+  color: #94a3b8;
 }
 
-.ssm-status.upcoming {
-  color: #6c757d;
-}
-
-/* Watch Link (Bottom) */
+/* Watch Link - Clean Blue Style */
 .ssm-watch-link {
-  grid-row: 3;
+  grid-row: 2;
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
@@ -312,18 +313,174 @@
   gap: 6px;
   margin-top: 10px;
   padding: 8px;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: #3b82f6;
   text-decoration: none;
+  transition: all 0.2s;
 }
 
 .ssm-watch-link:hover {
   color: #2563eb;
 }
 
-.ssm-channel-logo {
-  height: 18px;
+.ssm-watch-link i {
+  font-size: 12px;
+}
+
+/* ===================================
+   MODAL POPUP - Professional
+   =================================== */
+.ssm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.ssm-modal.show {
+  display: flex;
+}
+
+.ssm-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.ssm-modal-content {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ssm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.ssm-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ssm-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f1f3f5;
+  border-radius: 8px;
+  font-size: 24px;
+  line-height: 1;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ssm-modal-close:hover {
+  background: #e9ecef;
+  color: #1a1a1a;
+}
+
+.ssm-modal-body {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Channel Items in Modal */
+.ssm-modal-channel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1a1a1a;
+  transition: all 0.2s;
+}
+
+.ssm-modal-channel:last-child {
+  margin-bottom: 0;
+}
+
+.ssm-modal-channel:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.ssm-modal-channel-logo {
+  width: 40px;
+  height: 40px;
   object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px;
+}
+
+.ssm-modal-channel-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.ssm-modal-channel-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.ssm-modal-channel i {
+  color: #3b82f6;
+  font-size: 16px;
+}
+
+.ssm-no-channels {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-size: 14px;
 }
 
 /* RTL Support */
@@ -333,6 +490,10 @@
 
 [dir="rtl"] .ssm-team-row {
   flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ssm-team-name {
+  text-align: right;
 }
 
 [dir="rtl"] .ssm-search-wrapper i {
@@ -383,4 +544,15 @@
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive adjustments */
+@media (max-width: 360px) {
+  .ssm-team-name {
+    font-size: 13px;
+  }
+
+  .ssm-score-num {
+    font-size: 16px;
+  }
 }
