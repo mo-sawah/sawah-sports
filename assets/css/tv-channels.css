@@ -348,19 +348,18 @@
    ALTERNATIVE: Inline Badge Style
    Use this if you prefer badges instead of button
    ===================================== */
-/*
+
 .ss-watch-live-btn {
-    background: transparent !important;
-    border: 1px solid #e5e7eb !important;
-    color: #334155 !important;
-    box-shadow: none !important;
-    font-size: 11px !important;
-    padding: 5px 10px !important;
+  background: transparent !important;
+  border: 1px solid #e5e7eb !important;
+  color: #334155 !important;
+  box-shadow: none !important;
+  font-size: 11px !important;
+  padding: 5px 10px !important;
 }
 
 .ss-watch-live-btn:hover {
-    background: #f8fafc !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
-*/
