@@ -42,13 +42,6 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
             'default' => __('Standings', 'sawah-sports'),
         ]);
 
-        $this->add_control('show_tabs', [
-            'label' => __('Show Statistics/Details Tabs', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::SWITCHER,
-            'default' => 'yes',
-            'description' => __('Enable top tabs for Standings/Statistics/Details', 'sawah-sports'),
-        ]);
-
         $this->add_control('show_rules', [
             'label' => __('Show Rules Section', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::SWITCHER,
@@ -133,20 +126,6 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
              data-ecl-positions="<?php echo esc_attr($settings['ecl_positions']); ?>"
              data-rel-positions="<?php echo esc_attr($settings['rel_positions']); ?>">
             
-            <?php if ($settings['show_tabs'] === 'yes') : ?>
-            <div class="ss-standings-main-tabs">
-                <button class="ss-main-tab active" data-tab="standings">
-                    <?php echo esc_html__('Standings', 'sawah-sports'); ?>
-                </button>
-                <button class="ss-main-tab" data-tab="statistics">
-                    <?php echo esc_html__('Statistics', 'sawah-sports'); ?>
-                </button>
-                <button class="ss-main-tab" data-tab="details">
-                    <?php echo esc_html__('Details', 'sawah-sports'); ?>
-                </button>
-            </div>
-            <?php endif; ?>
-
             <div class="ss-standings-content">
                 <?php if (!empty($settings['title'])) : ?>
                 <div class="ss-widget-header">
