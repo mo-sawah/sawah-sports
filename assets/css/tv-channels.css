@@ -647,18 +647,16 @@
   align-items: center !important;
   gap: 8px !important;
 
-  padding: 8px 14px !important;
-  border-radius: 10px !important;
-
+  padding: 0px 14px !important;
+  border-radius: 50px !important;
+  height: 35px;
   background: #ffffff !important;
   color: #111827 !important;
   border: 1px solid #e5e7eb !important;
-
   font-size: 12px !important;
   font-weight: 700 !important;
   letter-spacing: 0.2px !important;
   text-transform: uppercase !important;
-
   box-shadow: 0 2px 8px rgba(17, 24, 39, 0.08) !important;
   cursor: pointer !important;
   transition: background 0.18s ease, border-color 0.18s ease,
