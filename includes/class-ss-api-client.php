@@ -181,6 +181,7 @@ final class Sawah_Sports_API_Client {
             'goals' => 208,
             'assists' => 79,
             'cards' => 84,
+            'cleansheets' => 209,  // Clean sheets for goalkeepers
         ];
         $type_id = $type_map[$type] ?? 208;
         return $this->get('topscorers/seasons/' . $season_id, [
