@@ -417,7 +417,7 @@ final class Sawah_Sports_REST {
         $s = Sawah_Sports_Helpers::settings();
         $season_id = (int)$req->get_param('season_id');
         $type = $req->get_param('type') ?: 'goals';
-        $cache_key = 'ss_topscorers_' . $season_id . '_' . $type;
+        $cache_key = 'ss_topscorers_v2_' . $season_id . '_' . $type;
         
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);

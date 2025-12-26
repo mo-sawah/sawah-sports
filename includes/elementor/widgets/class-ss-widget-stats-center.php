@@ -81,7 +81,8 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
 
     protected function render() {
         $settings = $this->get_settings_for_display();
-        $season_id = $settings['season_id'] ?? 25995;
+        $season_id = (int)($settings['season_id'] ?? 0);
+        if (!$season_id) { $season_id = 25995; }
         $league_name = $settings['league_name'] ?? 'Cyprus 1. Division';
         $default_tab = $settings['default_tab'] ?? 'dashboard';
         $accent_color = $settings['accent_color'] ?? '#3b82f6';

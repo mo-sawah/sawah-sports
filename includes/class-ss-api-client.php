@@ -177,16 +177,25 @@ final class Sawah_Sports_API_Client {
      * Get topscorers for a season
      */
     public function get_topscorers(int $season_id, string $type = 'goals'): array {
+        // SportMonks v3 Topscorers types (NOT the same as statistic type IDs)
+        // 208 = goals, 209 = assists, 210 = cards
+        // Docs: Topscorers use seasonTopscorerTypes filter.
+        $type = strtolower(trim($type));
+
         $type_map = [
-            'goals' => 208,
-            'assists' => 79,
-            'cards' => 84,
-            'cleansheets' => 209,  // Clean sheets for goalkeepers
+            'goals'  => 208,
+            'goal'   => 208,
+            'assists'=> 209,
+            'assist' => 209,
+            'cards'  => 210,
+            'card'   => 210,
         ];
+
         $type_id = $type_map[$type] ?? 208;
+
         return $this->get('topscorers/seasons/' . $season_id, [
             'include' => 'participant;player;type',
-            'filters' => 'topscorertypeTypes:' . $type_id
+            'filters' => 'seasonTopscorerTypes:' . $type_id,
         ], 12);
     }
 

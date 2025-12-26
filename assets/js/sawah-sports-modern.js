@@ -1294,7 +1294,7 @@
             StatsCenter.fetchTopScorers(seasonId, "goals"),
             StatsCenter.fetchTopScorers(seasonId, "assists"),
             StatsCenter.fetchTopScorers(seasonId, "passes"), // This might need adjustment
-            StatsCenter.fetchTopScorers(seasonId, "cleansheets"),
+            StatsCenter.fetchTopScorers(seasonId, "cards"),
             StatsCenter.fetchTeamStats(seasonId, "goals"),
             StatsCenter.fetchTeamStats(seasonId, "passes"),
           ]);
@@ -1313,12 +1313,7 @@
                 "player",
                 "📊"
               )}
-              ${StatsCenter.buildStatCard(
-                "Clean Sheets",
-                cleanSheets,
-                "player",
-                "🧤"
-              )}
+              ${StatsCenter.buildStatCard("Cards", cleanSheets, "player", "🧤")}
             </div>
           </div>
           
@@ -1355,9 +1350,9 @@
       try {
         const typeMap = {
           goals: "208",
-          assists: "79",
+          assists: "209",
           cards: "84",
-          cleansheets: "209",
+          cards: "210",
           passes: "88", // Total passes - might need adjustment
         };
 
@@ -1613,7 +1608,7 @@
         const [goals, assists, cleanSheets] = await Promise.all([
           StatsCenter.fetchTopScorers(seasonId, "goals"),
           StatsCenter.fetchTopScorers(seasonId, "assists"),
-          StatsCenter.fetchTopScorers(seasonId, "cleansheets"),
+          StatsCenter.fetchTopScorers(seasonId, "cards"),
         ]);
 
         console.log("[Stats Center] Data loaded:", {
@@ -1630,12 +1625,7 @@
             <div class="ss-stats-grid">
               ${StatsCenter.buildStatCard("Goals", goals, "player", "⚽")}
               ${StatsCenter.buildStatCard("Assists", assists, "player", "🎯")}
-              ${StatsCenter.buildStatCard(
-                "Clean Sheets",
-                cleanSheets,
-                "player",
-                "🧤"
-              )}
+              ${StatsCenter.buildStatCard("Cards", cleanSheets, "player", "🧤")}
             </div>
           </div>
         `;
