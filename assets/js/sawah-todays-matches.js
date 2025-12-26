@@ -1,7 +1,7 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
  * Features: Date Slider, Priority Sorting, Search, Live Filter, TV Channels
- * v5.3.3 - Mobile Optimized "Koora Style" Layout (English LTR)
+ * v5.3.2 - Mobile Optimized + "WATCH" button
  */
 (function ($) {
   "use strict";
@@ -280,52 +280,36 @@
             });
           }
 
-          // Determine box color classes based on Koora style
-          // Live = Yellow/Green background
-          // Finished = Grey/White
-          // Upcoming = No box (usually)
-          let scoreBoxClass = "";
-          if (status.class === "live") scoreBoxClass = "live";
-          else if (status.class === "finished") scoreBoxClass = "finished";
-          else scoreBoxClass = "upcoming";
-
           const $match = $(`
                         <div class="ss-premium-match">
-                            
-                            <div class="ss-teams-wrapper">
-                                <div class="ss-pm-team home">
-                                    <span class="ss-pm-team-name">${
-                                      home?.name || "-"
-                                    }</span>
-                                    <img class="ss-pm-team-logo" src="${
-                                      home?.image_path || ""
-                                    }" onerror="this.style.display='none'">
-                                </div>
-                                
-                                <div class="ss-pm-team away">
-                                    <span class="ss-pm-team-name">${
-                                      away?.name || "-"
-                                    }</span>
-                                    <img class="ss-pm-team-logo" src="${
-                                      away?.image_path || ""
-                                    }" onerror="this.style.display='none'">
-                                </div>
-                            </div>
-
-                            <div class="ss-score-wrapper">
-                                <div class="ss-pm-status ${status.class}">${
+                            <div class="ss-pm-status ${status.class}">${
             status.text
           }</div>
+                            
+                            <div class="ss-pm-team home">
+                                <span class="ss-pm-team-name">${
+                                  home?.name || "-"
+                                }</span>
+                                <img class="ss-pm-team-logo" src="${
+                                  home?.image_path || ""
+                                }" onerror="this.style.display='none'">
+                            </div>
 
-                                <div class="ss-pm-score-box ${scoreBoxClass}">
-                                    <span class="ss-score-home">${
-                                      score.home
-                                    }</span>
-                                    <span class="ss-score-sep">:</span>
-                                    <span class="ss-score-away">${
-                                      score.away
-                                    }</span>
-                                </div>
+                            <div class="ss-pm-score-box ${
+                              status.class === "live" ? "live" : ""
+                            }">
+                                <span>${score.home}</span>
+                                <span style="font-size:12px; opacity:0.5">:</span>
+                                <span>${score.away}</span>
+                            </div>
+
+                            <div class="ss-pm-team away">
+                                <img class="ss-pm-team-logo" src="${
+                                  away?.image_path || ""
+                                }" onerror="this.style.display='none'">
+                                <span class="ss-pm-team-name">${
+                                  away?.name || "-"
+                                }</span>
                             </div>
 
                             <div class="ss-pm-tv">
@@ -382,45 +366,70 @@
     }
 
     /**
-     * Render TV Channels HTML - Updated for Koora Style Text
+     * Render TV Channels HTML - UPDATED: "WATCH" instead of "WATCH LIVE"
      */
     renderTVChannels(channels, statusClass) {
       if (!channels || channels.length === 0) {
-        // No channels
+        // No channels - show default icon
         if (statusClass === "live") {
-          return '<div class="ss-mobile-live-indicator"><span class="ss-live-dot"></span> Live</div>';
+          return '<span class="ss-live-dot"></span>';
         } else {
-          // Empty div to maintain layout if needed, or simple placeholder
-          return '<span class="ss-no-tv"></span>';
+          return '<i class="eicon-arrow-right" style="color:#cbd5e1"></i>';
         }
       }
 
-      // Logic: Show first channel name/logo like "Watch on [Logo]"
-      const mainChannel = channels[0];
-      const channelImg = mainChannel.image
-        ? `<img src="${mainChannel.image}" class="ss-tv-logo-mini" alt="${mainChannel.name}" onerror="this.style.display='none'">`
-        : '<i class="eicon-play"></i>';
+      // Has channels - show "WATCH" button (changed from "WATCH LIVE")
+      const channelsList = channels
+        .slice(0, 5) // Show up to 5 channels
+        .map((ch) => {
+          const img = ch.image
+            ? `<img src="${ch.image}" alt="${ch.name}" onerror="this.style.display='none'">`
+            : "";
 
-      const channelName = mainChannel.name;
-      const url = mainChannel.url || this.getChannelSearchUrl(channelName);
+          // Make channel clickable if URL exists
+          const url = ch.url || this.getChannelSearchUrl(ch.name);
+          const attrs = url
+            ? `href="${url}" target="_blank" rel="noopener noreferrer"`
+            : "";
 
-      const moreCount = channels.length - 1;
+          return `
+                    <a ${attrs} class="ss-channel-item" title="${ch.name}${
+            url ? " - Click to visit" : ""
+          }">
+                        ${img}
+                        <span class="ss-channel-name">${ch.name}</span>
+                    </a>
+                `;
+        })
+        .join("");
 
-      // We render a link block that looks like "Watch on [Icon]"
+      const moreCount = channels.length > 5 ? channels.length - 5 : 0;
+      const moreText = moreCount > 0 ? `+${moreCount}` : "";
+
+      // CHANGED: "Watch Live" to just "Watch"
+      const buttonText = SawahSports.i18n.watch || "Watch";
+
       return `
-            <div class="ss-tv-channels">
-                <a href="${url}" target="_blank" rel="noopener noreferrer" class="ss-channel-link-card">
-                   ${channelImg}
-                   <span class="ss-watch-text">Watch on <strong>${channelName}</strong></span>
-                   ${
-                     moreCount > 0
-                       ? `<span class="ss-tv-more">+${moreCount}</span>`
-                       : ""
-                   }
-                   <i class="eicon-arrow-right"></i>
-                </a>
-            </div>
-      `;
+                <div class="ss-tv-channels">
+                    <button class="ss-watch-live-btn" type="button">
+                        <i class="eicon-play"></i>
+                        <span>${buttonText}</span>
+                    </button>
+                    <div class="ss-channels-dropdown">
+                        <div class="ss-channels-header">
+                            ${SawahSports.i18n.availableOn || "Available on"}
+                        </div>
+                        ${channelsList}
+                        ${
+                          moreText
+                            ? `<div class="ss-channels-more">${moreText} ${
+                                SawahSports.i18n.moreChannels || "more"
+                              }</div>`
+                            : ""
+                        }
+                    </div>
+                </div>
+            `;
     }
 
     /**
