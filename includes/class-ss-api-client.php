@@ -104,8 +104,9 @@ final class Sawah_Sports_API_Client {
      * Get fixture by ID with full details
      */
     public function get_fixture(int $fixture_id, array $includes = []): array {
+        // Expanded includes for v5.0 features
         $include_str = empty($includes) 
-            ? 'participants;league;scores;state;events;lineups;statistics;xGFixture;predictions;odds;tvStations;referees'
+            ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation'
             : implode(';', $includes);
         return $this->get('fixtures/' . $fixture_id, ['include' => $include_str], 15);
     }
@@ -117,6 +118,16 @@ final class Sawah_Sports_API_Client {
         $defaults = ['include' => 'participant;details.type;form'];
         $params = array_merge($defaults, $params);
         return $this->get('standings/seasons/' . $season_id, $params, 15);
+    }
+
+    /**
+     * Get Teams Stats by Season (New for v5.0 Stats Center)
+     * Fetches all teams in a season including their aggregated statistics
+     */
+    public function get_teams_by_season(int $season_id): array {
+        return $this->get('teams/seasons/' . $season_id, [
+            'include' => 'statistics.details.type'
+        ], 15);
     }
 
     /**
@@ -189,6 +200,8 @@ final class Sawah_Sports_API_Client {
             'assist' => 209,
             'cards'  => 210,
             'card'   => 210,
+            'yellowcards' => 84, 
+            'redcards' => 83,
         ];
 
         $type_id = $type_map[$type] ?? 208;
