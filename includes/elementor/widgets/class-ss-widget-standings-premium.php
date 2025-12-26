@@ -49,21 +49,6 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
             'description' => __('Display tie-breaking rules at bottom', 'sawah-sports'),
         ]);
 
-        $this->add_control('show_form', [
-            'label' => __('Show Form (Last 5)', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::SWITCHER,
-            'default' => 'yes',
-        ]);
-
-        $this->add_control('form_count', [
-            'label' => __('Form Matches Count', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::NUMBER,
-            'default' => 5,
-            'min' => 3,
-            'max' => 10,
-            'condition' => ['show_form' => 'yes'],
-        ]);
-
         $this->add_control('highlight_zones', [
             'label' => __('Highlight Qualification Zones', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::SWITCHER,
@@ -83,29 +68,29 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
         $this->add_control('cl_positions', [
             'label' => __('Champions League Positions', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::TEXT,
-            'default' => '1,2,3,4',
-            'description' => __('Comma-separated positions (e.g., 1,2,3,4)', 'sawah-sports'),
+            'default' => '1',
+            'description' => __('Comma-separated positions (e.g., 1 for Cyprus)', 'sawah-sports'),
         ]);
 
         $this->add_control('el_positions', [
             'label' => __('Europa League Positions', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::TEXT,
-            'default' => '5,6',
+            'default' => '2',
             'description' => __('Comma-separated positions', 'sawah-sports'),
         ]);
 
         $this->add_control('ecl_positions', [
             'label' => __('Conference League Positions', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::TEXT,
-            'default' => '7',
+            'default' => '3',
             'description' => __('Comma-separated positions', 'sawah-sports'),
         ]);
 
         $this->add_control('rel_positions', [
             'label' => __('Relegation Positions', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::TEXT,
-            'default' => '18,19,20',
-            'description' => __('Comma-separated positions', 'sawah-sports'),
+            'default' => '13,14',
+            'description' => __('Comma-separated positions (bottom 2 for Cyprus)', 'sawah-sports'),
         ]);
 
         $this->end_controls_section();
@@ -118,8 +103,6 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
         <div id="ss-standings-<?php echo esc_attr($widget_id); ?>" 
              class="ss-widget ss-standings-premium"
              data-season-id="<?php echo esc_attr($settings['season_id']); ?>"
-             data-show-form="<?php echo esc_attr($settings['show_form']); ?>"
-             data-form-count="<?php echo esc_attr($settings['form_count']); ?>"
              data-highlight-zones="<?php echo esc_attr($settings['highlight_zones']); ?>"
              data-cl-positions="<?php echo esc_attr($settings['cl_positions']); ?>"
              data-el-positions="<?php echo esc_attr($settings['el_positions']); ?>"
@@ -165,15 +148,15 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
                             <?php if ($settings['highlight_zones'] === 'yes') : ?>
                             <div class="ss-rule-item">
                                 <span class="ss-rule-badge ss-cl"></span>
-                                <span><?php echo esc_html__('Champions League', 'sawah-sports'); ?></span>
+                                <span><?php echo esc_html__('Champions League Qualifiers', 'sawah-sports'); ?></span>
                             </div>
                             <div class="ss-rule-item">
                                 <span class="ss-rule-badge ss-el"></span>
-                                <span><?php echo esc_html__('UEFA Europa League', 'sawah-sports'); ?></span>
+                                <span><?php echo esc_html__('Europa League Qualifiers', 'sawah-sports'); ?></span>
                             </div>
                             <div class="ss-rule-item">
                                 <span class="ss-rule-badge ss-ecl"></span>
-                                <span><?php echo esc_html__('UEFA Conference League', 'sawah-sports'); ?></span>
+                                <span><?php echo esc_html__('Europa Conference League Qualifiers', 'sawah-sports'); ?></span>
                             </div>
                             <div class="ss-rule-item">
                                 <span class="ss-rule-badge ss-rel"></span>
@@ -182,7 +165,10 @@ class Sawah_Sports_Widget_Standings_Premium extends \Elementor\Widget_Base {
                             <?php endif; ?>
                         </div>
                         <p class="ss-rules-text">
-                            <?php echo esc_html__('In the event that two (or more) teams have an equal number of points, the following rules break the tie: 1. Goal difference 2. Goals scored 3. H2H', 'sawah-sports'); ?>
+                            <?php echo esc_html__('Cyprus First Division: Winner qualifies for UEFA Champions League second qualifying round. 2nd place enters UEFA Europa League second qualifying round. 3rd place enters UEFA Europa Conference League second qualifying round. Bottom two teams (13th & 14th) are relegated to Second Division.', 'sawah-sports'); ?>
+                        </p>
+                        <p class="ss-rules-text" style="margin-top: 12px;">
+                            <?php echo esc_html__('Tie-breaking rules: 1. Points 2. Goal difference 3. Goals scored 4. Head-to-head record 5. Head-to-head goal difference 6. Head-to-head away goals', 'sawah-sports'); ?>
                         </p>
                     </div>
                 </div>

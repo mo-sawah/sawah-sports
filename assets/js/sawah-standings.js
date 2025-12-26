@@ -11,8 +11,6 @@
       this.$el = $(element);
       this.widgetId = this.$el.attr("id");
       this.seasonId = this.$el.data("season-id");
-      this.showForm = this.$el.data("show-form") === "yes";
-      this.formCount = parseInt(this.$el.data("form-count")) || 5;
       this.highlightZones = this.$el.data("highlight-zones") === "yes";
 
       // Parse zone positions
@@ -207,11 +205,6 @@
       html += '<th class="ss-stat-col">L</th>';
       html += '<th class="ss-stat-col">DIFF</th>';
       html += '<th class="ss-goals-col">Goals</th>';
-
-      if (this.showForm) {
-        html += '<th class="ss-form-col">L</th>';
-      }
-
       html += '<th class="ss-pts-col">Pts</th>';
       html += "</tr></thead><tbody>";
 
@@ -256,15 +249,6 @@
 
         // Goals For:Against
         html += `<td class="ss-goals-col">${stats.goalsFor}:${stats.goalsAgainst}</td>`;
-
-        // Form
-        if (this.showForm && teamStanding.form) {
-          html += '<td class="ss-form-col">';
-          html += this.renderForm(teamStanding.form);
-          html += "</td>";
-        } else if (this.showForm) {
-          html += '<td class="ss-form-col">—</td>';
-        }
 
         // Points
         html += `<td class="ss-pts-col">${teamStanding.points || 0}</td>`;
@@ -362,135 +346,6 @@
       }
 
       return stats;
-    }
-
-    renderForm(formData) {
-      if (!formData || !Array.isArray(formData) || formData.length === 0) {
-        return "—";
-      }
-
-      // Debug: Log the FULL form data structure for first team
-      if (!window.sawahFormDebugDone) {
-        console.log(
-          "📊 FULL FORM DATA STRUCTURE:",
-          JSON.stringify(formData[0], null, 2)
-        );
-        console.log("📊 All form objects:", formData);
-        window.sawahFormDebugDone = true;
-      }
-
-      // Take last N matches and reverse to show most recent first
-      const recent = formData.slice(-this.formCount).reverse();
-
-      let html = '<div class="ss-form-badges">';
-      let debugInfo = [];
-
-      recent.forEach((match, index) => {
-        // Try EVERY possible field that might contain the outcome
-        const possibleOutcomes = [
-          match.outcome,
-          match.result,
-          match.status,
-          match.result_info,
-          match.winner,
-          match.participant_result,
-          match.team_result,
-          match.match_result,
-        ];
-
-        // Also check nested objects
-        if (match.type) {
-          possibleOutcomes.push(match.type.name);
-          possibleOutcomes.push(match.type.code);
-        }
-        if (match.result_type) {
-          possibleOutcomes.push(match.result_type.name);
-        }
-
-        // Find first non-null value
-        let outcome = "";
-        for (const val of possibleOutcomes) {
-          if (val !== null && val !== undefined && val !== "") {
-            outcome = String(val).toLowerCase();
-            break;
-          }
-        }
-
-        debugInfo.push({ index, outcome, allFields: Object.keys(match) });
-
-        let badge = "draw";
-        let letter = "D";
-
-        // Check for WIN
-        if (
-          outcome.includes("win") ||
-          outcome.includes("won") ||
-          outcome.includes("w") ||
-          outcome.includes("victory") ||
-          outcome.includes("success")
-        ) {
-          badge = "win";
-          letter = "W";
-        }
-        // Check for LOSS
-        else if (
-          outcome.includes("loss") ||
-          outcome.includes("lost") ||
-          outcome.includes("lose") ||
-          outcome.includes("l") ||
-          outcome.includes("defeat") ||
-          outcome.includes("failed")
-        ) {
-          badge = "loss";
-          letter = "L";
-        }
-        // Check for DRAW
-        else if (
-          outcome.includes("draw") ||
-          outcome.includes("drew") ||
-          outcome.includes("d") ||
-          outcome.includes("tie") ||
-          outcome.includes("tied")
-        ) {
-          badge = "draw";
-          letter = "D";
-        }
-        // Last resort: try to parse scores
-        else if (match.score || match.scores) {
-          const scoreData = match.score || match.scores;
-          const home = scoreData.home || scoreData.goals_home || 0;
-          const away = scoreData.away || scoreData.goals_away || 0;
-
-          if (home > away) {
-            badge = "win";
-            letter = "W";
-          } else if (home < away) {
-            badge = "loss";
-            letter = "L";
-          } else {
-            badge = "draw";
-            letter = "D";
-          }
-        }
-
-        const title = outcome || "No outcome data";
-        html += `<span class="ss-form-badge ${badge}" title="${this.escapeHtml(
-          title
-        )}">${letter}</span>`;
-      });
-      html += "</div>";
-
-      // Log debugging info once
-      if (!window.sawahFormFieldsLogged) {
-        console.log("🔍 FORM PARSING DEBUG:", debugInfo);
-        console.log(
-          "📋 Available fields in form data:",
-          debugInfo[0]?.allFields
-        );
-        window.sawahFormFieldsLogged = true;
-      }
-
-      return html;
     }
 
     getZoneClass(position) {
