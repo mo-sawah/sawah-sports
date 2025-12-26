@@ -1,12 +1,13 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
  * Features: Date Slider, Priority Sorting, Search, Live Filter
- * v5.1.2 - Fixes Data Loading Crash & 0:0 Score Issue
+ * v5.1.4 - Complete Code with Robust Score Detection
  */
 (function ($) {
   "use strict";
 
   // --- CONFIGURATION: LEAGUE PRIORITY ---
+  // Lower number = Higher priority
   const PRIORITY_MAP = {
     // 1. Cyprus (Highest)
     253: 1, // 1. Division
@@ -43,7 +44,7 @@
       this.state = {
         date: new Date(),
         fixtures: [],
-        filter: "all",
+        filter: "all", // 'all' | 'live'
         search: "",
       };
 
@@ -57,6 +58,7 @@
     }
 
     bindEvents() {
+      // Filters
       this.$el.find(".ss-filter-btn").on("click", (e) => {
         const $btn = $(e.currentTarget);
         this.$el.find(".ss-filter-btn").removeClass("active");
@@ -65,14 +67,17 @@
         this.renderMatches();
       });
 
+      // Search
       this.$el.find(".ss-match-search").on("keyup", (e) => {
         this.state.search = e.target.value.toLowerCase();
         this.renderMatches();
       });
 
+      // Date Nav Buttons
       this.$el.find(".ss-prev").on("click", () => this.changeDate(-1));
       this.$el.find(".ss-next").on("click", () => this.changeDate(1));
 
+      // Hidden Date Input
       this.$el.find(".ss-date-input-hidden").on("change", (e) => {
         if (e.target.value) {
           this.state.date = new Date(e.target.value);
@@ -94,6 +99,7 @@
       const $slider = this.$el.find(".ss-date-slider");
       $slider.empty();
 
+      // Render 7 days before and after
       for (let i = -7; i <= 7; i++) {
         const d = new Date(this.state.date);
         d.setDate(d.getDate() + i);
@@ -122,6 +128,7 @@
         $slider.append($item);
       }
 
+      // Scroll to center
       setTimeout(() => {
         if ($slider[0]) {
           const scrollLeft =
@@ -138,7 +145,10 @@
       );
 
       try {
+        // Format Date YYYY-MM-DD
         const dateStr = this.state.date.toISOString().split("T")[0];
+
+        // Use global SawahSports object for URL
         const url = `${SawahSports.restUrl}/fixtures?date=${dateStr}`;
 
         const res = await $.ajax({
@@ -184,8 +194,10 @@
 
       // 1. Filter Data
       let filtered = this.state.fixtures.filter((fx) => {
+        // Live Filter
         if (this.state.filter === "live" && !this.isLive(fx)) return false;
 
+        // Search Filter
         if (this.state.search) {
           const q = this.state.search;
           const home = this.getTeam(fx, "home")?.name.toLowerCase() || "";
@@ -214,11 +226,15 @@
         groups[lid].matches.push(fx);
       });
 
-      // 3. Sort Leagues
+      // 3. Sort Leagues by Priority
       const sortedIDs = Object.keys(groups).sort((a, b) => {
         const pA = PRIORITY_MAP[a] || DEFAULT_PRIORITY;
         const pB = PRIORITY_MAP[b] || DEFAULT_PRIORITY;
+
+        // If priorities are different, lower number wins
         if (pA !== pB) return pA - pB;
+
+        // If priorities are same (e.g. both are "Others"), sort by name
         const nameA = groups[a].league?.name || "";
         const nameB = groups[b].league?.name || "";
         return nameA.localeCompare(nameB);
@@ -229,6 +245,7 @@
         const group = groups[lid];
         const $leagueGroup = $('<div class="ss-premium-league-group"></div>');
 
+        // Header
         $leagueGroup.append(`
                     <div class="ss-premium-league-header">
                         <img class="ss-premium-league-logo" src="${
@@ -245,6 +262,7 @@
                     </div>
                 `);
 
+        // Matches
         group.matches.forEach((fx) => {
           const home = this.getTeam(fx, "home");
           const away = this.getTeam(fx, "away");
@@ -328,6 +346,7 @@
       if (!scores.length) return { home: 0, away: 0 };
 
       // 2. Try Standard Priorities first
+      // Priority: 'CURRENT' (Live/Recent), 'EXTRA_TIME' (AET), '2ND_HALF' (FT), '1ST_HALF'
       const priorities = ["CURRENT", "EXTRA_TIME", "2ND_HALF", "1ST_HALF"];
       let s = null;
 
@@ -356,6 +375,8 @@
 
       // 4. Extract values safely
       if (s && s.score) {
+        // We use !== undefined because 0 is a valid score, but null/undefined is not.
+        // Priorities: score.home > score.home_score > 0
         const h =
           s.score.home !== undefined
             ? s.score.home
@@ -368,6 +389,7 @@
             : s.score.away_score !== undefined
             ? s.score.away_score
             : 0;
+
         return { home: h, away: a };
       }
 
@@ -394,6 +416,7 @@
     }
   }
 
+  // Initialize Widget
   $(document).ready(function () {
     $(".ss-todays-matches-premium").each(function () {
       new TodaysMatches(this);
