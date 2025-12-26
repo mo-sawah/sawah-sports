@@ -98,48 +98,68 @@
           xhr.setRequestHeader("X-WP-Nonce", SawahSports.nonce);
         },
         success: (response) => {
-          if (response.success && response.data) {
-            this.standingsData = response.data;
-            this.renderTable();
-          } else {
-            this.showError("No standings data available");
+          console.log("Standings API Response:", response);
+
+          // Handle WordPress REST response wrapper
+          let data = response;
+          if (response.success !== undefined && response.data) {
+            data = response.data;
           }
+
+          // Handle Sportmonks API structure: { data: [...] }
+          if (data.data && Array.isArray(data.data)) {
+            this.standingsData = data.data;
+          } else if (Array.isArray(data)) {
+            this.standingsData = data;
+          } else {
+            console.error("Unexpected data structure:", data);
+            this.showError("Invalid standings data format");
+            return;
+          }
+
+          if (!this.standingsData || this.standingsData.length === 0) {
+            this.showError("No standings data available for this season");
+            return;
+          }
+
+          console.log("Parsed standings data:", this.standingsData);
+          this.renderTable();
         },
         error: (xhr) => {
           console.error("Standings fetch error:", xhr);
-          this.showError("Failed to load standings");
+          const errorMsg =
+            xhr.responseJSON?.message ||
+            xhr.statusText ||
+            "Failed to load standings";
+          this.showError(errorMsg);
         },
       });
     }
 
     renderTable() {
+      console.log("renderTable called with data:", this.standingsData);
+
       if (!this.standingsData || !this.standingsData.length) {
+        console.warn("No standings data or empty array");
         this.showEmpty();
         return;
       }
 
-      // Get the appropriate standings data based on current type
-      let data = this.standingsData[0]; // Usually first item is overall standings
+      // The standings data is already an array of team standings
+      // Each item represents a team's position in the table
+      // We don't need to filter by type here - the API returns overall, home, away separately
 
-      // Look for home/away specific data if needed
-      if (this.currentType === "home" || this.currentType === "away") {
-        const typeData = this.standingsData.find(
-          (s) =>
-            s.type_name && s.type_name.toLowerCase().includes(this.currentType)
-        );
-        if (typeData) data = typeData;
-      }
+      // For now, use the standings data directly
+      // TODO: Implement proper home/away filtering when API supports it
+      const details = this.standingsData;
 
-      if (!data.details || !data.details.length) {
-        this.showEmpty();
-        return;
-      }
+      console.log("Building table with", details.length, "teams");
 
-      const html = this.buildTableHTML(data.details);
+      const html = this.buildTableHTML(details);
       this.$el.find(".ss-standings-table-wrapper").html(html);
     }
 
-    buildTableHTML(details) {
+    buildTableHTML(standings) {
       let html = '<table class="ss-standings-table"><thead><tr>';
 
       // Headers
@@ -160,10 +180,10 @@
       html += "</tr></thead><tbody>";
 
       // Sort by position
-      details.sort((a, b) => a.position - b.position);
+      standings.sort((a, b) => a.position - b.position);
 
-      details.forEach((team) => {
-        const position = team.position;
+      standings.forEach((teamStanding) => {
+        const position = teamStanding.position || 0;
         const zoneClass = this.getZoneClass(position);
 
         html += "<tr>";
@@ -175,18 +195,18 @@
 
         // Team
         html += '<td><div class="ss-team-cell">';
-        if (team.participant && team.participant.image_path) {
+        if (teamStanding.participant && teamStanding.participant.image_path) {
           html += `<img src="${this.escapeHtml(
-            team.participant.image_path
+            teamStanding.participant.image_path
           )}" alt="" class="ss-team-logo" loading="lazy">`;
         }
         html += `<span class="ss-team-name">${this.escapeHtml(
-          team.participant?.name || "Unknown"
+          teamStanding.participant?.name || "Unknown"
         )}</span>`;
         html += "</div></td>";
 
-        // Stats
-        const stats = this.extractStats(team);
+        // Stats - extract from details array
+        const stats = this.extractStats(teamStanding);
         html += `<td class="ss-stat-col">${stats.played}</td>`;
         html += `<td class="ss-stat-col">${stats.won}</td>`;
         html += `<td class="ss-stat-col">${stats.draw}</td>`;
@@ -202,16 +222,16 @@
         html += `<td class="ss-goals-col">${stats.goalsFor}:${stats.goalsAgainst}</td>`;
 
         // Form
-        if (this.showForm && team.form) {
+        if (this.showForm && teamStanding.form) {
           html += '<td class="ss-form-col">';
-          html += this.renderForm(team.form);
+          html += this.renderForm(teamStanding.form);
           html += "</td>";
         } else if (this.showForm) {
           html += '<td class="ss-form-col">—</td>';
         }
 
         // Points
-        html += `<td class="ss-pts-col">${team.points || 0}</td>`;
+        html += `<td class="ss-pts-col">${teamStanding.points || 0}</td>`;
 
         html += "</tr>";
       });
@@ -220,7 +240,7 @@
       return html;
     }
 
-    extractStats(team) {
+    extractStats(teamStanding) {
       const stats = {
         played: 0,
         won: 0,
@@ -231,11 +251,15 @@
         diff: 0,
       };
 
-      if (!team.details || !Array.isArray(team.details)) {
+      if (!teamStanding.details || !Array.isArray(teamStanding.details)) {
+        console.warn(
+          "No details array for team:",
+          teamStanding.participant?.name
+        );
         return stats;
       }
 
-      team.details.forEach((detail) => {
+      teamStanding.details.forEach((detail) => {
         const typeName = detail.type?.name?.toLowerCase() || "";
         const value = detail.value || 0;
 
@@ -243,8 +267,16 @@
         else if (typeName.includes("won")) stats.won = value;
         else if (typeName.includes("draw")) stats.draw = value;
         else if (typeName.includes("lost")) stats.lost = value;
-        else if (typeName.includes("goals_for")) stats.goalsFor = value;
-        else if (typeName.includes("goals_against")) stats.goalsAgainst = value;
+        else if (
+          typeName.includes("goals_for") ||
+          typeName.includes("goalsfor")
+        )
+          stats.goalsFor = value;
+        else if (
+          typeName.includes("goals_against") ||
+          typeName.includes("goalsagainst")
+        )
+          stats.goalsAgainst = value;
       });
 
       stats.diff = stats.goalsFor - stats.goalsAgainst;
