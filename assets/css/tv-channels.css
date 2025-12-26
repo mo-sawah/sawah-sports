@@ -1,29 +1,63 @@
 /**
- * TV Channels CSS - FINAL FIX
- * Overrides sawah-sports-modern.css overflow issues
- * Place this file AFTER sawah-sports-modern.css
+ * TV Channels CSS - INTEGRATED LAYOUT FIX
+ * Makes the button feel part of the row, not floating outside
  */
 
 /* =====================================
    CRITICAL OVERFLOW FIXES
-   These override the main theme CSS
    ===================================== */
-
-/* Fix line 69 - .ss-widget */
 .ss-widget {
   overflow: visible !important;
 }
 
-/* Fix line 1912 - .ss-premium-league-group */
 .ss-premium-league-group {
   overflow: visible !important;
 }
 
-/* Additional containers that need overflow visible */
 .ss-body,
 .ss-matches-list-wrapper,
 .ss-todays-matches-premium {
   overflow: visible !important;
+}
+
+/* =====================================
+   BETTER GRID LAYOUT FOR TV COLUMN
+   ===================================== */
+
+/* Adjust grid to give more space to TV column */
+.ss-premium-match {
+  display: grid !important;
+  grid-template-columns: 80px 1fr 60px 1fr 120px !important; /* Increased TV column from 80px to 120px */
+  align-items: center !important;
+  padding: 15px 20px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  cursor: pointer !important;
+  transition: background 0.1s !important;
+  gap: 10px !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Better TV column layout */
+.ss-premium-match .ss-pm-tv {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important; /* Center instead of flex-end */
+  width: 100% !important;
+  min-width: auto !important;
+  max-width: none !important;
+  padding: 0 !important; /* Remove padding */
+  overflow: visible !important;
+}
+
+[dir="rtl"] .ss-premium-match .ss-pm-tv {
+  justify-content: center !important;
+}
+
+/* Raise match row on hover to show dropdown */
+.ss-premium-match:hover {
+  z-index: 100 !important;
+  background: #fdfdfd !important;
 }
 
 /* =====================================
@@ -34,30 +68,34 @@
 .ss-tv-channels {
   position: relative !important;
   display: inline-block !important;
+  width: 100% !important; /* Full width of column */
 }
 
-/* Watch Live Button - CUSTOM DARK GRADIENT */
+/* Watch Live Button - DARK GRADIENT & COMPACT */
 .ss-watch-live-btn {
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 6px !important;
-  padding: 6px 12px !important;
+  padding: 7px 14px !important; /* Slightly more padding */
   background: linear-gradient(135deg, #101214 0%, #1a212e 100%) !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 6px !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
+  border-radius: 8px !important; /* Slightly more rounded */
+  font-size: 12px !important; /* Smaller font */
+  font-weight: 600 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  box-shadow: 0 2px 4px rgba(16, 18, 20, 0.3) !important;
+  box-shadow: 0 2px 6px rgba(16, 18, 20, 0.25) !important;
   white-space: nowrap !important;
+  width: 100% !important; /* Full width of container */
+  max-width: 110px !important; /* Max width to keep it compact */
 }
 
 .ss-watch-live-btn:hover {
-  background: linear-gradient(135deg, #1a212e 0%, #101214 100%) !important;
+  background: linear-gradient(135deg, #1a212e 0%, #2a3142 100%) !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 8px rgba(16, 18, 20, 0.4) !important;
+  box-shadow: 0 4px 10px rgba(16, 18, 20, 0.35) !important;
 }
 
 .ss-watch-live-btn:active {
@@ -65,38 +103,39 @@
 }
 
 .ss-watch-live-btn i {
-  font-size: 14px !important;
+  font-size: 13px !important;
 }
 
-/* Channels Dropdown - MAXIMUM Z-INDEX */
+/* Channels Dropdown - BETTER POSITIONING */
 .ss-channels-dropdown {
   position: absolute !important;
   top: calc(100% + 8px) !important;
-  right: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(-10px) !important; /* Center under button */
   min-width: 220px !important;
   max-width: 280px !important;
   background: #ffffff !important;
   border: 1px solid #e5e7eb !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
   opacity: 0 !important;
   visibility: hidden !important;
-  transform: translateY(-10px) !important;
   transition: all 0.3s ease !important;
   z-index: 999999 !important;
   padding: 8px 0 !important;
 }
 
-/* RTL Support */
+/* RTL Support - keep centered */
 [dir="rtl"] .ss-channels-dropdown {
+  left: 50% !important;
   right: auto !important;
-  left: 0 !important;
+  transform: translateX(-50%) translateY(-10px) !important;
 }
 
 .ss-channels-dropdown.show {
   opacity: 1 !important;
   visibility: visible !important;
-  transform: translateY(0) !important;
+  transform: translateX(-50%) translateY(0) !important;
 }
 
 /* Dropdown Header */
@@ -186,74 +225,65 @@
   display: none !important;
 }
 
-/* CRITICAL: Match row layout adjustments */
-.ss-premium-match {
-  position: relative !important;
-  overflow: visible !important;
-}
+/* =====================================
+   RESPONSIVE ADJUSTMENTS
+   ===================================== */
 
-.ss-premium-match .ss-pm-tv {
-  min-width: 140px !important;
-  max-width: 140px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  padding-right: 12px !important;
-  overflow: visible !important;
-}
-
-[dir="rtl"] .ss-premium-match .ss-pm-tv {
-  justify-content: flex-start !important;
-  padding-right: 0 !important;
-  padding-left: 12px !important;
-}
-
-/* Raise match row on hover to show dropdown */
-.ss-premium-match:hover {
-  z-index: 100 !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .ss-watch-live-btn span {
-    display: none !important;
+/* Tablet */
+@media (max-width: 900px) {
+  .ss-premium-match {
+    grid-template-columns: 70px 1fr 55px 1fr 100px !important;
   }
 
   .ss-watch-live-btn {
-    padding: 8px 10px !important;
-  }
-
-  .ss-channels-dropdown {
-    right: -40px !important;
-    min-width: 240px !important;
-  }
-
-  [dir="rtl"] .ss-channels-dropdown {
-    left: -40px !important;
-    right: auto !important;
+    max-width: 90px !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
   }
 }
 
+/* Mobile - Keep button visible but smaller */
+@media (max-width: 768px) {
+  .ss-watch-live-btn span {
+    display: none !important; /* Hide text, show only icon */
+  }
+
+  .ss-watch-live-btn {
+    padding: 8px !important;
+    max-width: 40px !important;
+  }
+
+  .ss-watch-live-btn i {
+    font-size: 16px !important;
+    margin: 0 !important;
+  }
+}
+
+/* Very small screens */
 @media (max-width: 600px) {
-  .ss-premium-match .ss-pm-tv {
-    display: flex !important; /* Override the hide on mobile */
+  .ss-premium-match {
+    grid-template-columns: 1fr 50px 1fr 50px !important;
+    grid-template-rows: auto auto !important;
+    gap: 8px 15px !important;
   }
-}
 
-@media (max-width: 480px) {
-  .ss-premium-match .ss-pm-tv {
-    min-width: 60px !important;
-    max-width: 60px !important;
+  .ss-pm-status {
+    grid-column: 1 / -1 !important;
+  }
+
+  .ss-pm-tv {
+    grid-column: -1 !important;
+    grid-row: 2 !important;
   }
 
   .ss-channels-dropdown {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) translateY(-10px) !important;
+    right: 0 !important;
+    left: auto !important;
+    transform: translateY(-10px) !important;
   }
 
   .ss-channels-dropdown.show {
-    transform: translateX(-50%) translateY(0) !important;
+    transform: translateY(0) !important;
   }
 }
 
@@ -287,11 +317,11 @@
 @keyframes dropdownSlide {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(-50%) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -306,10 +336,31 @@
   -moz-user-select: none !important;
 }
 
-/* FINAL: Ensure Elementor containers don't clip */
+/* Ensure Elementor containers don't clip */
 .elementor-widget-container,
 .elementor-element,
 .elementor-column,
 .elementor-section {
   overflow: visible !important;
 }
+
+/* =====================================
+   ALTERNATIVE: Inline Badge Style
+   Use this if you prefer badges instead of button
+   ===================================== */
+/*
+.ss-watch-live-btn {
+    background: transparent !important;
+    border: 1px solid #e5e7eb !important;
+    color: #334155 !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+}
+
+.ss-watch-live-btn:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+*/
