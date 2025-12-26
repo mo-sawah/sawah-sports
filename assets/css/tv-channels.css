@@ -1,32 +1,23 @@
 /**
- * Sawah Sports - Responsive Layout
- * Desktop: Horizontal
- * Mobile: Card Style "Koora" (English LTR)
- * v6.3.1 - Mobile Card Optimized
+ * Sawah Sports - Proper Responsive Layout
+ * Matches Arabic screenshots exactly
+ * v7.0 - Correct Mobile Layout
  */
 
-/* =====================================
-   CRITICAL OVERFLOW FIXES
-   ===================================== */
+/* ===================================
+   OVERFLOW FIXES
+   =================================== */
 .ss-widget,
 .ss-premium-league-group,
 .ss-body,
 .ss-matches-list-wrapper,
-.ss-todays-matches-premium,
-.ss-premium-match {
+.ss-todays-matches-premium {
   overflow: visible !important;
 }
 
-.elementor-widget-container,
-.elementor-element,
-.elementor-column,
-.elementor-section {
-  overflow: visible !important;
-}
-
-/* =====================================
+/* ===================================
    DATE SLIDER
-   ===================================== */
+   =================================== */
 .ss-date-slider-wrapper {
   display: flex;
   align-items: center;
@@ -45,8 +36,6 @@
   overflow-x: auto;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
   padding: 4px;
 }
 
@@ -58,20 +47,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   min-width: 80px;
   padding: 10px 5px;
   background: #fff;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
 .ss-date-item:hover {
   background: #f8fafc;
 }
 
-/* Active State: Yellow for Koora style */
 .ss-date-item.active {
   background: #fbbf24;
   color: #000;
@@ -108,7 +95,6 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .ss-date-nav-btn:hover,
@@ -117,59 +103,22 @@
   color: #fbbf24;
 }
 
-.ss-date-input-hidden {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-}
-
-/* =====================================
-   FILTER BAR
-   ===================================== */
-.ss-filter-bar {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  background: #fff !important;
-  padding: 10px 15px !important;
-  border-radius: 16px !important;
-  margin-bottom: 24px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
-  gap: 15px !important;
-}
-
-.ss-filter-buttons {
-  display: flex !important;
-  gap: 8px !important;
-  flex-shrink: 0 !important;
-}
-
-.ss-filter-btn {
-  padding: 8px 24px !important;
-  border-radius: 20px !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  border: none !important;
-  background: #f1f5f9 !important;
-  color: #64748b !important;
-  cursor: pointer !important;
-  transition: all 0.2s !important;
-  white-space: nowrap !important;
-}
-
-.ss-filter-btn.active {
-  background: #fbbf24 !important;
-  color: #000 !important;
-}
-
+/* ===================================
+   SEARCH BAR (Below date slider)
+   =================================== */
 .ss-search-wrapper {
   position: relative !important;
-  flex: 1 !important;
+  width: 100% !important;
+  margin-bottom: 16px !important;
+  background: #fff !important;
+  padding: 10px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
 .ss-search-wrapper i {
   position: absolute;
-  left: 12px;
+  left: 22px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
@@ -190,14 +139,41 @@
   background: #fff !important;
 }
 
-/* =====================================
+/* ===================================
+   FILTER BUTTONS (Below search)
+   =================================== */
+.ss-filter-bar {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 24px !important;
+}
+
+.ss-filter-btn {
+  padding: 8px 24px !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.ss-filter-btn.active {
+  background: #fbbf24 !important;
+  color: #000 !important;
+}
+
+/* ===================================
    LEAGUE GROUPS
-   ===================================== */
+   =================================== */
 .ss-premium-league-group {
   background: #fff !important;
   border-radius: 16px !important;
   margin-bottom: 20px !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+  overflow: visible !important;
 }
 
 .ss-premium-league-header {
@@ -212,12 +188,6 @@
 .ss-premium-league-logo {
   width: 24px !important;
   height: 24px !important;
-  object-fit: contain !important;
-}
-
-.ss-premium-league-info {
-  display: flex !important;
-  flex-direction: column !important;
 }
 
 .ss-premium-league-name {
@@ -231,100 +201,51 @@
   color: #64748b !important;
 }
 
-/* =====================================
-   DESKTOP LAYOUT - HORIZONTAL
-   Teams Wrapper | Score Wrapper | Watch
-   ===================================== */
-@media (min-width: 769px) {
-  .ss-premium-match {
-    display: grid !important;
-    grid-template-columns: 2fr 150px 150px !important; /* Teams | Score/Status | Watch */
-    align-items: center !important;
-    padding: 15px 20px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    cursor: pointer !important;
-    transition: background 0.1s !important;
-    gap: 12px !important;
-  }
+/* ===================================
+   DESKTOP MATCH LAYOUT (Horizontal)
+   =================================== */
+.ss-premium-match {
+  display: grid !important;
+  grid-template-columns: 60px 1fr auto 1fr 100px !important;
+  align-items: center !important;
+  padding: 15px 20px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  gap: 12px !important;
+  overflow: visible !important;
+}
 
-  /* Wrapper 1: Teams (Horizontal on Desktop) */
-  .ss-teams-wrapper {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important; /* Space between Home and Away */
-    gap: 20px !important;
-  }
+.ss-premium-match:last-child {
+  border-bottom: none !important;
+}
 
-  .ss-pm-team {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    flex: 1 !important;
-  }
+.ss-premium-match:hover {
+  background: #fdfdfd !important;
+}
 
-  .ss-pm-team.home {
-    justify-content: flex-end !important;
-    flex-direction: row-reverse !important; /* Name Left, Logo Right for Home */
-    text-align: right !important;
-  }
+.ss-pm-status {
+  font-size: 12px !important;
+  color: #64748b !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
 
-  .ss-pm-team.away {
-    justify-content: flex-start !important;
-    flex-direction: row !important; /* Logo Left, Name Right for Away */
-    text-align: left !important;
-  }
+.ss-pm-status.live {
+  color: #10b981 !important;
+  font-weight: bold !important;
+}
 
-  /* Wrapper 2: Score/Status */
-  .ss-score-wrapper {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-  }
+.ss-pm-team.home {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+}
 
-  .ss-pm-score-box {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: 5px !important;
-    font-size: 16px !important;
-    font-weight: 700 !important;
-    color: #0f172a !important;
-    background: #f8fafc !important;
-    padding: 6px 12px !important;
-    border-radius: 8px !important;
-    min-width: 60px !important;
-  }
-
-  .ss-pm-score-box.live {
-    background: #d1fae5 !important;
-    color: #10b981 !important;
-  }
-
-  .ss-pm-status {
-    font-size: 12px !important;
-    color: #64748b !important;
-  }
-  .ss-pm-status.live {
-    color: #10b981 !important;
-    font-weight: bold !important;
-  }
-
-  /* Watch Button (Desktop) */
-  .ss-channel-link-card {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    gap: 8px !important;
-    color: #334155 !important;
-    text-decoration: none !important;
-    font-size: 13px !important;
-  }
-  .ss-tv-logo-mini {
-    width: 30px;
-    height: auto;
-  }
+.ss-pm-team.away {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 10px !important;
 }
 
 .ss-pm-team-name {
@@ -337,21 +258,179 @@
   width: 28px !important;
   height: 28px !important;
   object-fit: contain !important;
-  flex-shrink: 0 !important;
 }
 
-/* =====================================
-   MOBILE LAYOUT - CARD STYLE (KOORA)
-   Vertical: Teams Left, Score Right
-   ===================================== */
-@media (max-width: 768px) {
-  /* Date Slider - Compact */
-  .ss-date-slider-wrapper {
-    padding: 8px !important;
-    gap: 8px !important;
-    margin-bottom: 12px !important;
-  }
+.ss-pm-score-box {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  background: #f8fafc !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+}
 
+.ss-pm-score-box.live {
+  background: #d1fae5 !important;
+  color: #10b981 !important;
+}
+
+.ss-pm-tv {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.ss-watch-live-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 6px 12px !important;
+  background: linear-gradient(135deg, #101214 0%, #1a212e 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.ss-watch-live-btn:hover {
+  background: linear-gradient(135deg, #1a212e 0%, #2a3142 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===================================
+   MOBILE MATCH LAYOUT (Vertical)
+   Matches Arabic screenshots exactly
+   =================================== */
+.ss-premium-match-mobile {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  grid-template-rows: auto auto auto !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  gap: 0 !important;
+  align-items: start !important;
+}
+
+.ss-premium-match-mobile:last-child {
+  border-bottom: none !important;
+}
+
+/* Teams Column (Right for RTL) */
+.ss-pm-teams-mobile {
+  grid-row: 1 !important;
+  grid-column: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  align-items: flex-end !important;
+}
+
+.ss-pm-team-row-mobile {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-direction: row-reverse !important;
+}
+
+.ss-pm-team-name-mobile {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #334155 !important;
+  text-align: right !important;
+}
+
+.ss-pm-team-logo-mobile {
+  width: 26px !important;
+  height: 26px !important;
+  object-fit: contain !important;
+}
+
+/* Score Box (Left, Yellow for Upcoming ONLY) */
+.ss-pm-score-mobile {
+  grid-row: 1 !important;
+  grid-column: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  padding: 4px 12px !important;
+  gap: 4px !important;
+  min-width: 50px !important;
+}
+
+/* YELLOW BOX ONLY FOR UPCOMING */
+.ss-pm-score-mobile.upcoming {
+  background: #fbbf24 !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+}
+
+.ss-pm-score-num-mobile {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #334155 !important;
+  line-height: 1 !important;
+}
+
+.ss-pm-score-mobile.upcoming .ss-pm-score-num-mobile {
+  color: #000 !important;
+}
+
+/* Status/Time (Below scores) */
+.ss-pm-status-mobile,
+.ss-pm-time-mobile {
+  grid-row: 2 !important;
+  grid-column: 1 / -1 !important;
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  text-align: center !important;
+  margin-top: 8px !important;
+  padding: 4px 0 !important;
+}
+
+/* Watch Link (Like Arabic screenshots) */
+.ss-watch-link-mobile {
+  grid-row: 3 !important;
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  margin-top: 10px !important;
+  padding: 8px !important;
+  font-size: 12px !important;
+  color: #3b82f6 !important;
+  text-decoration: none !important;
+}
+
+.ss-watch-link-mobile:hover {
+  color: #2563eb !important;
+}
+
+/* RTL Support */
+[dir="rtl"] .ss-pm-teams-mobile {
+  align-items: flex-end !important;
+}
+
+[dir="rtl"] .ss-pm-team-row-mobile {
+  flex-direction: row-reverse !important;
+}
+
+[dir="rtl"] .ss-search-wrapper i {
+  left: auto !important;
+  right: 22px !important;
+}
+
+[dir="rtl"] .ss-match-search {
+  padding: 10px 36px 10px 12px !important;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
   .ss-date-item {
     min-width: 60px !important;
     padding: 8px 4px !important;
@@ -360,247 +439,99 @@
   .ss-date-day {
     font-size: 10px !important;
   }
+
   .ss-date-num {
     font-size: 16px !important;
   }
 
-  /* Filter Bar - Stacked */
-  .ss-filter-bar {
-    padding: 10px !important;
-    gap: 10px !important;
-    overflow-x: auto !important; /* Allow scroll if many filters */
-  }
-
-  .ss-filter-buttons {
-    width: auto !important;
-  }
-  .ss-search-wrapper {
-    min-width: 150px !important;
-  }
-
-  /* ===== MOBILE MATCH CARD ===== */
-
-  .ss-premium-league-group {
-    background: transparent !important;
-    box-shadow: none !important;
+  .ss-filter-btn {
+    flex: 1 !important;
+    font-size: 13px !important;
   }
 
   .ss-premium-league-header {
-    background: transparent !important;
-    border: none !important;
-    padding: 10px 5px !important;
-  }
-  .ss-premium-league-name {
-    font-size: 15px !important;
+    padding: 12px 16px !important;
   }
 
-  .ss-premium-match {
-    /* Grid Layout: 
-       [ Teams Area (Left) ]  [ Score Box (Right) ]
-       [ TV Area (Bottom) - spans full width ] 
-    */
-    display: grid !important;
-    grid-template-columns: 1fr 60px !important;
-    grid-template-areas:
-      "teams scores"
-      "tv tv";
-    gap: 10px !important;
-
-    background: #ffffff !important;
-    border-radius: 12px !important;
-    margin-bottom: 12px !important;
-    padding: 16px !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
-    border: 1px solid #f1f5f9 !important;
-    align-items: start !important;
-  }
-
-  /* 1. Teams Wrapper (Left Side - Stacked Vertically) */
-  .ss-teams-wrapper {
-    grid-area: teams !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-    justify-content: center !important;
-  }
-
-  .ss-pm-team {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-    width: 100% !important;
-    justify-content: flex-start !important; /* LTR Align */
-  }
-
-  .ss-pm-team.home,
-  .ss-pm-team.away {
-    flex-direction: row !important; /* Always Logo Left, Name Right on Mobile */
-    text-align: left !important;
-  }
-
-  .ss-pm-team-logo {
-    width: 24px !important;
-    height: 24px !important;
-  }
-
-  .ss-pm-team-name {
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #1e293b !important;
-  }
-
-  /* 2. Score Wrapper (Right Side - Vertical Box) */
-  .ss-score-wrapper {
-    grid-area: scores !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 5px !important;
-  }
-
-  /* The Colored Box */
-  .ss-pm-score-box {
-    display: flex !important;
-    flex-direction: column !important; /* Stack numbers */
-    align-items: center !important;
-    justify-content: center !important;
-
-    width: 40px !important;
-    padding: 6px 0 !important;
-    border-radius: 8px !important;
-    font-size: 15px !important;
-    font-weight: 700 !important;
-    line-height: 1.4 !important;
-
-    background: #f1f5f9 !important; /* Default Grey */
-    color: #334155 !important;
-  }
-
-  /* Hide the colon separator on mobile */
-  .ss-score-sep {
-    display: none !important;
-  }
-
-  /* Yellow for Live/Today (Koora Style) */
-  .ss-pm-score-box.live {
-    background: #fbbf24 !important; /* Yellow */
-    color: #000 !important;
-  }
-
-  .ss-pm-score-box.finished {
-    background: #f8fafc !important;
-    color: #64748b !important;
-    border: 1px solid #e2e8f0 !important;
-  }
-
-  /* Status Text (Time/Ended) */
-  .ss-pm-status {
-    font-size: 11px !important;
-    color: #94a3b8 !important;
-    font-weight: 500 !important;
-    order: 2 !important; /* Put status below box on mobile */
-  }
-
-  .ss-pm-status.live {
-    color: #10b981 !important;
-    font-weight: 700 !important;
-  }
-
-  /* Special: Upcoming Matches (Time only, no 0-0 box) */
-  .ss-pm-status.upcoming {
-    font-size: 14px !important;
-    color: #0f172a !important;
-    font-weight: 600 !important;
-    order: 1 !important;
-  }
-
-  /* Hide score box if upcoming */
-  .ss-pm-score-box.upcoming {
-    display: none !important;
-  }
-
-  /* 3. TV / Watch Area (Bottom) */
-  .ss-pm-tv {
-    grid-area: tv !important;
-    border-top: 1px solid #f8fafc !important;
-    margin-top: 5px !important;
-    padding-top: 12px !important;
-  }
-
-  .ss-channel-link-card {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    color: #334155 !important;
-    text-decoration: none !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    justify-content: flex-end !important; /* Align Right */
-  }
-
-  .ss-tv-logo-mini {
-    width: auto !important;
-    height: 16px !important;
-  }
-
-  .ss-watch-text {
-    margin-right: auto !important; /* Pushes arrow to far right if desired, or remove to keep compact */
-    margin-right: 4px !important;
-  }
-
-  .ss-tv-more {
-    font-size: 10px !important;
-    background: #f1f5f9;
-    padding: 2px 4px;
-    border-radius: 4px;
-    color: #64748b;
-  }
-
-  .ss-mobile-live-indicator {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: #ef4444;
-    font-size: 12px;
-    font-weight: 600;
-  }
-
-  .ss-live-dot {
-    width: 8px;
-    height: 8px;
-    background: #ef4444;
-    border-radius: 50%;
-    animation: ss-pulse 1.5s infinite;
+  .ss-premium-match-mobile {
+    padding: 14px 16px !important;
   }
 }
 
-@keyframes ss-pulse {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.2);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* Dropdowns */
+.ss-tv-channels {
+  position: relative !important;
 }
 
-/* RTL Support for Desktop only (if needed) */
-[dir="rtl"] .ss-search-wrapper i {
-  left: auto !important;
-  right: 12px !important;
+.ss-channels-dropdown {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(-10px) !important;
+  min-width: 220px !important;
+  background: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  z-index: 999999 !important;
+  padding: 8px 0 !important;
 }
 
-[dir="rtl"] .ss-match-search {
-  padding: 10px 36px 10px 12px !important;
+.ss-channels-dropdown.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+
+.ss-channels-header {
+  padding: 8px 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.ss-channel-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 12px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  color: #1f2937 !important;
+}
+
+.ss-channel-item:hover {
+  background: #f9fafb !important;
+}
+
+/* Utilities */
+.ss-loading,
+.ss-empty {
+  padding: 40px 20px !important;
+  text-align: center !important;
+  color: #94a3b8 !important;
+}
+
+.ss-spinner {
+  width: 48px !important;
+  height: 48px !important;
+  border: 4px solid #e5e7eb !important;
+  border-top-color: #fbbf24 !important;
+  border-radius: 50% !important;
+  animation: spin 0.8s linear infinite !important;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Prevent text selection */
+.ss-watch-live-btn,
 .ss-filter-btn,
 .ss-date-item {
   user-select: none !important;
