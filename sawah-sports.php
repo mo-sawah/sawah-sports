@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Sawah Sports Premium
  * Description: Premium football statistics & analytics for Elementor powered by Sportmonks API - Optimized for Cyprus Football
- * Version: 5.0.4
+ * Version: 5.0.5
  * Author: Sawah Solutions
  * Author URI: https://sawahsolutions.com
  * Text Domain: sawah-sports
