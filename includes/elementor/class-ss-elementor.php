@@ -71,11 +71,11 @@ final class Sawah_Sports_Elementor {
     }
 
     public function frontend_assets() {
-        // v4.0: Enqueue premium redesigned assets
-        wp_enqueue_style('sawah-sports-premium', SAWAH_SPORTS_URL . 'assets/css/sawah-sports-premium.css', [], SAWAH_SPORTS_VERSION);
-        wp_enqueue_script('sawah-sports-premium', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-premium.js', [], SAWAH_SPORTS_VERSION, true);
+        // v5.0: Modern Sofascore-inspired redesign
+        wp_enqueue_style('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/css/sawah-sports-modern.css', [], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-modern.js', [], SAWAH_SPORTS_VERSION, true);
 
-        wp_localize_script('sawah-sports-premium', 'SawahSports', [
+        wp_localize_script('sawah-sports-modern', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
             'i18n' => [
