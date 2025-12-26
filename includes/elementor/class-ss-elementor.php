@@ -79,6 +79,10 @@ final class Sawah_Sports_Elementor {
         wp_enqueue_style('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/css/sawah-sports-modern.css', [], SAWAH_SPORTS_VERSION);
         wp_enqueue_script('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-modern.js', [], SAWAH_SPORTS_VERSION, true);
 
+        // New Matches Widget Script
+        wp_enqueue_script('sawah-matches-widget', SAWAH_SPORTS_URL . 'assets/js/sawah-todays-matches.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+        //
+
         wp_localize_script('sawah-sports-modern', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
             'nonce' => wp_create_nonce('wp_rest'),

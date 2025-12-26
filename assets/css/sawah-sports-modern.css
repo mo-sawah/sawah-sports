@@ -1701,3 +1701,341 @@
     background: var(--ss-secondary);
   }
 }
+
+/* =====================================
+   TODAY'S MATCHES PREMIUM WIDGET
+   ===================================== */
+
+/* Container */
+.ss-todays-matches-premium {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.ss-widget-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ss-text-primary);
+  margin-bottom: 20px;
+  text-align: right; /* Default to RTL if Arabic, but we use LTR for English */
+}
+/* Override for English LTR */
+.elementor-widget-sawah_sports_todays_matches .ss-widget-header h2 {
+  text-align: left;
+}
+
+/* --- Date Slider --- */
+.ss-date-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.ss-date-slider {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE */
+  padding: 4px;
+}
+.ss-date-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.ss-date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: 10px 5px;
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.ss-date-item:hover {
+  background: #f8fafc;
+}
+
+.ss-date-item.active {
+  background: #fbbf24; /* Yellow from screenshot */
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.ss-date-day {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+.ss-date-item.active .ss-date-day {
+  color: #000;
+  font-weight: 600;
+}
+
+.ss-date-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ss-date-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ss-date-nav-btn:hover {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.ss-date-picker-trigger {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+}
+.ss-date-input-hidden {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* --- Filter Bar --- */
+.ss-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 10px 15px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.ss-filter-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.ss-filter-btn {
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ss-filter-btn.active {
+  background: #fbbf24;
+  color: #000;
+}
+
+.ss-search-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+}
+
+.ss-search-wrapper i {
+  position: absolute;
+  right: 12px; /* For LTR logic, flip if needed */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+/* English LTR Adjustment */
+html[dir="ltr"] .ss-search-wrapper i {
+  right: auto;
+  left: 12px;
+}
+
+.ss-match-search {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s;
+}
+.ss-match-search:focus {
+  border-color: #fbbf24;
+  background: #fff;
+}
+
+/* --- League Headers & Matches --- */
+.ss-premium-league-group {
+  background: #fff;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.ss-premium-league-header {
+  padding: 15px 20px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ss-premium-league-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.ss-premium-league-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-premium-league-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.ss-premium-league-country {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* --- Match Row (Screenshot Replica) --- */
+.ss-premium-match {
+  display: grid;
+  grid-template-columns: 80px 1fr 60px 1fr 80px; /* Status | Home | Score | Away | TV */
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.1s;
+  gap: 10px;
+}
+.ss-premium-match:last-child {
+  border-bottom: none;
+}
+.ss-premium-match:hover {
+  background: #fdfdfd;
+}
+
+/* Columns */
+.ss-pm-status {
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+}
+.ss-pm-status.live {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.ss-pm-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ss-pm-team.home {
+  justify-content: flex-end;
+  text-align: right;
+}
+.ss-pm-team.away {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.ss-pm-team-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+.ss-pm-team-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ss-pm-score-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 8px;
+  min-width: 60px;
+}
+.ss-pm-score-box.live {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .ss-premium-match {
+    grid-template-columns: 1fr 50px 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px 15px;
+    padding: 12px;
+  }
+  .ss-pm-status {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 11px;
+  }
+  .ss-pm-tv {
+    display: none;
+  }
+  .ss-pm-team-name {
+    font-size: 13px;
+  }
+}
