@@ -1,33 +1,36 @@
 /**
- * TV Channels CSS - INTEGRATED LAYOUT FIX
- * Makes the button feel part of the row, not floating outside
+ * Sawah Sports - Mobile-First Professional Design
+ * App-style experience for mobile devices
+ * v6.0 - Complete Mobile Redesign
  */
 
 /* =====================================
    CRITICAL OVERFLOW FIXES
    ===================================== */
-.ss-widget {
-  overflow: visible !important;
-}
-
-.ss-premium-league-group {
-  overflow: visible !important;
-}
-
+.ss-widget,
+.ss-premium-league-group,
 .ss-body,
 .ss-matches-list-wrapper,
-.ss-todays-matches-premium {
+.ss-todays-matches-premium,
+.ss-premium-match {
+  overflow: visible !important;
+}
+
+.elementor-widget-container,
+.elementor-element,
+.elementor-column,
+.elementor-section {
   overflow: visible !important;
 }
 
 /* =====================================
-   BETTER GRID LAYOUT FOR TV COLUMN
+   DESKTOP LAYOUT (Default)
    ===================================== */
 
-/* Adjust grid to give more space to TV column */
+/* Grid Layout */
 .ss-premium-match {
   display: grid !important;
-  grid-template-columns: 80px 1fr 60px 1fr 120px !important; /* Increased TV column from 80px to 120px */
+  grid-template-columns: 80px 1fr 60px 1fr 120px !important;
   align-items: center !important;
   padding: 15px 20px !important;
   border-bottom: 1px solid #f1f5f9 !important;
@@ -35,61 +38,40 @@
   transition: background 0.1s !important;
   gap: 10px !important;
   position: relative !important;
-  overflow: visible !important;
 }
 
-/* Better TV column layout */
-.ss-premium-match .ss-pm-tv {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important; /* Center instead of flex-end */
-  width: 100% !important;
-  min-width: auto !important;
-  max-width: none !important;
-  padding: 0 !important; /* Remove padding */
-  overflow: visible !important;
-}
-
-[dir="rtl"] .ss-premium-match .ss-pm-tv {
-  justify-content: center !important;
-}
-
-/* Raise match row on hover to show dropdown */
 .ss-premium-match:hover {
   z-index: 100 !important;
   background: #fdfdfd !important;
 }
 
-/* =====================================
-   TV CHANNELS STYLES
-   ===================================== */
-
-/* TV Channels Container */
-.ss-tv-channels {
-  position: relative !important;
-  display: inline-block !important;
-  width: 100% !important; /* Full width of column */
+/* TV Column */
+.ss-premium-match .ss-pm-tv {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
 }
 
-/* Watch Live Button - DARK GRADIENT & COMPACT */
+/* Watch Button - Desktop */
 .ss-watch-live-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 6px !important;
-  padding: 7px 14px !important; /* Slightly more padding */
+  padding: 7px 14px !important;
   background: linear-gradient(135deg, #101214 0%, #1a212e 100%) !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 8px !important; /* Slightly more rounded */
-  font-size: 12px !important; /* Smaller font */
+  border-radius: 8px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 2px 6px rgba(16, 18, 20, 0.25) !important;
   white-space: nowrap !important;
-  width: 100% !important; /* Full width of container */
-  max-width: 110px !important; /* Max width to keep it compact */
+  width: 100% !important;
+  max-width: 110px !important;
 }
 
 .ss-watch-live-btn:hover {
@@ -98,20 +80,22 @@
   box-shadow: 0 4px 10px rgba(16, 18, 20, 0.35) !important;
 }
 
-.ss-watch-live-btn:active {
-  transform: translateY(0) !important;
-}
-
 .ss-watch-live-btn i {
   font-size: 13px !important;
 }
 
-/* Channels Dropdown - BETTER POSITIONING */
+/* Channels Dropdown */
+.ss-tv-channels {
+  position: relative !important;
+  display: inline-block !important;
+  width: 100% !important;
+}
+
 .ss-channels-dropdown {
   position: absolute !important;
   top: calc(100% + 8px) !important;
   left: 50% !important;
-  transform: translateX(-50%) translateY(-10px) !important; /* Center under button */
+  transform: translateX(-50%) translateY(-10px) !important;
   min-width: 220px !important;
   max-width: 280px !important;
   background: #ffffff !important;
@@ -125,20 +109,12 @@
   padding: 8px 0 !important;
 }
 
-/* RTL Support - keep centered */
-[dir="rtl"] .ss-channels-dropdown {
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) translateY(-10px) !important;
-}
-
 .ss-channels-dropdown.show {
   opacity: 1 !important;
   visibility: visible !important;
   transform: translateX(-50%) translateY(0) !important;
 }
 
-/* Dropdown Header */
 .ss-channels-header {
   padding: 8px 12px !important;
   font-size: 11px !important;
@@ -149,7 +125,6 @@
   letter-spacing: 0.5px !important;
 }
 
-/* Channel Item - CLICKABLE */
 .ss-channel-item {
   display: flex !important;
   align-items: center !important;
@@ -164,10 +139,6 @@
 .ss-channel-item:hover {
   background: #f9fafb !important;
   text-decoration: none !important;
-}
-
-.ss-channel-item:active {
-  background: #f3f4f6 !important;
 }
 
 .ss-channel-item img {
@@ -186,7 +157,6 @@
   flex: 1 !important;
 }
 
-/* External link indicator */
 .ss-channel-item::after {
   content: "↗" !important;
   font-size: 12px !important;
@@ -199,7 +169,6 @@
   opacity: 1 !important;
 }
 
-/* More Channels Indicator */
 .ss-channels-more {
   padding: 8px 12px !important;
   font-size: 12px !important;
@@ -209,77 +178,216 @@
   font-weight: 500 !important;
 }
 
-/* TV Icon for matches without channel data */
-.ss-pm-tv .ss-tv-icon {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 32px !important;
-  height: 32px !important;
-  color: #9ca3af !important;
-  font-size: 18px !important;
-}
-
-/* Live indicator with channels */
-.ss-tv-channels .ss-live-dot {
-  display: none !important;
-}
-
 /* =====================================
-   RESPONSIVE ADJUSTMENTS
+   MOBILE APP-STYLE REDESIGN
    ===================================== */
 
-/* Tablet */
+/* Tablet - 900px and below */
 @media (max-width: 900px) {
   .ss-premium-match {
-    grid-template-columns: 70px 1fr 55px 1fr 100px !important;
+    grid-template-columns: 70px 1fr 55px 1fr 90px !important;
+    padding: 12px 16px !important;
+    gap: 8px !important;
   }
 
   .ss-watch-live-btn {
-    max-width: 90px !important;
+    max-width: 80px !important;
     font-size: 11px !important;
     padding: 6px 10px !important;
   }
 }
 
-/* Mobile - Keep button visible but smaller */
+/* Mobile - 768px and below */
 @media (max-width: 768px) {
-  .ss-watch-live-btn span {
-    display: none !important; /* Hide text, show only icon */
+  /* === HEADER & NAVIGATION === */
+
+  /* Widget Title */
+  .ss-widget-header h2 {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* === DATE SLIDER - MOBILE OPTIMIZED === */
+  .ss-date-slider-wrapper {
+    padding: 8px !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .ss-date-slider {
+    gap: 6px !important;
+  }
+
+  .ss-date-item {
+    min-width: 60px !important;
+    padding: 8px 4px !important;
+  }
+
+  .ss-date-day {
+    font-size: 10px !important;
+  }
+
+  .ss-date-num {
+    font-size: 16px !important;
+  }
+
+  .ss-date-nav-btn,
+  .ss-date-picker-trigger {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  /* === FILTER BAR - MOBILE OPTIMIZED === */
+  .ss-filter-bar {
+    padding: 10px !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .ss-filter-buttons {
+    gap: 6px !important;
+    flex: 1 !important;
+  }
+
+  .ss-filter-btn {
+    padding: 7px 16px !important;
+    font-size: 13px !important;
+    flex: 1 !important; /* Equal width buttons */
+  }
+
+  /* === SEARCH - MOBILE OPTIMIZED === */
+  .ss-search-wrapper {
+    flex: 1 !important;
+    max-width: 100% !important; /* Full width on mobile */
+    width: 100% !important;
+  }
+
+  .ss-match-search {
+    padding: 8px 10px 8px 32px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+  }
+
+  /* === LEAGUE GROUPS - MOBILE === */
+  .ss-premium-league-group {
+    margin-bottom: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  .ss-premium-league-header {
+    padding: 12px 14px !important;
+  }
+
+  .ss-premium-league-name {
+    font-size: 13px !important;
+  }
+
+  .ss-premium-league-country {
+    font-size: 10px !important;
+  }
+
+  /* === MATCH ROW - MOBILE STACKED LAYOUT === */
+  .ss-premium-match {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  /* Row 1: Status + Time */
+  .ss-pm-status {
+    font-size: 11px !important;
+    text-align: left !important;
+    order: 1 !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Row 2: Teams + Score (Horizontal) */
+  .ss-pm-team.home,
+  .ss-pm-team.away {
+    order: 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 !important;
+  }
+
+  .ss-pm-team.home {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .ss-pm-team.away {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  /* Team Names - NO TRUNCATION */
+  .ss-pm-team-name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    white-space: normal !important; /* Allow wrapping */
+    overflow: visible !important;
+    text-overflow: clip !important;
+    flex: 1 !important;
+    line-height: 1.3 !important;
+  }
+
+  .ss-pm-team-logo {
+    width: 24px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Score Box - Between Teams */
+  .ss-pm-score-box {
+    order: 3 !important;
+    font-size: 18px !important;
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
+    min-width: 70px !important;
+    margin: 4px 0 !important;
+    align-self: center !important;
+  }
+
+  /* Watch Button - Bottom Row */
+  .ss-pm-tv {
+    order: 4 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 6px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #f1f5f9 !important;
   }
 
   .ss-watch-live-btn {
-    padding: 8px !important;
-    max-width: 40px !important;
+    max-width: 100% !important; /* Full width on mobile */
+    width: 100% !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  .ss-watch-live-btn span {
+    display: inline !important; /* Show text on mobile */
   }
 
   .ss-watch-live-btn i {
-    font-size: 16px !important;
-    margin: 0 !important;
-  }
-}
-
-/* Very small screens */
-@media (max-width: 600px) {
-  .ss-premium-match {
-    grid-template-columns: 1fr 50px 1fr 50px !important;
-    grid-template-rows: auto auto !important;
-    gap: 8px 15px !important;
+    font-size: 14px !important;
   }
 
-  .ss-pm-status {
-    grid-column: 1 / -1 !important;
-  }
-
-  .ss-pm-tv {
-    grid-column: -1 !important;
-    grid-row: 2 !important;
-  }
-
+  /* Dropdown on Mobile - Full Width */
   .ss-channels-dropdown {
+    left: 0 !important;
     right: 0 !important;
-    left: auto !important;
     transform: translateY(-10px) !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
   }
 
   .ss-channels-dropdown.show {
@@ -287,7 +395,81 @@
   }
 }
 
-/* Dark mode support */
+/* Very Small Mobile - 480px and below */
+@media (max-width: 480px) {
+  /* Even more compact */
+  .ss-widget-header h2 {
+    font-size: 18px !important;
+  }
+
+  .ss-date-item {
+    min-width: 55px !important;
+    padding: 6px 3px !important;
+  }
+
+  .ss-date-num {
+    font-size: 15px !important;
+  }
+
+  .ss-filter-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+
+  .ss-pm-team-name {
+    font-size: 12px !important;
+  }
+
+  .ss-pm-score-box {
+    font-size: 16px !important;
+    padding: 6px 10px !important;
+  }
+
+  .ss-premium-league-name {
+    font-size: 12px !important;
+  }
+}
+
+/* === BETTER MOBILE TOUCH TARGETS === */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  .ss-date-item,
+  .ss-filter-btn,
+  .ss-watch-live-btn,
+  .ss-channel-item {
+    min-height: 44px !important; /* iOS recommended touch target */
+  }
+
+  /* Prevent accidental taps */
+  .ss-premium-match {
+    cursor: default !important;
+  }
+
+  /* Better spacing between matches */
+  .ss-premium-match {
+    margin-bottom: 2px !important;
+  }
+}
+
+/* === RTL SUPPORT === */
+[dir="rtl"] .ss-channels-dropdown {
+  left: 50% !important;
+  right: auto !important;
+}
+
+@media (max-width: 768px) {
+  [dir="rtl"] .ss-channels-dropdown {
+    left: 0 !important;
+    right: 0 !important;
+  }
+
+  [dir="rtl"] .ss-pm-team.home,
+  [dir="rtl"] .ss-pm-team.away {
+    flex-direction: row-reverse !important;
+  }
+}
+
+/* === DARK MODE === */
 @media (prefers-color-scheme: dark) {
   .ss-channels-dropdown {
     background: #1f2937 !important;
@@ -304,16 +486,26 @@
     background: #374151 !important;
   }
 
-  .ss-channel-item:active {
-    background: #4b5563 !important;
-  }
-
   .ss-channel-name {
     color: #f3f4f6 !important;
   }
 }
 
-/* Animation */
+/* === LOADING & EMPTY STATES === */
+.ss-loading,
+.ss-empty {
+  padding: 40px 20px !important;
+}
+
+@media (max-width: 768px) {
+  .ss-loading,
+  .ss-empty {
+    padding: 30px 16px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* === ANIMATIONS === */
 @keyframes dropdownSlide {
   from {
     opacity: 0;
@@ -325,41 +517,39 @@
   }
 }
 
+@media (max-width: 768px) {
+  @keyframes dropdownSlide {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 .ss-channels-dropdown.show {
   animation: dropdownSlide 0.3s ease !important;
 }
 
-/* Prevent text selection */
-.ss-watch-live-btn {
+/* === PREVENT TEXT SELECTION === */
+.ss-watch-live-btn,
+.ss-filter-btn,
+.ss-date-item {
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Ensure Elementor containers don't clip */
-.elementor-widget-container,
-.elementor-element,
-.elementor-column,
-.elementor-section {
-  overflow: visible !important;
+/* === SMOOTH SCROLLING === */
+.ss-date-slider {
+  -webkit-overflow-scrolling: touch !important;
 }
 
-/* =====================================
-   ALTERNATIVE: Inline Badge Style
-   Use this if you prefer badges instead of button
-   ===================================== */
-
-.ss-watch-live-btn {
-  background: transparent !important;
-  border: 1px solid #e5e7eb !important;
-  color: #334155 !important;
-  box-shadow: none !important;
-  font-size: 11px !important;
-  padding: 5px 10px !important;
-}
-
-.ss-watch-live-btn:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
+/* === HIDE ARROWS ON MOBILE === */
+.ss-pm-tv .eicon-arrow-right {
+  display: none !important;
 }

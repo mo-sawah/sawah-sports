@@ -1,7 +1,7 @@
 /**
  * Sawah Sports - Premium Today's Matches Widget
  * Features: Date Slider, Priority Sorting, Search, Live Filter, TV Channels
- * v5.3.1 - Fixed clickable channels and alignment
+ * v5.3.2 - Mobile Optimized + "WATCH" button
  */
 (function ($) {
   "use strict";
@@ -366,7 +366,7 @@
     }
 
     /**
-     * Render TV Channels HTML - UPDATED with clickable links
+     * Render TV Channels HTML - UPDATED: "WATCH" instead of "WATCH LIVE"
      */
     renderTVChannels(channels, statusClass) {
       if (!channels || channels.length === 0) {
@@ -378,7 +378,7 @@
         }
       }
 
-      // Has channels - show "Watch Live" button
+      // Has channels - show "WATCH" button (changed from "WATCH LIVE")
       const channelsList = channels
         .slice(0, 5) // Show up to 5 channels
         .map((ch) => {
@@ -406,13 +406,14 @@
       const moreCount = channels.length > 5 ? channels.length - 5 : 0;
       const moreText = moreCount > 0 ? `+${moreCount}` : "";
 
+      // CHANGED: "Watch Live" to just "Watch"
+      const buttonText = SawahSports.i18n.watch || "Watch";
+
       return `
                 <div class="ss-tv-channels">
                     <button class="ss-watch-live-btn" type="button">
                         <i class="eicon-play"></i>
-                        <span>${
-                          SawahSports.i18n.watchLive || "Watch Live"
-                        }</span>
+                        <span>${buttonText}</span>
                     </button>
                     <div class="ss-channels-dropdown">
                         <div class="ss-channels-header">
@@ -618,7 +619,7 @@
       }
     });
 
-    // FIXED: Close dropdown when clicking a channel link
+    // Close dropdown when clicking a channel link
     $(document).on("click", ".ss-channel-item", function () {
       // Delay to allow link to open, then close dropdown
       setTimeout(function () {
