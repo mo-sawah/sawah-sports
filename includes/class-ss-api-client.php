@@ -84,41 +84,38 @@ final class Sawah_Sports_API_Client {
 
     /**
      * Get livescores (in-play matches)
-     * FIX: Changed separator to comma
      */
     public function get_livescores(array $params = []): array {
-        $defaults = ['include' => 'participants,league,scores,state,periods'];
+        $defaults = ['include' => 'participants;league;scores;state;periods'];
         $params = array_merge($defaults, $params);
         return $this->get('livescores/inplay', $params, 12);
     }
 
     /**
      * Get fixtures by date
-     * FIX: Changed separator to comma and added events
      */
     public function get_fixtures_by_date(string $date, array $params = []): array {
-        $defaults = ['include' => 'participants,league.country,scores,state,events'];
+        $defaults = ['include' => 'participants;league.country;scores;state'];
         $params = array_merge($defaults, $params);
         return $this->get('fixtures/date/' . rawurlencode($date), $params, 15);
     }
 
     /**
      * Get fixture by ID with full details
-     * FIX: Changed separator to comma
      */
     public function get_fixture(int $fixture_id, array $includes = []): array {
+        // Expanded includes for v5.0 features
         $include_str = empty($includes) 
-            ? 'participants,league,scores,state,events,lineups.player,lineups.details,statistics,coaches,formation'
-            : implode(',', $includes);
+            ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation'
+            : implode(';', $includes);
         return $this->get('fixtures/' . $fixture_id, ['include' => $include_str], 15);
     }
 
     /**
      * Get standings for a season
-     * FIX: Changed separator to comma
      */
     public function get_standings(int $season_id, array $params = []): array {
-        $defaults = ['include' => 'participant,details.type,form'];
+        $defaults = ['include' => 'participant;details.type;form'];
         $params = array_merge($defaults, $params);
         return $this->get('standings/seasons/' . $season_id, $params, 15);
     }
@@ -142,10 +139,9 @@ final class Sawah_Sports_API_Client {
 
     /**
      * Get pre-match odds
-     * FIX: Changed separator to comma
      */
     public function get_odds(int $fixture_id, array $params = []): array {
-        $defaults = ['include' => 'bookmaker,market'];
+        $defaults = ['include' => 'bookmaker;market'];
         $params = array_merge($defaults, $params);
         return $this->get('odds/pre-match/fixtures/' . $fixture_id, $params, 12);
     }
@@ -166,34 +162,30 @@ final class Sawah_Sports_API_Client {
 
     /**
      * Get team details
-     * FIX: Changed separator to comma
      */
     public function get_team(int $team_id, array $includes = []): array {
         $include_str = empty($includes)
-            ? 'country,venue'
-            : implode(',', $includes);
+            ? 'country;venue'
+            : implode(';', $includes);
         return $this->get('teams/' . $team_id, ['include' => $include_str], 12);
     }
 
     /**
      * Get team squad
-     * FIX: Changed separator to comma
      */
     public function get_team_squad(int $team_id): array {
-        return $this->get('squads/seasons/' . $team_id, ['include' => 'player,position'], 12);
+        return $this->get('squads/seasons/' . $team_id, ['include' => 'player;position'], 12);
     }
 
     /**
      * Get player details
-     * FIX: Changed separator to comma
      */
     public function get_player(int $player_id): array {
-        return $this->get('players/' . $player_id, ['include' => 'position,country,statistics'], 12);
+        return $this->get('players/' . $player_id, ['include' => 'position;country;statistics'], 12);
     }
 
     /**
      * Get topscorers for a season
-     * FIX: Changed separator to comma
      */
     public function get_topscorers(int $season_id, string $type = 'goals'): array {
         // SportMonks v3 Topscorers types (NOT the same as statistic type IDs)
@@ -215,18 +207,17 @@ final class Sawah_Sports_API_Client {
         $type_id = $type_map[$type] ?? 208;
 
         return $this->get('topscorers/seasons/' . $season_id, [
-            'include' => 'participant,player,type',
+            'include' => 'participant;player;type',
             'filters' => 'seasonTopscorerTypes:' . $type_id,
         ], 12);
     }
 
     /**
      * Get head-to-head data
-     * FIX: Changed separator to comma
      */
     public function get_h2h(int $team1_id, int $team2_id): array {
         return $this->get('fixtures/head-to-head/' . $team1_id . '/' . $team2_id, [
-            'include' => 'participants,scores,league,state'
+            'include' => 'participants;scores;league;state'
         ], 12);
     }
 
@@ -239,10 +230,9 @@ final class Sawah_Sports_API_Client {
 
     /**
      * Get referee details
-     * FIX: Changed separator to comma
      */
     public function get_referee(int $referee_id): array {
-        return $this->get('referees/' . $referee_id, ['include' => 'country,statistics'], 12);
+        return $this->get('referees/' . $referee_id, ['include' => 'country;statistics'], 12);
     }
 
     /**
