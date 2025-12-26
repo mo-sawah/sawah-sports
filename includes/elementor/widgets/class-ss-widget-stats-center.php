@@ -69,23 +69,45 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
             'tab' => \Elementor\Controls_Manager::TAB_STYLE,
         ]);
 
-        $this->add_control('accent_color', [
-            'label' => __('Accent Color', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::COLOR,
-            'default' => '#3b82f6',
-            'description' => __('Main accent color for the stats center', 'sawah-sports'),
-        ]);
+$this->add_control('theme', [
+    'label' => __('Theme', 'sawah-sports'),
+    'type' => \Elementor\Controls_Manager::SELECT,
+    'default' => 'light',
+    'options' => [
+        'light' => __('Light (White)', 'sawah-sports'),
+        'dark' => __('Dark', 'sawah-sports'),
+        'auto' => __('Auto (System)', 'sawah-sports'),
+    ],
+]);
+
+$this->add_control('density', [
+    'label' => __('Layout Density', 'sawah-sports'),
+    'type' => \Elementor\Controls_Manager::SELECT,
+    'default' => 'compact',
+    'options' => [
+        'compact' => __('Compact (EPL-like)', 'sawah-sports'),
+        'comfortable' => __('Comfortable', 'sawah-sports'),
+    ],
+]);
+
+$this->add_control('accent_color', [
+    'label' => __('Accent Color', 'sawah-sports'),
+    'type' => \Elementor\Controls_Manager::COLOR,
+    'default' => '#3b82f6',
+    'description' => __('Main accent color for the stats center', 'sawah-sports'),
+]);
 
         $this->end_controls_section();
     }
 
     protected function render() {
         $settings = $this->get_settings_for_display();
-        $season_id = (int)($settings['season_id'] ?? 0);
-        if (!$season_id) { $season_id = 25995; }
+        $season_id = $settings['season_id'] ?? 25995;
         $league_name = $settings['league_name'] ?? 'Cyprus 1. Division';
         $default_tab = $settings['default_tab'] ?? 'dashboard';
         $accent_color = $settings['accent_color'] ?? '#3b82f6';
+        $theme = $settings['theme'] ?? 'light';
+        $density = $settings['density'] ?? 'compact';
         
         wp_enqueue_style('sawah-sports-modern');
         wp_enqueue_script('sawah-sports-modern');
@@ -93,7 +115,7 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
         $id = 'ss-stats-center-' . esc_attr($this->get_id());
         ?>
         <div id="<?php echo $id; ?>" 
-             class="ss-stats-center" 
+             class="ss-stats-center ss-theme-<?php echo esc_attr($theme); ?> ss-density-<?php echo esc_attr($density); ?>" 
              data-season="<?php echo esc_attr($season_id); ?>"
              data-league-name="<?php echo esc_attr($league_name); ?>"
              data-default-tab="<?php echo esc_attr($default_tab); ?>"
@@ -101,6 +123,7 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
             
             <!-- Stats Center Header -->
             <div class="ss-stats-header">
+                <div class="ss-stats-header-inner">
                 <h1 class="ss-stats-title">Stats Centre</h1>
                 
                 <!-- Navigation Tabs -->
@@ -116,6 +139,7 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
 
             <!-- Tab Content Container -->
             <div class="ss-stats-content">
+                <div class="ss-stats-content-inner">
                 <!-- Dashboard Tab -->
                 <div class="ss-stats-tab-content active" data-content="dashboard">
                     <div class="ss-loading">
@@ -147,6 +171,7 @@ class Sawah_Sports_Widget_Stats_Center extends \Elementor\Widget_Base {
                 <!-- Player Comparison Tab -->
                 <div class="ss-stats-tab-content" data-content="comparison">
                     <div class="ss-empty">Player comparison - coming soon</div>
+                </div>
                 </div>
             </div>
 

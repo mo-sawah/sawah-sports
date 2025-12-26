@@ -1529,3 +1529,175 @@
   color: #1e40af;
   font-weight: 700;
 }
+
+/* =====================================
+   STATS CENTER - EPL-LIKE LAYOUT (LIGHT + COMPACT)
+   ===================================== */
+
+/* Center inner content like premierleague.com */
+.ss-stats-header-inner,
+.ss-stats-content-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* Light theme (white) */
+.ss-stats-center.ss-theme-light {
+  background: #ffffff;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-header {
+  background: #ffffff;
+  color: var(--ss-text-primary);
+  border-bottom: 1px solid var(--ss-border);
+  padding: 32px 24px 0;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-title {
+  color: var(--ss-text-primary);
+  font-style: normal;
+  font-size: 36px;
+  margin: 0 0 18px 0;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-tabs {
+  gap: 18px;
+  padding-bottom: 12px;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-tab {
+  background: transparent;
+  color: var(--ss-text-secondary);
+  padding: 10px 0;
+  border-radius: 0;
+  backdrop-filter: none;
+  position: relative;
+  font-weight: 600;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-tab:hover {
+  background: transparent;
+  transform: none;
+  color: var(--ss-text-primary);
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-tab.active {
+  background: transparent;
+  color: var(--ss-text-primary);
+  box-shadow: none;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -12px;
+  height: 3px;
+  background: var(--stats-accent, #3b82f6);
+  border-radius: 3px;
+}
+
+.ss-stats-center.ss-theme-light .ss-stats-content {
+  background: #ffffff;
+  padding: 24px 24px 44px;
+}
+
+/* Make cards feel premium on white background */
+.ss-stats-center.ss-theme-light .ss-stat-card {
+  border: 1px solid var(--ss-border);
+  box-shadow: none;
+}
+
+.ss-stats-center.ss-theme-light .ss-stat-card:hover {
+  box-shadow: var(--ss-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Compact density (EPL-like) */
+.ss-stats-center.ss-density-compact .ss-stats-header {
+  padding: 24px 20px 0;
+}
+
+.ss-stats-center.ss-density-compact .ss-stats-title {
+  font-size: 30px;
+  margin-bottom: 14px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stats-content {
+  padding: 18px 20px 36px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stats-section {
+  margin-bottom: 34px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stats-section-title {
+  font-size: 22px;
+  margin-bottom: 18px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stats-grid {
+  gap: 16px;
+  margin-bottom: 34px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-card {
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-card-header {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-card-title {
+  font-size: 16px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-items {
+  gap: 10px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-item {
+  padding: 8px;
+  border-radius: 10px;
+  grid-template-columns: 28px 44px 1fr auto;
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-photo,
+.ss-stats-center.ss-density-compact .ss-stat-photo-fallback,
+.ss-stats-center.ss-density-compact .ss-stat-badge,
+.ss-stats-center.ss-density-compact .ss-stat-badge-fallback {
+  width: 44px;
+  height: 44px;
+}
+
+.ss-stats-center.ss-density-compact .ss-stat-value {
+  font-size: 20px;
+  min-width: 44px;
+}
+
+/* Auto theme (use system dark mode) */
+@media (prefers-color-scheme: dark) {
+  .ss-stats-center.ss-theme-auto .ss-stats-header {
+    background: linear-gradient(
+      135deg,
+      var(--stats-accent, #3b82f6) 0%,
+      #2563eb 100%
+    );
+    color: #ffffff;
+    border-bottom: none;
+  }
+
+  .ss-stats-center.ss-theme-auto .ss-stats-title {
+    color: #ffffff;
+    font-style: italic;
+  }
+
+  .ss-stats-center.ss-theme-auto .ss-stats-content {
+    background: var(--ss-secondary);
+  }
+}
