@@ -3,8 +3,66 @@ if (!defined('ABSPATH')) { exit; }
 
 /**
  * League Hub Widget (SofaScore Style)
- * v7.1 - Complete UI Overhaul
+ * v7.2 - Self-contained AJAX logic (No Core Edits Required)
  */
+
+// --- 1. Custom AJAX Handler for this Widget ---
+add_action('wp_ajax_ss_hub_data', 'ss_hub_handle_ajax');
+add_action('wp_ajax_nopriv_ss_hub_data', 'ss_hub_handle_ajax');
+
+function ss_hub_handle_ajax() {
+    // Security check
+    check_ajax_referer('ss_hub_nonce', 'nonce');
+
+    $request_type = $_GET['req_type'] ?? '';
+    $id = (int)($_GET['req_id'] ?? 0);
+    
+    // Initialize API Client using existing plugin helper
+    $token = Sawah_Sports_Helpers::api_token();
+    $client = new Sawah_Sports_API_Client($token);
+    
+    $data = [];
+    
+    // A. Get Rounds
+    if ($request_type === 'rounds') {
+        $cache_key = 'ss_hub_rounds_' . $id;
+        $cached = Sawah_Sports_Cache::get($cache_key);
+        
+        if ($cached) {
+            $data = $cached;
+        } else {
+            // Fetch rounds from API
+            $res = $client->get('rounds/seasons/' . $id);
+            if ($res['ok']) {
+                $data = $res['data'];
+                Sawah_Sports_Cache::set($cache_key, $data, 3600); // 1 hour
+            }
+        }
+    }
+    
+    // B. Get Fixtures by Round
+    elseif ($request_type === 'fixtures') {
+        $cache_key = 'ss_hub_fix_rnd_' . $id;
+        $cached = Sawah_Sports_Cache::get($cache_key); // Shorter cache for matches
+
+        if ($cached) {
+            $data = $cached;
+        } else {
+            // Include scores, participants, state
+            $params = ['include' => 'participants;scores;state;starting_at'];
+            $res = $client->get('fixtures/rounds/' . $id, $params);
+            if ($res['ok']) {
+                $data = $res['data'];
+                Sawah_Sports_Cache::set($cache_key, $data, 120); // 2 mins cache for livescores
+            }
+        }
+    }
+
+    wp_send_json_success($data);
+}
+
+// --- 2. The Widget Class ---
+
 class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
 
     public function get_name() { return 'sawah_sports_league_hub'; }
@@ -33,22 +91,22 @@ class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
         $this->add_control('league_name', [
             'label' => __('League Name', 'sawah-sports'),
             'type'  => \Elementor\Controls_Manager::TEXT,
-            'default' => 'Premier League',
+            'default' => 'Cyprus 1st Division',
         ]);
 
         $this->add_control('league_logo', [
-            'label' => __('League Logo URL', 'sawah-sports'),
+            'label' => __('League Logo', 'sawah-sports'),
             'type'  => \Elementor\Controls_Manager::MEDIA,
         ]);
 
         $this->add_control('country_name', [
             'label' => __('Country', 'sawah-sports'),
             'type'  => \Elementor\Controls_Manager::TEXT,
-            'default' => 'England',
+            'default' => 'Cyprus',
         ]);
-
-         $this->add_control('country_flag', [
-            'label' => __('Country Flag URL', 'sawah-sports'),
+        
+        $this->add_control('country_flag', [
+            'label' => __('Country Flag', 'sawah-sports'),
             'type'  => \Elementor\Controls_Manager::MEDIA,
         ]);
 
@@ -58,52 +116,57 @@ class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
             'default' => '25/26',
         ]);
 
+        $this->add_control('about_title', [
+            'label' => __('About Title', 'sawah-sports'),
+            'type'  => \Elementor\Controls_Manager::TEXT,
+            'default' => __('About', 'sawah-sports'),
+        ]);
+
+        $this->add_control('about_text', [
+            'label' => __('About Text', 'sawah-sports'),
+            'type'  => \Elementor\Controls_Manager::TEXTAREA,
+            'default' => __('Follow fixtures, results, standings and top scorers.', 'sawah-sports'),
+        ]);
+
         $this->end_controls_section();
     }
 
     protected function render() {
         $s = $this->get_settings_for_display();
-        $league_id = (int)($s['league_id'] ?? 0);
-        $season_id = (int)($s['season_id'] ?? 0);
-        
+        $league_id = (int)$s['league_id'];
+        $season_id = (int)$s['season_id'];
         $logo_url = !empty($s['league_logo']['url']) ? $s['league_logo']['url'] : '';
         $flag_url = !empty($s['country_flag']['url']) ? $s['country_flag']['url'] : '';
 
+        // Prepare localized data for JS
         $uid = 'ss-hub-' . $this->get_id();
+        $ajax_nonce = wp_create_nonce('ss_hub_nonce');
+        
         ?>
         <div id="<?php echo esc_attr($uid); ?>"
              class="ss-sofa-hub"
              data-league-id="<?php echo esc_attr($league_id); ?>"
              data-season-id="<?php echo esc_attr($season_id); ?>"
-             data-current-date="<?php echo date('Y-m-d'); ?>">
+             data-ajax-url="<?php echo esc_url(admin_url('admin-ajax.php')); ?>"
+             data-nonce="<?php echo esc_attr($ajax_nonce); ?>">
 
             <div class="ss-sofa-header">
                 <div class="ss-sofa-header-inner">
                     <div class="ss-sofa-logo-area">
-                        <?php if($logo_url): ?>
-                            <img src="<?php echo esc_url($logo_url); ?>" class="ss-league-logo-img" alt="League">
-                        <?php endif; ?>
+                        <?php if($logo_url): ?><img src="<?php echo esc_url($logo_url); ?>" class="ss-league-logo-img" alt=""><?php endif; ?>
                         <div class="ss-header-texts">
                             <h1 class="ss-league-title">
                                 <?php echo esc_html($s['league_name']); ?> 
                                 <span class="ss-season-year"><?php echo esc_html($s['season_label']); ?></span>
                             </h1>
                             <div class="ss-league-meta">
-                                <?php if($flag_url): ?>
-                                    <img src="<?php echo esc_url($flag_url); ?>" class="ss-country-flag" alt="Flag">
-                                <?php endif; ?>
+                                <?php if($flag_url): ?><img src="<?php echo esc_url($flag_url); ?>" class="ss-country-flag" alt=""><?php endif; ?>
                                 <span class="ss-country-name"><?php echo esc_html($s['country_name']); ?></span>
                             </div>
                         </div>
                     </div>
                     <div class="ss-header-actions">
-                        <button class="ss-fav-btn"><i class="eicon-star"></i> <?php echo esc_html__('Follow', 'sawah-sports'); ?></button>
-                    </div>
-                </div>
-                <div class="ss-sofa-progress">
-                    <div class="ss-progress-bar"><div class="ss-progress-fill" style="width: 45%"></div></div>
-                    <div class="ss-progress-labels">
-                        <span>Aug</span><span>May</span>
+                         <button class="ss-fav-btn"><i class="eicon-star"></i> <?php echo esc_html__('Follow', 'sawah-sports'); ?></button>
                     </div>
                 </div>
             </div>
@@ -113,9 +176,9 @@ class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
                 <div class="ss-sofa-sidebar">
                     
                     <div class="ss-sofa-card ss-card-featured">
-                        <div class="ss-card-head-sm"><?php echo esc_html__('Featured', 'sawah-sports'); ?></div>
+                        <div class="ss-card-head-sm"><?php echo esc_html__('Featured Match', 'sawah-sports'); ?></div>
                         <div class="ss-lh-featured-body">
-                             <div class="ss-loading-sm"></div>
+                            <div class="ss-loading-sm"></div>
                         </div>
                     </div>
 
@@ -125,10 +188,17 @@ class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
                         </div>
                         <div class="ss-matches-controls">
                             <button class="ss-round-nav prev"><i class="eicon-chevron-left"></i></button>
-                            <span class="ss-current-round"><?php echo date('d M'); ?></span>
+                            <span class="ss-current-round"><?php echo esc_html__('Loading...', 'sawah-sports'); ?></span>
                             <button class="ss-round-nav next"><i class="eicon-chevron-right"></i></button>
                         </div>
                         <div class="ss-lh-matches-list">
+                            <div class="ss-loading-sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="ss-sofa-card ss-card-topplayers">
+                        <div class="ss-card-head-sm"><?php echo esc_html__('Top Players', 'sawah-sports'); ?></div>
+                        <div class="ss-lh-topplayers-body">
                             <div class="ss-loading-sm"></div>
                         </div>
                     </div>
@@ -140,8 +210,6 @@ class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
                     <div class="ss-sofa-card ss-card-standings">
                         <div class="ss-main-tabs">
                             <div class="ss-main-tab active" data-target="standings"><?php echo esc_html__('Standings', 'sawah-sports'); ?></div>
-                            <div class="ss-main-tab" data-target="stats"><?php echo esc_html__('Statistics', 'sawah-sports'); ?></div>
-                            <div class="ss-main-tab" data-target="details"><?php echo esc_html__('Details', 'sawah-sports'); ?></div>
                         </div>
 
                         <div class="ss-sub-filters">
@@ -160,9 +228,11 @@ class Sawah_Sports_Widget_League_Hub extends \Elementor\Widget_Base {
                         </div>
                     </div>
 
-                    <div class="ss-sofa-card ss-card-stats">
-                        <div class="ss-card-head"><?php echo esc_html__('Top Players', 'sawah-sports'); ?></div>
-                        <div class="ss-lh-topplayers-body"></div>
+                    <div class="ss-sofa-card ss-card-about">
+                        <div class="ss-card-head-sm"><?php echo esc_html($s['about_title']); ?></div>
+                        <div style="padding:16px; font-size:14px; color:#555; line-height:1.6;">
+                            <?php echo wp_kses_post(nl2br($s['about_text'])); ?>
+                        </div>
                     </div>
 
                 </div>

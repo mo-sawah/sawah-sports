@@ -1,10 +1,7 @@
 (function ($) {
   "use strict";
 
-  const I18N =
-    window.SawahSports && window.SawahSports.i18n
-      ? window.SawahSports.i18n
-      : {};
+  // We use the REST URL for Standings/Players, but AJAX for Rounds
   const REST =
     window.SawahSports && window.SawahSports.restUrl
       ? window.SawahSports.restUrl
@@ -24,10 +21,9 @@
     );
   }
 
-  // Format Time (18:00)
-  function fmtTime(dStr) {
-    if (!dStr) return "-";
-    const d = new Date(dStr.replace(/-/g, "/")); // safari fix
+  function fmtTime(ts) {
+    if (!ts) return "-";
+    const d = new Date(ts * 1000);
     return (
       d.getHours().toString().padStart(2, "0") +
       ":" +
@@ -35,171 +31,192 @@
     );
   }
 
-  // Parse Form string (WWDLL) into HTML
-  function renderForm(formStr) {
-    if (!formStr) return "";
-    const chars = formStr.split("").slice(0, 5); // Max 5
-    return (
-      `<div class="ss-form-badges">` +
-      chars
-        .map((c) => {
-          const u = c.toUpperCase();
-          let cls = "ss-b-D"; // draw default
-          if (u === "W") cls = "ss-b-W";
-          if (u === "L") cls = "ss-b-L";
-          return `<div class="ss-badge ${cls}">${u}</div>`;
-        })
-        .join("") +
-      `</div>`
-    );
+  function getScore(fx) {
+    if (!fx.scores || !fx.scores.length) return { home: "-", away: "-" };
+
+    // Try 'CURRENT', then '2ND_HALF', then 'FT'
+    let s = fx.scores.find((x) => x.description === "CURRENT");
+    if (!s) s = fx.scores.find((x) => x.description === "2ND_HALF");
+    if (!s) s = fx.scores.find((x) => x.description === "FT");
+    if (!s) s = fx.scores[fx.scores.length - 1];
+
+    // Robust check for different API structures
+    let h = "-",
+      a = "-";
+    if (s && s.score && s.score.goals) {
+      h = s.score.goals.home ?? 0;
+      a = s.score.goals.away ?? 0;
+    }
+    return { home: h, away: a };
   }
 
-  function getTeam(fx, loc) {
-    const parts = fx && fx.participants ? fx.participants : [];
-    return parts.find((p) => p && p.meta && p.meta.location === loc) || null;
-  }
+  // --- Rendering Functions ---
 
-  // Render Sidebar Matches
-  function renderMatchesList($root, fixtures) {
+  function renderMatches($root, fixtures) {
     const $list = $root.find(".ss-lh-matches-list");
-    if (!fixtures.length) {
+    if (!fixtures || !fixtures.length) {
       $list.html(
-        '<div style="padding:15px;text-align:center;color:#999">No matches today</div>'
+        '<div style="padding:20px;text-align:center;color:#999">No matches in this round.</div>'
       );
       return;
     }
 
+    // Sort by time
+    fixtures.sort(
+      (a, b) => (a.starting_at.timestamp || 0) - (b.starting_at.timestamp || 0)
+    );
+
     const html = fixtures
       .map((fx) => {
-        const home = getTeam(fx, "home");
-        const away = getTeam(fx, "away");
-        const hName = home?.name || home?.short_code || "-";
-        const aName = away?.name || away?.short_code || "-";
-        const hImg = home?.image_path || "";
-        const aImg = away?.image_path || "";
-
-        // Scores
-        let hScore = "-",
-          aScore = "-";
-        const scores = fx.scores || [];
-        const curr =
-          scores.find((s) => s.description === "CURRENT") ||
-          scores[scores.length - 1];
-        if (curr && curr.score && curr.score.goals) {
-          hScore = curr.score.goals.home || 0;
-          aScore = curr.score.goals.away || 0;
-        }
+        const home =
+          fx.participants.find((p) => p.meta.location === "home") || {};
+        const away =
+          fx.participants.find((p) => p.meta.location === "away") || {};
+        const sc = getScore(fx);
 
         const state = fx.state ? fx.state.short_name : "NS";
         const time = state === "NS" ? fmtTime(fx.starting_at.timestamp) : state;
-        const isLive = ["LIVE", "HT", "ET"].includes(state);
+        const isLive = ["LIVE", "HT", "ET", "PEN_LIVE"].includes(state);
 
         return `
             <div class="ss-lh-match">
-                <div class="ss-lh-match-time">${time}</div>
+                <div class="ss-lh-match-time ${
+                  isLive ? "live" : ""
+                }">${time}</div>
                 <div class="ss-lh-match-teams">
                     <div class="ss-lh-m-team">
-                        <span>${
-                          hImg ? `<img src="${hImg}">` : ""
-                        } ${hName}</span>
-                        <span class="ss-lh-m-score ${
-                          isLive ? "live" : ""
-                        }">${hScore}</span>
+                        <span><img src="${
+                          home.image_path || ""
+                        }" onerror="this.style.display='none'"> ${esc(
+          home.name
+        )}</span>
+                        <span class="ss-lh-m-score ${isLive ? "live" : ""}">${
+          sc.home
+        }</span>
                     </div>
                     <div class="ss-lh-m-team">
-                        <span>${
-                          aImg ? `<img src="${aImg}">` : ""
-                        } ${aName}</span>
-                        <span class="ss-lh-m-score ${
-                          isLive ? "live" : ""
-                        }">${aScore}</span>
+                        <span><img src="${
+                          away.image_path || ""
+                        }" onerror="this.style.display='none'"> ${esc(
+          away.name
+        )}</span>
+                        <span class="ss-lh-m-score ${isLive ? "live" : ""}">${
+          sc.away
+        }</span>
                     </div>
                 </div>
-            </div>
-          `;
+            </div>`;
       })
       .join("");
     $list.html(html);
   }
 
-  // Render Sidebar Featured
   function renderFeatured($root, fixtures) {
     const $box = $root.find(".ss-lh-featured-body");
-    // Find a live match or the next upcoming one
-    let featured = fixtures.find((f) =>
-      ["LIVE", "HT"].includes(f.state?.short_name)
-    );
-    if (!featured) featured = fixtures[0]; // fallback to first
 
-    if (!featured) {
-      $box.html("");
+    // Logic: 1. Live, 2. NS (Upcoming/closest), 3. FT (Recently finished)
+    let feat = fixtures.find((f) =>
+      ["LIVE", "HT", "ET"].includes(f.state?.short_name)
+    );
+    if (!feat) feat = fixtures.find((f) => f.state?.short_name === "NS");
+    if (!feat) feat = fixtures[fixtures.length - 1]; // Last played if all finished
+
+    if (!feat) {
+      $box.html(
+        '<div style="padding:15px;text-align:center;color:#999">No matches available</div>'
+      );
       return;
     }
 
-    const home = getTeam(featured, "home");
-    const away = getTeam(featured, "away");
-    const time = fmtTime(featured.starting_at.timestamp);
+    const home =
+      feat.participants.find((p) => p.meta.location === "home") || {};
+    const away =
+      feat.participants.find((p) => p.meta.location === "away") || {};
+    const sc = getScore(feat);
+    const state = feat.state ? feat.state.short_name : "NS";
+    const statusLabel =
+      state === "NS" ? fmtTime(feat.starting_at.timestamp) : state;
+    const isLive = ["LIVE", "HT"].includes(state);
 
     $box.html(`
         <div class="ss-lh-featured-row">
-            <div class="ss-feat-meta">${esc(
-              featured.state?.state || "Upcoming"
-            )} • ${time}</div>
+            <div class="ss-feat-meta ${
+              isLive ? "live" : ""
+            }">${statusLabel}</div>
             <div class="ss-feat-row">
                 <div class="ss-feat-team">
-                    <img src="${home?.image_path}" alt="">
-                    <div class="ss-feat-team-name">${home?.name}</div>
+                    <img src="${home.image_path || ""}">
+                    <div class="ss-feat-team-name">${esc(home.name)}</div>
                 </div>
-                <div class="ss-feat-score">VS</div>
+                <div class="ss-feat-score">
+                    ${state === "NS" ? "VS" : `${sc.home} - ${sc.away}`}
+                </div>
                 <div class="ss-feat-team">
-                    <img src="${away?.image_path}" alt="">
-                    <div class="ss-feat-team-name">${away?.name}</div>
+                    <img src="${away.image_path || ""}">
+                    <div class="ss-feat-team-name">${esc(away.name)}</div>
                 </div>
             </div>
         </div>
       `);
   }
 
-  // Render Detailed Standings Table
   function renderStandings($root, rows, scope) {
     const $box = $root.find(".ss-lh-standings-body");
-    if (!rows.length) {
+    if (!rows || !rows.length) {
       $box.html(
-        `<div style="padding:20px;text-align:center">No standings data.</div>`
+        '<div style="padding:20px;text-align:center">No standings data.</div>'
       );
       return;
     }
 
     const html = rows
-      .map((r, i) => {
-        // Determine rank class for color
+      .map((r) => {
+        const team = r.participant || r.team;
+        let stats = r;
+        // Filter stats if scope is home/away
+        if (scope !== "all" && r[scope]) stats = r[scope];
+
+        // Color Badges
         let rankCls = "";
         if (r.position <= 4) rankCls = "ss-rank-1";
-        else if (r.position <= 6) rankCls = "ss-rank-5";
         else if (rows.length - r.position < 3) rankCls = "ss-rank-rel";
 
-        const team = r.participant || r.team;
-        const stats = scope === "all" ? r : r[scope] || r; // handle home/away scope
-
-        // Form (usually only available on 'total' or 'all')
-        const formHtml = scope === "all" && r.form ? renderForm(r.form) : "";
+        // Form Badges (Only show on 'all')
+        const formHtml =
+          scope === "all" && r.form
+            ? `<div class="ss-form-badges">
+                  ${r.form
+                    .split("")
+                    .slice(0, 5)
+                    .map(
+                      (c) =>
+                        `<span class="ss-badge ss-b-${c.toUpperCase()}">${c}</span>`
+                    )
+                    .join("")}
+               </div>`
+            : "";
 
         return `
             <tr>
                 <td><span class="ss-rank-box ${rankCls}">${
           r.position
         }</span></td>
-                <td style="text-align:left; display:flex; align-items:center; gap:8px;">
-                    <img src="${team.image_path}" style="width:20px;"> 
-                    <span style="font-weight:600">${team.name}</span>
+                <td class="tl">
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <img src="${
+                          team.image_path
+                        }" style="width:20px;height:20px">
+                        <span>${esc(team.name)}</span>
+                    </div>
                 </td>
-                <td>${stats.played || 0}</td>
+                <td>${stats.played || stats.games_played || 0}</td>
                 <td>${stats.won || 0}</td>
                 <td>${stats.draw || 0}</td>
                 <td>${stats.lost || 0}</td>
-                <td>${stats.goals_for || 0}:${stats.goals_against || 0}</td>
                 <td style="font-weight:700">${stats.points || 0}</td>
-                <td>${formHtml}</td>
+                ${
+                  scope === "all" ? `<td class="hide-mob">${formHtml}</td>` : ""
+                }
             </tr>
           `;
       })
@@ -209,15 +226,13 @@
         <table class="ss-standings-table">
             <thead>
                 <tr>
-                    <th width="30">#</th>
-                    <th class="tl">Team</th>
-                    <th width="30">P</th>
-                    <th width="30">W</th>
-                    <th width="30">D</th>
-                    <th width="30">L</th>
-                    <th width="50">Goals</th>
-                    <th width="30">Pts</th>
-                    <th width="90">Last 5</th>
+                    <th width="30">#</th> <th class="tl">Team</th> <th width="30">P</th>
+                    <th width="30">W</th> <th width="30">D</th> <th width="30">L</th>
+                    <th width="30">Pts</th> ${
+                      scope === "all"
+                        ? '<th width="100" class="hide-mob">Form</th>'
+                        : ""
+                    }
                 </tr>
             </thead>
             <tbody>${html}</tbody>
@@ -225,69 +240,144 @@
       `);
   }
 
-  async function apiGet(path) {
-    const url = REST ? `${REST}${path}` : path;
-    const res = await fetch(url);
-    return await res.json();
+  function renderTopPlayers($root, list) {
+    const $box = $root.find(".ss-lh-topplayers-body");
+    if (!list || !list.length) {
+      $box.html(
+        '<div style="padding:15px;color:#999;text-align:center">No data</div>'
+      );
+      return;
+    }
+
+    const html = list
+      .slice(0, 5)
+      .map((p, i) => {
+        const player = p.player;
+        const team = p.participant || p.team;
+        return `
+            <div class="ss-lh-player-row">
+                <div class="ss-lh-p-rank">${i + 1}</div>
+                <img src="${player.image_path || ""}" class="ss-lh-p-img">
+                <div class="ss-lh-p-info">
+                    <div class="ss-lh-p-name">${esc(player.name)}</div>
+                    <div class="ss-lh-p-team">${esc(team.name)}</div>
+                </div>
+                <div class="ss-lh-p-val">${p.goals || p.total}</div>
+            </div>
+          `;
+      })
+      .join("");
+    $box.html(html);
   }
 
-  async function load($root) {
-    const leagueId = $root.data("league-id");
+  // --- Logic ---
+
+  async function loadRoundsAndFixtures($root) {
     const seasonId = $root.data("season-id");
-    const date = $root.data("current-date");
+    const ajaxUrl = $root.data("ajax-url");
+    const nonce = $root.data("nonce");
 
-    // Parallel Fetch
-    // 1. Fixtures for today (Sidebar)
-    // 2. Standings (Main)
+    // Call the Widget's Custom AJAX
+    const url = `${ajaxUrl}?action=ss_hub_data&req_type=rounds&req_id=${seasonId}&nonce=${nonce}`;
 
-    const [fixRes, stdRes] = await Promise.all([
-      apiGet(`/fixtures?date=${date}`),
-      apiGet(`/standings/${seasonId}`),
+    try {
+      const res = await fetch(url).then((r) => r.json());
+      if (!res.success) return;
+
+      const rounds = res.data;
+      if (!rounds || !rounds.length) return;
+
+      $root.data("rounds", rounds);
+
+      // Find current round
+      let current =
+        rounds.find((r) => r.is_current) || rounds[rounds.length - 1];
+      $root.data("current-round-idx", rounds.indexOf(current));
+
+      loadRound($root);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadRound($root) {
+    const rounds = $root.data("rounds");
+    const idx = $root.data("current-round-idx");
+    const round = rounds[idx];
+    if (!round) return;
+
+    const ajaxUrl = $root.data("ajax-url");
+    const nonce = $root.data("nonce");
+
+    // Update UI
+    $root.find(".ss-current-round").text(round.name);
+    $root.find(".ss-lh-matches-list").html('<div class="ss-loading-sm"></div>');
+    $root
+      .find(".ss-lh-featured-body")
+      .html('<div class="ss-loading-sm"></div>');
+
+    // AJAX Fetch Fixtures
+    const url = `${ajaxUrl}?action=ss_hub_data&req_type=fixtures&req_id=${round.id}&nonce=${nonce}`;
+    const res = await fetch(url).then((r) => r.json());
+
+    const fixtures = res.success && Array.isArray(res.data) ? res.data : [];
+
+    renderMatches($root, fixtures);
+    renderFeatured($root, fixtures);
+  }
+
+  async function loadStandingsAndPlayers($root) {
+    const seasonId = $root.data("season-id");
+
+    // We use existing REST endpoints for these since they work fine
+    const [stdRes, plyRes] = await Promise.all([
+      fetch(`${REST}/standings/${seasonId}`).then((r) => r.json()),
+      fetch(`${REST}/topscorers/${seasonId}`).then((r) => r.json()),
     ]);
 
-    // Filter league fixtures
-    let fixtures = [];
-    if (fixRes && fixRes.data) {
-      fixtures = fixRes.data.filter(
-        (f) => Number(f.league_id) === Number(leagueId)
-      );
-    }
-
     // Standings
-    let standings = [];
-    if (stdRes && stdRes.data) {
-      // Handle groups vs simple standings
-      standings = Array.isArray(stdRes.data)
+    let rows = [];
+    if (stdRes.data)
+      rows = Array.isArray(stdRes.data)
         ? stdRes.data
-        : stdRes.data.standings || [];
-    }
+        : stdRes.data[0]?.standings || [];
+    $root.data("raw-standings", rows);
+    renderStandings($root, rows, "all");
 
-    renderFeatured($root, fixtures);
-    renderMatchesList($root, fixtures);
-    renderStandings($root, standings, "all");
-
-    // Cache raw standings for filtering
-    $root.data("raw-standings", standings);
+    // Players
+    let players = [];
+    if (plyRes.data) players = Array.isArray(plyRes.data) ? plyRes.data : [];
+    renderTopPlayers($root, players);
   }
 
   function init($root) {
-    load($root);
+    if (!$root.data("season-id")) return;
 
-    // Filter Standings (Home/Away/All)
-    $root.on("click", ".ss-sub-pill", function () {
-      const scope = $(this).data("scope");
-      $root.find(".ss-sub-pill").removeClass("active");
-      $(this).addClass("active");
+    // Initial Loads
+    loadRoundsAndFixtures($root);
+    loadStandingsAndPlayers($root);
 
-      const raw = $root.data("raw-standings");
-      if (raw) renderStandings($root, raw, scope);
+    // Events
+    $root.on("click", ".ss-round-nav", function () {
+      const rounds = $root.data("rounds");
+      if (!rounds) return;
+      let idx = $root.data("current-round-idx");
+
+      if ($(this).hasClass("prev")) idx = Math.max(0, idx - 1);
+      else idx = Math.min(rounds.length - 1, idx + 1);
+
+      $root.data("current-round-idx", idx);
+      loadRound($root);
     });
 
-    // Main Tabs (Visual Only for now as we focused on Standings)
-    $root.on("click", ".ss-main-tab", function () {
-      $(".ss-main-tab").removeClass("active");
+    $root.on("click", ".ss-sub-pill", function () {
+      $root.find(".ss-sub-pill").removeClass("active");
       $(this).addClass("active");
-      // Logic to switch view to Stats/Details would go here
+      renderStandings(
+        $root,
+        $root.data("raw-standings"),
+        $(this).data("scope")
+      );
     });
   }
 

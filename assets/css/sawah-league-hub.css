@@ -1,55 +1,47 @@
 /* SofaScore-style Hub CSS */
 .ss-sofa-hub {
-  font-family: "Roboto", "Open Sans", -apple-system, sans-serif;
+  font-family: "Roboto", "Open Sans", sans-serif;
   color: #121619;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Header */
+/* --- Header --- */
 .ss-sofa-header {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   padding: 24px;
   margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
 }
-
 .ss-sofa-header-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
-
 .ss-sofa-logo-area {
   display: flex;
   align-items: center;
   gap: 20px;
 }
-
 .ss-league-logo-img {
   width: 64px;
   height: 64px;
   object-fit: contain;
 }
-
 .ss-league-title {
   font-size: 24px;
   font-weight: 700;
   margin: 0;
-  line-height: 1.2;
   color: #0f1923;
+  line-height: 1.2;
 }
-
 .ss-season-year {
   font-weight: 400;
   color: #555e61;
+  font-size: 18px;
   margin-left: 8px;
 }
-
 .ss-league-meta {
   display: flex;
   align-items: center;
@@ -58,16 +50,13 @@
   font-size: 14px;
   color: #555e61;
 }
-
 .ss-country-flag {
   width: 18px;
   height: 14px;
   border-radius: 2px;
-  object-fit: cover;
 }
-
 .ss-fav-btn {
-  background: #37003c; /* PL Purple example, or generic Blue */
+  background: #37003c;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -77,35 +66,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: 0.2s;
-}
-.ss-fav-btn:hover {
-  opacity: 0.9;
 }
 
-/* Progress Bar */
-.ss-sofa-progress {
-  margin-top: 10px;
-}
-.ss-progress-bar {
-  height: 4px;
-  background: #e0e0e0;
-  border-radius: 2px;
-  overflow: hidden;
-}
-.ss-progress-fill {
-  height: 100%;
-  background: #37003c;
-}
-.ss-progress-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #888;
-  margin-top: 4px;
-}
-
-/* Grid Layout */
+/* --- Grid System --- */
 .ss-sofa-grid {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -117,7 +80,7 @@
   }
 }
 
-/* Cards Common */
+/* --- Cards Common --- */
 .ss-sofa-card {
   background: #fff;
   border-radius: 12px;
@@ -125,7 +88,6 @@
   margin-bottom: 20px;
   overflow: hidden;
 }
-
 .ss-card-head-sm {
   font-size: 13px;
   font-weight: 700;
@@ -134,8 +96,26 @@
   color: #8a9097;
   border-bottom: 1px solid #f0f0f0;
 }
+.ss-card-head-tabs {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  gap: 15px;
+}
+.ss-card-head-tabs span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #8a9097;
+  cursor: pointer;
+  padding-bottom: 12px;
+  margin-bottom: -13px;
+}
+.ss-card-head-tabs span.active {
+  color: #2b6fe3;
+  border-bottom: 2px solid #2b6fe3;
+}
 
-/* Sidebar Matches */
+/* --- Matches List --- */
 .ss-matches-controls {
   display: flex;
   justify-content: space-between;
@@ -149,6 +129,7 @@
   background: none;
   cursor: pointer;
   color: #555;
+  font-size: 16px;
 }
 .ss-current-round {
   font-weight: 700;
@@ -166,28 +147,33 @@
 .ss-lh-match:hover {
   background: #fbfbfb;
 }
-
 .ss-lh-match-time {
   font-size: 11px;
   color: #888;
   min-width: 35px;
+  text-align: center;
+}
+.ss-lh-match-time.live {
+  color: #e53935;
+  font-weight: bold;
 }
 .ss-lh-match-teams {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .ss-lh-m-team {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   color: #333;
+  align-items: center;
 }
 .ss-lh-m-team img {
   width: 16px;
   height: 16px;
-  margin-right: 6px;
+  margin-right: 8px;
   vertical-align: middle;
 }
 .ss-lh-m-score {
@@ -198,7 +184,51 @@
   color: #e53935;
 }
 
-/* Main Tabs */
+/* --- Featured Match --- */
+.ss-lh-featured-row {
+  padding: 16px;
+  text-align: center;
+}
+.ss-feat-meta {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.ss-feat-meta.live {
+  color: #e53935;
+}
+.ss-feat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ss-feat-team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.ss-feat-team img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+.ss-feat-team-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.ss-feat-score {
+  font-size: 22px;
+  font-weight: 800;
+  color: #121619;
+  padding: 0 10px;
+}
+
+/* --- Standings --- */
 .ss-main-tabs {
   display: flex;
   border-bottom: 1px solid #e0e0e0;
@@ -213,9 +243,10 @@
   border-bottom: 3px solid transparent;
 }
 .ss-main-tab.active {
-  color: #2b6fe3; /* Sofa Blue */
+  color: #2b6fe3;
   border-bottom-color: #2b6fe3;
 }
+
 .ss-sub-filters {
   padding: 16px;
   display: flex;
@@ -236,7 +267,6 @@
   color: #fff;
 }
 
-/* Standings Table */
 .ss-standings-table {
   width: 100%;
   border-collapse: collapse;
@@ -260,11 +290,6 @@
   border-bottom: 1px solid #f0f0f0;
   color: #121619;
 }
-.ss-standings-table tr:hover td {
-  background: #f9fbff;
-}
-
-/* Rank Colors */
 .ss-rank-box {
   display: inline-block;
   width: 24px;
@@ -281,16 +306,11 @@
 .ss-rank-4 {
   background: #1a73e8;
   color: #fff;
-} /* CL */
-.ss-rank-5,
-.ss-rank-6 {
-  background: #e37400;
-  color: #fff;
-} /* EL */
+}
 .ss-rank-rel {
   background: #d93025;
   color: #fff;
-} /* Relegation */
+}
 
 /* Form Badges */
 .ss-form-badges {
@@ -299,11 +319,11 @@
   justify-content: center;
 }
 .ss-badge {
-  width: 16px;
-  height: 16px;
-  border-radius: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
   color: #fff;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -319,44 +339,65 @@
   background: #d50000;
 }
 
-/* Featured Area */
-.ss-lh-featured-row {
-  padding: 16px;
-}
-.ss-feat-row {
+/* Top Players List */
+.ss-lh-player-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f5f5f5;
 }
-.ss-feat-team {
-  text-align: center;
-  flex: 1;
-}
-.ss-feat-team img {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 6px;
-}
-.ss-feat-team-name {
+.ss-lh-p-rank {
   font-size: 12px;
-  font-weight: 600;
-}
-.ss-feat-score {
-  font-size: 20px;
   font-weight: 700;
-  color: #121619;
-  padding: 0 10px;
+  color: #888;
+  width: 20px;
 }
-.ss-feat-meta {
-  text-align: center;
+.ss-lh-p-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin: 0 10px;
+  background: #eee;
+}
+.ss-lh-p-info {
+  flex: 1;
+  min-width: 0;
+}
+.ss-lh-p-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #121619;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-lh-p-team {
   font-size: 11px;
   color: #888;
-  margin-bottom: 6px;
+}
+.ss-lh-p-val {
+  font-weight: 700;
+  font-size: 14px;
+  color: #121619;
 }
 
+/* Loaders */
 .ss-loading-sm {
   height: 60px;
   background: url("https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif")
     no-repeat center;
   opacity: 0.5;
+}
+.ss-loading {
+  height: 150px;
+  background: url("https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif")
+    no-repeat center;
+  opacity: 0.5;
+}
+
+/* Responsive Hide */
+@media (max-width: 600px) {
+  .hide-mob {
+    display: none;
+  }
 }
