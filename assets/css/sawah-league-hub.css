@@ -1,4 +1,4 @@
-/* SofaScore-style Hub CSS */
+/* SofaScore-style Hub CSS v3 */
 .ss-sofa-hub {
   font-family: "Roboto", "Open Sans", sans-serif;
   color: #121619;
@@ -6,7 +6,7 @@
   margin: 0 auto;
 }
 
-/* --- Header --- */
+/* Header */
 .ss-sofa-header {
   background: #fff;
   border-radius: 12px;
@@ -68,7 +68,7 @@
   gap: 6px;
 }
 
-/* --- Grid System --- */
+/* Grid */
 .ss-sofa-grid {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -80,7 +80,7 @@
   }
 }
 
-/* --- Cards Common --- */
+/* Cards */
 .ss-sofa-card {
   background: #fff;
   border-radius: 12px;
@@ -115,7 +115,23 @@
   border-bottom: 2px solid #2b6fe3;
 }
 
-/* --- Matches List --- */
+/* Loaders */
+.ss-loading-sm {
+  height: 60px;
+  background: url("https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif")
+    no-repeat center;
+  opacity: 0.5;
+  width: 100%;
+}
+.ss-loading {
+  height: 150px;
+  background: url("https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif")
+    no-repeat center;
+  opacity: 0.5;
+  width: 100%;
+}
+
+/* Matches */
 .ss-matches-controls {
   display: flex;
   justify-content: space-between;
@@ -135,7 +151,6 @@
   font-weight: 700;
   font-size: 13px;
 }
-
 .ss-lh-match {
   padding: 10px 16px;
   display: flex;
@@ -184,7 +199,7 @@
   color: #e53935;
 }
 
-/* --- Featured Match --- */
+/* Featured */
 .ss-lh-featured-row {
   padding: 16px;
   text-align: center;
@@ -228,7 +243,7 @@
   padding: 0 10px;
 }
 
-/* --- Standings --- */
+/* Standings */
 .ss-main-tabs {
   display: flex;
   border-bottom: 1px solid #e0e0e0;
@@ -246,7 +261,6 @@
   color: #2b6fe3;
   border-bottom-color: #2b6fe3;
 }
-
 .ss-sub-filters {
   padding: 16px;
   display: flex;
@@ -266,7 +280,6 @@
   background: #121619;
   color: #fff;
 }
-
 .ss-standings-table {
   width: 100%;
   border-collapse: collapse;
@@ -311,8 +324,6 @@
   background: #d93025;
   color: #fff;
 }
-
-/* Form Badges */
 .ss-form-badges {
   display: flex;
   gap: 2px;
@@ -339,7 +350,7 @@
   background: #d50000;
 }
 
-/* Top Players List */
+/* Players */
 .ss-lh-player-row {
   display: flex;
   align-items: center;
@@ -381,21 +392,6 @@
   color: #121619;
 }
 
-/* Loaders */
-.ss-loading-sm {
-  height: 60px;
-  background: url("https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif")
-    no-repeat center;
-  opacity: 0.5;
-}
-.ss-loading {
-  height: 150px;
-  background: url("https://cdnjs.cloudflare.com/ajax/libs/galleriffic/2.0.1/css/loader.gif")
-    no-repeat center;
-  opacity: 0.5;
-}
-
-/* Responsive Hide */
 @media (max-width: 600px) {
   .hide-mob {
     display: none;

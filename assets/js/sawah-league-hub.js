@@ -1,12 +1,6 @@
 (function ($) {
   "use strict";
 
-  // We use the REST URL for Standings/Players, but AJAX for Rounds
-  const REST =
-    window.SawahSports && window.SawahSports.restUrl
-      ? window.SawahSports.restUrl
-      : "";
-
   function esc(s) {
     return String(s == null ? "" : s).replace(
       /[&<>"']/g,
@@ -34,13 +28,11 @@
   function getScore(fx) {
     if (!fx.scores || !fx.scores.length) return { home: "-", away: "-" };
 
-    // Try 'CURRENT', then '2ND_HALF', then 'FT'
     let s = fx.scores.find((x) => x.description === "CURRENT");
     if (!s) s = fx.scores.find((x) => x.description === "2ND_HALF");
     if (!s) s = fx.scores.find((x) => x.description === "FT");
     if (!s) s = fx.scores[fx.scores.length - 1];
 
-    // Robust check for different API structures
     let h = "-",
       a = "-";
     if (s && s.score && s.score.goals) {
@@ -50,8 +42,7 @@
     return { home: h, away: a };
   }
 
-  // --- Rendering Functions ---
-
+  // --- Renderers ---
   function renderMatches($root, fixtures) {
     const $list = $root.find(".ss-lh-matches-list");
     if (!fixtures || !fixtures.length) {
@@ -60,8 +51,6 @@
       );
       return;
     }
-
-    // Sort by time
     fixtures.sort(
       (a, b) => (a.starting_at.timestamp || 0) - (b.starting_at.timestamp || 0)
     );
@@ -73,7 +62,6 @@
         const away =
           fx.participants.find((p) => p.meta.location === "away") || {};
         const sc = getScore(fx);
-
         const state = fx.state ? fx.state.short_name : "NS";
         const time = state === "NS" ? fmtTime(fx.starting_at.timestamp) : state;
         const isLive = ["LIVE", "HT", "ET", "PEN_LIVE"].includes(state);
@@ -114,16 +102,15 @@
   function renderFeatured($root, fixtures) {
     const $box = $root.find(".ss-lh-featured-body");
 
-    // Logic: 1. Live, 2. NS (Upcoming/closest), 3. FT (Recently finished)
     let feat = fixtures.find((f) =>
       ["LIVE", "HT", "ET"].includes(f.state?.short_name)
     );
     if (!feat) feat = fixtures.find((f) => f.state?.short_name === "NS");
-    if (!feat) feat = fixtures[fixtures.length - 1]; // Last played if all finished
+    if (!feat) feat = fixtures[fixtures.length - 1];
 
     if (!feat) {
       $box.html(
-        '<div style="padding:15px;text-align:center;color:#999">No matches available</div>'
+        '<div style="padding:15px;text-align:center;color:#999">No featured match</div>'
       );
       return;
     }
@@ -173,15 +160,12 @@
       .map((r) => {
         const team = r.participant || r.team;
         let stats = r;
-        // Filter stats if scope is home/away
         if (scope !== "all" && r[scope]) stats = r[scope];
 
-        // Color Badges
         let rankCls = "";
         if (r.position <= 4) rankCls = "ss-rank-1";
         else if (rows.length - r.position < 3) rankCls = "ss-rank-rel";
 
-        // Form Badges (Only show on 'all')
         const formHtml =
           scope === "all" && r.form
             ? `<div class="ss-form-badges">
@@ -204,8 +188,8 @@
                 <td class="tl">
                     <div style="display:flex;align-items:center;gap:6px">
                         <img src="${
-                          team.image_path
-                        }" style="width:20px;height:20px">
+                          team.image_path || ""
+                        }" style="width:20px;height:20px;object-fit:contain;">
                         <span>${esc(team.name)}</span>
                     </div>
                 </td>
@@ -244,7 +228,7 @@
     const $box = $root.find(".ss-lh-topplayers-body");
     if (!list || !list.length) {
       $box.html(
-        '<div style="padding:15px;color:#999;text-align:center">No data</div>'
+        '<div style="padding:15px;color:#999;text-align:center">No players data.</div>'
       );
       return;
     }
@@ -270,33 +254,39 @@
     $box.html(html);
   }
 
-  // --- Logic ---
+  // --- AJAX Fetchers ---
 
   async function loadRoundsAndFixtures($root) {
     const seasonId = $root.data("season-id");
     const ajaxUrl = $root.data("ajax-url");
     const nonce = $root.data("nonce");
 
-    // Call the Widget's Custom AJAX
-    const url = `${ajaxUrl}?action=ss_hub_data&req_type=rounds&req_id=${seasonId}&nonce=${nonce}`;
-
+    // 1. Get Rounds
     try {
-      const res = await fetch(url).then((r) => r.json());
-      if (!res.success) return;
+      const res = await fetch(
+        `${ajaxUrl}?action=ss_hub_data&req_type=rounds&req_id=${seasonId}&nonce=${nonce}`
+      ).then((r) => r.json());
+
+      if (!res.success || !res.data || !res.data.length) {
+        $root
+          .find(".ss-lh-matches-list")
+          .html(
+            '<div style="padding:20px;text-align:center">No rounds found</div>'
+          );
+        return;
+      }
 
       const rounds = res.data;
-      if (!rounds || !rounds.length) return;
-
       $root.data("rounds", rounds);
 
-      // Find current round
+      // Current Round Logic
       let current =
         rounds.find((r) => r.is_current) || rounds[rounds.length - 1];
       $root.data("current-round-idx", rounds.indexOf(current));
 
       loadRound($root);
     } catch (e) {
-      console.error(e);
+      console.error("Rounds Error:", e);
     }
   }
 
@@ -309,55 +299,68 @@
     const ajaxUrl = $root.data("ajax-url");
     const nonce = $root.data("nonce");
 
-    // Update UI
     $root.find(".ss-current-round").text(round.name);
     $root.find(".ss-lh-matches-list").html('<div class="ss-loading-sm"></div>');
     $root
       .find(".ss-lh-featured-body")
       .html('<div class="ss-loading-sm"></div>');
 
-    // AJAX Fetch Fixtures
-    const url = `${ajaxUrl}?action=ss_hub_data&req_type=fixtures&req_id=${round.id}&nonce=${nonce}`;
-    const res = await fetch(url).then((r) => r.json());
-
-    const fixtures = res.success && Array.isArray(res.data) ? res.data : [];
-
-    renderMatches($root, fixtures);
-    renderFeatured($root, fixtures);
+    try {
+      const res = await fetch(
+        `${ajaxUrl}?action=ss_hub_data&req_type=fixtures&req_id=${round.id}&nonce=${nonce}`
+      ).then((r) => r.json());
+      const fixtures = res.success && Array.isArray(res.data) ? res.data : [];
+      renderMatches($root, fixtures);
+      renderFeatured($root, fixtures);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async function loadStandingsAndPlayers($root) {
     const seasonId = $root.data("season-id");
+    const ajaxUrl = $root.data("ajax-url");
+    const nonce = $root.data("nonce");
 
-    // We use existing REST endpoints for these since they work fine
-    const [stdRes, plyRes] = await Promise.all([
-      fetch(`${REST}/standings/${seasonId}`).then((r) => r.json()),
-      fetch(`${REST}/topscorers/${seasonId}`).then((r) => r.json()),
-    ]);
+    // Fetch Standings
+    try {
+      const sRes = await fetch(
+        `${ajaxUrl}?action=ss_hub_data&req_type=standings&req_id=${seasonId}&nonce=${nonce}`
+      ).then((r) => r.json());
+      let rows = [];
+      if (sRes.success && sRes.data) {
+        rows = Array.isArray(sRes.data)
+          ? sRes.data
+          : sRes.data[0]?.standings || [];
+      }
+      $root.data("raw-standings", rows);
+      renderStandings($root, rows, "all");
+    } catch (e) {
+      console.error(e);
+    }
 
-    // Standings
-    let rows = [];
-    if (stdRes.data)
-      rows = Array.isArray(stdRes.data)
-        ? stdRes.data
-        : stdRes.data[0]?.standings || [];
-    $root.data("raw-standings", rows);
-    renderStandings($root, rows, "all");
-
-    // Players
-    let players = [];
-    if (plyRes.data) players = Array.isArray(plyRes.data) ? plyRes.data : [];
-    renderTopPlayers($root, players);
+    // Fetch Players
+    try {
+      const pRes = await fetch(
+        `${ajaxUrl}?action=ss_hub_data&req_type=players&req_id=${seasonId}&nonce=${nonce}`
+      ).then((r) => r.json());
+      let players = pRes.success && Array.isArray(pRes.data) ? pRes.data : [];
+      renderTopPlayers($root, players);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   function init($root) {
-    if (!$root.data("season-id")) return;
+    const sid = $root.data("season-id");
+    if (!sid || sid == 0) {
+      console.warn("Sawah Hub: No Season ID set in widget settings.");
+      return;
+    }
 
-    // Initial Loads
     loadRoundsAndFixtures($root);
     loadStandingsAndPlayers($root);
 
-    // Events
     $root.on("click", ".ss-round-nav", function () {
       const rounds = $root.data("rounds");
       if (!rounds) return;
