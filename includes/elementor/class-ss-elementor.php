@@ -59,6 +59,9 @@ final class Sawah_Sports_Elementor {
         // v7.0: League Hub (SofaScore-style page)
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-league-hub.php';
 
+        // v8.0: Goal.com Style Matches (Greek/Cyprus Priority)
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-goal-style-matches.php';
+
         // Register all widgets
         $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center()); // v5.0 Stats Center
         $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches()); // v4.0 Premium
@@ -80,6 +83,7 @@ final class Sawah_Sports_Elementor {
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Ticker());
         $widgets_manager->register(new \Sawah_Sports_Widget_Mobile_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_League_Hub()); // v7.0 League Hub
+        $widgets_manager->register(new \Sawah_Sports_Widget_Goal_Style_Matches()); // v8.0 Goal.com Style
     }
 
     public function frontend_assets() {
@@ -134,6 +138,22 @@ final class Sawah_Sports_Elementor {
         wp_enqueue_script(
             'sawah-league-hub',
             SAWAH_SPORTS_URL . 'assets/js/sawah-league-hub.js',
+            ['jquery', 'sawah-sports-modern'],
+            SAWAH_SPORTS_VERSION,
+            true
+        );
+
+        // Goal.com Style Matches (v8.0) - Greek/Cyprus Priority
+        wp_enqueue_style(
+            'sawah-goal-matches',
+            SAWAH_SPORTS_URL . 'assets/css/goal-style-matches.css',
+            ['sawah-sports-modern'],
+            SAWAH_SPORTS_VERSION
+        );
+
+        wp_enqueue_script(
+            'sawah-goal-matches',
+            SAWAH_SPORTS_URL . 'assets/js/goal-style-matches.js',
             ['jquery', 'sawah-sports-modern'],
             SAWAH_SPORTS_VERSION,
             true
