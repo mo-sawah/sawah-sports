@@ -1,0 +1,299 @@
+/**
+ * Sawah Sports - Sidebar Standings Widget
+ * Compact design for narrow spaces
+ */
+
+/* Container */
+.ss-standings-sidebar {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+}
+
+/* Header */
+.ss-sidebar-header {
+  padding: 20px 20px 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.ss-sidebar-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  font-family: inherit;
+}
+
+/* Table Wrapper */
+.ss-sidebar-table-wrapper {
+  min-height: 200px;
+}
+
+/* Table */
+.ss-sidebar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+/* Table Header */
+.ss-sidebar-table thead tr {
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.ss-sidebar-table th {
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #f9fafb;
+  font-family: inherit;
+}
+
+.ss-sidebar-table th:first-child {
+  padding-left: 16px;
+  width: 40px;
+}
+
+.ss-sidebar-table th:last-child {
+  padding-right: 16px;
+  text-align: right;
+}
+
+.ss-sidebar-table th.ss-stat {
+  text-align: center;
+  width: 32px;
+}
+
+/* Table Body */
+.ss-sidebar-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.2s;
+}
+
+.ss-sidebar-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.ss-sidebar-table tbody tr.hidden {
+  display: none;
+}
+
+.ss-sidebar-table tbody tr.expanded {
+  display: table-row;
+}
+
+.ss-sidebar-table td {
+  padding: 12px 8px;
+  color: #111827;
+  font-family: inherit;
+}
+
+.ss-sidebar-table td:first-child {
+  padding-left: 16px;
+}
+
+.ss-sidebar-table td:last-child {
+  padding-right: 16px;
+  text-align: right;
+}
+
+/* Position Column */
+.ss-sidebar-pos {
+  font-weight: 700;
+  font-size: 14px;
+  color: #6b7280;
+  width: 40px;
+}
+
+/* Team Column */
+.ss-sidebar-team {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ss-sidebar-team-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.ss-sidebar-team-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+/* Stat Columns */
+.ss-stat {
+  text-align: center;
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 13px;
+  width: 32px;
+}
+
+/* Points Column */
+.ss-pts {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+  text-align: right;
+}
+
+/* More Button */
+.ss-sidebar-more-wrapper {
+  padding: 16px 20px;
+  border-top: 1px solid #f3f4f6;
+  text-align: center;
+}
+
+.ss-sidebar-more-btn {
+  width: 100%;
+  padding: 10px 20px;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.ss-sidebar-more-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.ss-sidebar-more-btn.expanded {
+  border-color: var(--ss-primary-color, #000);
+  color: var(--ss-primary-color, #000);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+/* Loading State */
+.ss-loading {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.ss-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: ss-spin 0.7s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes ss-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.ss-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+/* Error State */
+.ss-error {
+  padding: 40px 20px;
+  text-align: center;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+/* Highlight Top Teams (Optional) */
+.ss-sidebar-table tbody tr:nth-child(1) .ss-sidebar-pos,
+.ss-sidebar-table tbody tr:nth-child(2) .ss-sidebar-pos,
+.ss-sidebar-table tbody tr:nth-child(3) .ss-sidebar-pos {
+  color: var(--ss-accent-color, #f59e0b);
+}
+
+/* Responsive - Mobile */
+@media (max-width: 480px) {
+  .ss-sidebar-header {
+    padding: 16px;
+  }
+
+  .ss-sidebar-header h3 {
+    font-size: 18px;
+  }
+
+  .ss-sidebar-table {
+    font-size: 12px;
+  }
+
+  .ss-sidebar-table th,
+  .ss-sidebar-table td {
+    padding: 10px 6px;
+  }
+
+  .ss-sidebar-table th:first-child,
+  .ss-sidebar-table td:first-child {
+    padding-left: 12px;
+  }
+
+  .ss-sidebar-table th:last-child,
+  .ss-sidebar-table td:last-child {
+    padding-right: 12px;
+  }
+
+  .ss-sidebar-team {
+    gap: 8px;
+  }
+
+  .ss-sidebar-team-logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ss-sidebar-team-name {
+    font-size: 12px;
+  }
+
+  .ss-stat {
+    font-size: 12px;
+    width: 28px;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .ss-sidebar-table th,
+[dir="rtl"] .ss-sidebar-table td {
+  text-align: right;
+}
+
+[dir="rtl"] .ss-sidebar-table th:last-child,
+[dir="rtl"] .ss-sidebar-table td:last-child {
+  text-align: left;
+}
+
+[dir="rtl"] .ss-sidebar-team {
+  flex-direction: row-reverse;
+}

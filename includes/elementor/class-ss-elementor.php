@@ -62,6 +62,9 @@ final class Sawah_Sports_Elementor {
         // v8.0: Goal.com Style Matches (Greek/Cyprus Priority)
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-goal-style-matches.php';
 
+        // v9.0: Sidebar Standings (Compact)
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings-sidebar.php';
+
         // Register all widgets
         $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center()); // v5.0 Stats Center
         $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches()); // v4.0 Premium
@@ -84,6 +87,7 @@ final class Sawah_Sports_Elementor {
         $widgets_manager->register(new \Sawah_Sports_Widget_Mobile_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_League_Hub()); // v7.0 League Hub
         $widgets_manager->register(new \Sawah_Sports_Widget_Goal_Style_Matches()); // v8.0 Goal.com Style
+        $widgets_manager->register(new \Sawah_Sports_Widget_Standings_Sidebar()); // v9.0 Sidebar Standings
     }
 
     public function frontend_assets() {
@@ -159,6 +163,22 @@ final class Sawah_Sports_Elementor {
             true
         );
 
+        // Sidebar Standings (v9.0) - Compact for sidebars
+        wp_enqueue_style(
+            'sawah-standings-sidebar',
+            SAWAH_SPORTS_URL . 'assets/css/standings-sidebar.css',
+            ['sawah-sports-modern'],
+            SAWAH_SPORTS_VERSION
+        );
+
+        wp_enqueue_script(
+            'sawah-standings-sidebar',
+            SAWAH_SPORTS_URL . 'assets/js/standings-sidebar.js',
+            ['jquery', 'sawah-sports-modern'],
+            SAWAH_SPORTS_VERSION,
+            true
+        );
+
         wp_localize_script('sawah-sports-modern', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
@@ -186,6 +206,10 @@ final class Sawah_Sports_Elementor {
                 'moreChannels' => __('more channels', 'sawah-sports'),
                 'streamingOn' => __('Streaming on', 'sawah-sports'),
                 'broadcastOn' => __('Broadcast on', 'sawah-sports'),
+                
+                // v9.0: Sidebar Standings i18n
+                'more' => __('More', 'sawah-sports'),
+                'less' => __('Less', 'sawah-sports'),
             ],
         ]);
     }
