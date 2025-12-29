@@ -189,19 +189,19 @@
 
 .ss-goal-scroller {
   position: relative;
-  padding: 0 50px;
+  padding: 0 44px; /* Match arrow width */
 }
 
-/* Scroll Arrows - Circular like Goal.com */
+/* Scroll Arrows - Tall rectangles like Goal.com */
 .ss-goal-scroll-arrow {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  height: auto;
   border: none;
-  background: #fff;
-  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -209,28 +209,29 @@
   color: #111827;
   z-index: 10;
   transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
 }
 
 .ss-goal-scroll-arrow:hover:not(:disabled) {
-  background: #f9fafb;
+  background: #fff;
   color: #000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .ss-goal-scroll-arrow:disabled {
   opacity: 0.3;
   cursor: not-allowed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
 }
 
 .ss-goal-scroll-arrow.left {
-  left: 10px;
+  left: 0;
+  border-radius: 8px 0 0 8px;
 }
 
 .ss-goal-scroll-arrow.right {
-  right: 10px;
+  right: 0;
+  border-radius: 0 8px 8px 0;
 }
 
 /* Horizontal Match List */
@@ -505,21 +506,19 @@
   }
 
   .ss-goal-scroller {
-    padding: 0 40px;
+    padding: 0 36px;
   }
 
   .ss-goal-scroll-arrow {
     width: 36px;
-    height: 36px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   }
 
   .ss-goal-scroll-arrow.left {
-    left: 6px;
+    left: 0;
   }
 
   .ss-goal-scroll-arrow.right {
-    right: 6px;
+    right: 0;
   }
 
   .ss-goal-match-card {

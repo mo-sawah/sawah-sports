@@ -533,104 +533,181 @@
       return ["FT", "AET", "FT_PEN", "FINISHED"].some((s) => short.includes(s));
     }
 
-    getScore(match) {
-      const scores = match.scores || [];
-      let home = "-";
-      let away = "-";
+    /**
+     * Extract goals from a score item (helper for computeScoreFromItems)
+     */
+    extractGoalsFromScoreItem(item) {
+      const s = item?.score;
 
-      const state = match.state || {};
-      const isFinished = this.isMatchFinished(match);
-      const isLive = this.isMatchLive(match);
+      if (typeof s === "number") return s;
 
-      // Debug logging for finished matches without scores
-      if (isFinished && scores.length > 0) {
-        console.log("Finished match scores:", {
-          id: match.id,
-          state: state.short_name,
-          scores: scores,
-          participants: match.participants?.map((p) => p.name),
-        });
+      const directCandidates = [
+        s?.goals,
+        s?.goal,
+        s?.score,
+        s?.value,
+        item?.goals,
+        item?.score,
+        item?.value,
+      ];
+
+      for (const c of directCandidates) {
+        if (typeof c === "number") return c;
+        if (typeof c === "string" && c.trim() !== "" && !isNaN(Number(c)))
+          return Number(c);
       }
 
-      // Priority 1: Look for scores with specific descriptions
-      for (const score of scores) {
-        if (!score.score) continue;
-
-        const desc = (score.description || "").toLowerCase();
-        const data = score.score;
-
-        // Match various score descriptions
+      // Sometimes goals is wrapped
+      if (s && typeof s === "object") {
+        if (typeof s.goals === "number") return s.goals;
+        if (typeof s.home === "number" || typeof s.away === "number")
+          return null; // handled elsewhere
         if (
-          desc.includes("current") ||
-          desc.includes("final") ||
-          desc.includes("fulltime") ||
-          desc.includes("ft") ||
-          desc.includes("full-time")
-        ) {
-          home = data.home ?? data.participant_home ?? data.goals?.home ?? home;
-          away = data.away ?? data.participant_away ?? data.goals?.away ?? away;
-
-          if (home !== "-" && away !== "-") {
-            return { home, away };
-          }
-        }
+          typeof s.home_score === "number" ||
+          typeof s.away_score === "number"
+        )
+          return null; // handled elsewhere
       }
 
-      // Priority 2: For finished/live matches, try ANY score object
-      if (isFinished || isLive) {
-        for (const score of scores) {
-          if (!score.score) continue;
+      return null;
+    }
 
-          const data = score.score;
+    /**
+     * Compute score from score items array
+     */
+    computeScoreFromItems(items, match) {
+      if (!Array.isArray(items) || items.length === 0) return null;
 
-          // Try all possible field names
-          const homeScore =
-            data.home ?? data.participant_home ?? data.goals?.home;
-          const awayScore =
-            data.away ?? data.participant_away ?? data.goals?.away;
+      // Case A: one item already has both sides
+      const bothSides = items.find((it) => {
+        const sc = it?.score;
+        return (
+          sc &&
+          (sc.home !== undefined ||
+            sc.away !== undefined ||
+            sc.home_score !== undefined ||
+            sc.away_score !== undefined ||
+            (sc.goals && typeof sc.goals === "object"))
+        );
+      });
 
-          if (homeScore !== undefined && homeScore !== null) {
-            home = homeScore;
-          }
-          if (awayScore !== undefined && awayScore !== null) {
-            away = awayScore;
-          }
+      if (bothSides && bothSides.score) {
+        const sc = bothSides.score;
+        const home =
+          sc.home ??
+          sc.home_score ??
+          sc.goals?.home ??
+          sc.participant?.home ??
+          0;
 
-          if (home !== "-" && away !== "-") {
-            return { home, away };
-          }
-        }
+        const away =
+          sc.away ??
+          sc.away_score ??
+          sc.goals?.away ??
+          sc.participant?.away ??
+          0;
 
-        // Priority 3: Check participants for scores
-        if (match.participants) {
-          for (const participant of match.participants) {
-            if (
-              participant.meta?.location === "home" &&
-              participant.meta?.score !== undefined
-            ) {
-              home = participant.meta.score;
-            }
-            if (
-              participant.meta?.location === "away" &&
-              participant.meta?.score !== undefined
-            ) {
-              away = participant.meta.score;
-            }
-          }
-        }
+        return { home, away };
       }
 
-      // Priority 4: Check match-level score fields
-      if (isFinished || isLive) {
-        if (match.home_score !== undefined && match.home_score !== null) {
-          home = match.home_score;
-        }
-        if (match.away_score !== undefined && match.away_score !== null) {
-          away = match.away_score;
-        }
+      // Case B: per-participant items (most common for SportMonks)
+      const participants = match.participants || [];
+      const homeTeam = participants.find((p) => p.meta?.location === "home");
+      const awayTeam = participants.find((p) => p.meta?.location === "away");
+      const homeId = homeTeam?.id;
+      const awayId = awayTeam?.id;
+
+      let home = null;
+      let away = null;
+
+      items.forEach((it) => {
+        const goals = this.extractGoalsFromScoreItem(it);
+        if (goals === null) return;
+
+        const pid =
+          it.participant_id ??
+          it.participant?.id ??
+          it.score?.participant_id ??
+          it.score?.participant?.id ??
+          null;
+
+        const side =
+          it.score?.participant === "home" || it.participant === "home"
+            ? "home"
+            : it.score?.participant === "away" || it.participant === "away"
+            ? "away"
+            : null;
+
+        if (pid && homeId && pid === homeId) home = goals;
+        else if (pid && awayId && pid === awayId) away = goals;
+        else if (side === "home") home = goals;
+        else if (side === "away") away = goals;
+      });
+
+      if (home === null && away === null) return null;
+
+      return { home: home ?? 0, away: away ?? 0 };
+    }
+
+    /**
+     * Get score - ENHANCED VERSION from working widget
+     */
+    getScore(match) {
+      const state = match.state?.short_name || "";
+
+      // Not started / postponed -> dashes
+      if (
+        ["NS", "TBA", "INT", "POST", "CANCL", "POSTP", "DELAYED"].includes(
+          state
+        )
+      ) {
+        return { home: "-", away: "-" };
       }
 
-      return { home, away };
+      const scores = match.scores || [];
+      if (!scores.length) {
+        return { home: "-", away: "-" };
+      }
+
+      // Priority list (CURRENT first for live matches)
+      const priorities = [
+        "CURRENT",
+        "FT_SCORE",
+        "FULLTIME",
+        "FINAL",
+        "EXTRA_TIME",
+        "AET",
+        "2ND_HALF",
+        "HALFTIME",
+        "HT_SCORE",
+        "1ST_HALF",
+      ];
+
+      // Try priorities by grouping items with same description
+      for (const priority of priorities) {
+        const items = scores.filter((s) => {
+          const desc = (s.description || "").toUpperCase();
+          return desc === priority || desc.includes(priority);
+        });
+
+        const computed = this.computeScoreFromItems(items, match);
+        if (computed) return computed;
+      }
+
+      // Fallback: try last non-empty description group
+      const nonEmpty = scores.filter((s) => s && s.score);
+      if (nonEmpty.length) {
+        const last = nonEmpty[nonEmpty.length - 1];
+        const lastDesc = (last.description || "").toUpperCase();
+        const items = scores.filter(
+          (s) => (s.description || "").toUpperCase() === lastDesc
+        );
+        const computed = this.computeScoreFromItems(items, match);
+        if (computed) return computed;
+      }
+
+      // Last resort
+      return { home: "-", away: "-" };
     }
 
     getTimeInfo(match, isLive, isFinished) {
