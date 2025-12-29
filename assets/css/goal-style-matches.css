@@ -197,9 +197,9 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 44px;
+  width: 30px;
   height: auto;
-  border: none;
+  border: solid 1px #c3c3c3;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0;
   display: flex;
@@ -210,6 +210,7 @@
   z-index: 10;
   transition: all 0.2s;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
 }
 
 .ss-goal-scroll-arrow:hover:not(:disabled) {
@@ -277,7 +278,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   padding-bottom: 6px;
   border-bottom: 1px solid #f3f4f6;
   gap: 6px;
@@ -715,9 +716,9 @@
 
 /* Matches Container */
 .ss-goal-matches-container {
-  min-height: 200px;
+  min-height: 140px;
   background: #fff;
-  padding: 20px;
+  padding: 10px;
 }
 
 /* Competition Group */
@@ -769,7 +770,7 @@
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 14px;
+  padding: 8px;
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -789,7 +790,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   padding-bottom: 10px;
   border-bottom: 1px solid #f3f4f6;
 }
@@ -821,7 +822,7 @@
 .ss-goal-card-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
 }
 
 /* Team Row - Team + Score */
@@ -890,7 +891,7 @@
   font-size: 11px;
   color: #d1d5db;
   font-weight: 600;
-  margin: -5px 0;
+  margin: -8px 0;
 }
 
 /* Card Footer - Status/Group */
@@ -1088,4 +1089,9 @@
 [dir="rtl"] .ss-goal-cyprus-badge {
   margin-left: 0;
   margin-right: 6px;
+}
+
+.ss-widget {
+  border-radius: 0;
+  box-shadow: 0 4px 6px -1px rgb(116 113 113 / 6%);
 }
