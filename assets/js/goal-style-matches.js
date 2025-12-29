@@ -397,10 +397,12 @@
       }
       html += "</div>";
 
-      // Matches
+      // Matches Grid
+      html += '<div class="ss-goal-matches-grid">';
       group.matches.forEach((match) => {
         html += this.buildMatchCard(match);
       });
+      html += "</div>";
 
       html += "</div>";
       return html;
@@ -417,22 +419,31 @@
       const score = this.getScore(match);
       const timeInfo = this.getTimeInfo(match, isLive, isFinished);
       const groupInfo = this.getGroupInfo(match);
+      const league = match.league || {};
 
-      let html = '<div class="ss-goal-match';
+      let html = '<div class="ss-goal-match-card';
       if (isLive) html += " live";
       if (isFinished) html += " finished";
       html += '">';
 
-      // Time
-      html += '<div class="ss-goal-match-time">';
-      html += `<span class="ss-goal-time-text">${timeInfo.time}</span>`;
-      if (timeInfo.status) {
-        html += `<span class="ss-goal-status-badge">${timeInfo.status}</span>`;
+      // Card Header - Competition + Time
+      html += '<div class="ss-goal-card-header">';
+      html += `<div class="ss-goal-card-comp">${this.escapeHtml(
+        league.name || ""
+      )}`;
+      if (groupInfo) {
+        html += ` - ${groupInfo}`;
       }
       html += "</div>";
+      html += `<div class="ss-goal-card-time">${timeInfo.time}</div>`;
+      html += "</div>";
 
-      // Home Team
-      html += '<div class="ss-goal-team-home">';
+      // Card Body - Teams
+      html += '<div class="ss-goal-card-body">';
+
+      // Home Team Row
+      html += '<div class="ss-goal-team-row">';
+      html += '<div class="ss-goal-team-info">';
       if (homeTeam?.image_path) {
         html += `<img src="${this.escapeHtml(
           homeTeam.image_path
@@ -442,34 +453,39 @@
         this.getTeamCode(homeTeam)
       )}</span>`;
       html += "</div>";
-
-      // Score
-      html += '<div class="ss-goal-score-wrapper">';
       html += `<div class="ss-goal-score-badge">${score.home}</div>`;
-      html += '<span class="ss-goal-score-separator">:</span>';
-      html += `<div class="ss-goal-score-badge">${score.away}</div>`;
       html += "</div>";
 
-      // Away Team
-      html += '<div class="ss-goal-team-away">';
-      html += `<span class="ss-goal-team-code">${this.escapeHtml(
-        this.getTeamCode(awayTeam)
-      )}</span>`;
+      // Score Separator
+      html += '<div class="ss-goal-score-separator">:</div>';
+
+      // Away Team Row
+      html += '<div class="ss-goal-team-row">';
+      html += '<div class="ss-goal-team-info">';
       if (awayTeam?.image_path) {
         html += `<img src="${this.escapeHtml(
           awayTeam.image_path
         )}" alt="" class="ss-goal-team-flag" loading="lazy">`;
       }
+      html += `<span class="ss-goal-team-code">${this.escapeHtml(
+        this.getTeamCode(awayTeam)
+      )}</span>`;
+      html += "</div>";
+      html += `<div class="ss-goal-score-badge">${score.away}</div>`;
       html += "</div>";
 
-      // Match Info
-      html += '<div class="ss-goal-match-info">';
-      if (groupInfo) {
-        html += `<span class="ss-goal-group-badge">${groupInfo}</span>`;
+      html += "</div>"; // .ss-goal-card-body
+
+      // Card Footer - Status
+      if (isLive || isFinished || timeInfo.status) {
+        html += '<div class="ss-goal-card-footer">';
+        html += `<span class="ss-goal-card-status">${
+          timeInfo.status || ""
+        }</span>`;
+        html += "</div>";
       }
-      html += "</div>";
 
-      html += "</div>";
+      html += "</div>"; // .ss-goal-match-card
       return html;
     }
 
