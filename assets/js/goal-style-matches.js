@@ -538,43 +538,52 @@
       let home = "-";
       let away = "-";
 
-      // Try to find current or final score
+      const state = match.state || {};
+      const isFinished = this.isMatchFinished(match);
+      const isLive = this.isMatchLive(match);
+
+      // Debug logging for finished matches without scores
+      if (isFinished && scores.length > 0) {
+        console.log("Finished match scores:", {
+          id: match.id,
+          state: state.short_name,
+          scores: scores,
+          participants: match.participants?.map((p) => p.name),
+        });
+      }
+
+      // Priority 1: Look for scores with specific descriptions
       for (const score of scores) {
+        if (!score.score) continue;
+
         const desc = (score.description || "").toLowerCase();
+        const data = score.score;
+
+        // Match various score descriptions
         if (
           desc.includes("current") ||
           desc.includes("final") ||
-          desc.includes("fulltime")
+          desc.includes("fulltime") ||
+          desc.includes("ft") ||
+          desc.includes("full-time")
         ) {
-          const data = score.score || {};
-          const homeScore =
-            data.home ?? data.participant_home ?? data.goals?.home;
-          const awayScore =
-            data.away ?? data.participant_away ?? data.goals?.away;
+          home = data.home ?? data.participant_home ?? data.goals?.home ?? home;
+          away = data.away ?? data.participant_away ?? data.goals?.away ?? away;
 
-          if (homeScore !== undefined && homeScore !== null) {
-            home = homeScore;
-          }
-          if (awayScore !== undefined && awayScore !== null) {
-            away = awayScore;
-          }
-
-          // If we found scores, break
           if (home !== "-" && away !== "-") {
-            break;
+            return { home, away };
           }
         }
       }
 
-      // If no score found but match is finished/live, get any available score
-      if (
-        (home === "-" || away === "-") &&
-        (this.isMatchFinished(match) || this.isMatchLive(match))
-      ) {
+      // Priority 2: For finished/live matches, try ANY score object
+      if (isFinished || isLive) {
         for (const score of scores) {
           if (!score.score) continue;
 
           const data = score.score;
+
+          // Try all possible field names
           const homeScore =
             data.home ?? data.participant_home ?? data.goals?.home;
           const awayScore =
@@ -588,8 +597,36 @@
           }
 
           if (home !== "-" && away !== "-") {
-            break;
+            return { home, away };
           }
+        }
+
+        // Priority 3: Check participants for scores
+        if (match.participants) {
+          for (const participant of match.participants) {
+            if (
+              participant.meta?.location === "home" &&
+              participant.meta?.score !== undefined
+            ) {
+              home = participant.meta.score;
+            }
+            if (
+              participant.meta?.location === "away" &&
+              participant.meta?.score !== undefined
+            ) {
+              away = participant.meta.score;
+            }
+          }
+        }
+      }
+
+      // Priority 4: Check match-level score fields
+      if (isFinished || isLive) {
+        if (match.home_score !== undefined && match.home_score !== null) {
+          home = match.home_score;
+        }
+        if (match.away_score !== undefined && match.away_score !== null) {
+          away = match.away_score;
         }
       }
 
