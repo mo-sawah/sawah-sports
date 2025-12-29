@@ -1,6 +1,6 @@
 /**
- * Sawah Sports - Goal.com Style Matches Widget
- * Handles date navigation, competition filtering, live updates, and responsive behavior
+ * Sawah Sports - Goal.com Style Matches Widget (FIXED)
+ * Exact match to Goal.com design with working API
  */
 
 (function ($) {
@@ -13,25 +13,24 @@
     tomorrow: "Αύριο",
     allCompetitions: "Όλες οι διοργανώσεις",
     loading: "Φόρτωση αγώνων...",
-    noMatches: "Δεν υπάρχουν αγώνες για αυτήν την ημερομηνία",
-    error: "Σφάλμα φόρτωσης αγώνων",
+    noMatches: "Δεν υπάρχουν αγώνες",
+    error: "Σφάλμα φόρτωσης",
     live: "LIVE",
-    fullTime: "FT",
-    halfTime: "HT",
-    finished: "Τελικό",
+    fullTime: "ΤΕΛ",
+    halfTime: "ΗΧ",
     group: "Όμιλος",
-    // Greek day names (short)
+    // Greek day names (3 letters)
     days: ["Κυρ", "Δευ", "Τρί", "Τετ", "Πέμ", "Παρ", "Σάβ"],
-    // Greek month names
+    // Greek month names (3 letters)
     months: [
       "Ιαν",
       "Φεβ",
-      "Μάρ",
+      "Μαρ",
       "Απρ",
       "Μάι",
       "Ιούν",
       "Ιούλ",
-      "Αύγ",
+      "Αυγ",
       "Σεπ",
       "Οκτ",
       "Νοε",
@@ -39,8 +38,8 @@
     ],
   };
 
-  // Cyprus League IDs for prioritization
-  const CYPRUS_LEAGUE_IDS = [570, 215]; // First Division, Cup
+  // Cyprus League IDs
+  const CYPRUS_LEAGUE_IDS = [570, 215];
 
   class GoalStyleMatches {
     constructor(element) {
@@ -48,8 +47,6 @@
       this.widgetId = this.$el.attr("id");
       this.cyprusPriority = this.$el.data("cyprus-priority") === "yes";
       this.autoRefresh = parseInt(this.$el.data("auto-refresh")) || 0;
-      this.primaryColor = this.$el.data("primary-color") || "#000000";
-      this.accentColor = this.$el.data("accent-color") || "#fbbf24";
 
       this.dates = [];
       this.currentDateIndex = 0;
@@ -63,7 +60,6 @@
     }
 
     init() {
-      this.applyCustomColors();
       this.generateDates();
       this.renderDateSlider();
       this.bindEvents();
@@ -74,29 +70,18 @@
       }
     }
 
-    applyCustomColors() {
-      const css = `
-        #${this.widgetId} .ss-goal-date-item.active { background: ${this.primaryColor} !important; }
-        #${this.widgetId} .ss-goal-date-item.today { border-color: ${this.primaryColor} !important; }
-        #${this.widgetId} .ss-goal-comp-dropdown:focus { border-color: ${this.primaryColor} !important; }
-        #${this.widgetId} .ss-goal-date-nav:hover { border-color: ${this.primaryColor} !important; }
-      `;
-      $("<style>").text(css).appendTo("head");
-    }
-
     generateDates() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      // Generate 7 days: 3 before, today, 3 after
+      // 7 days: 3 before, today, 3 after
       for (let i = -3; i <= 3; i++) {
         const date = new Date(today);
         date.setDate(date.getDate() + i);
         this.dates.push(date);
       }
 
-      // Set current date to today
-      this.currentDateIndex = 3;
+      this.currentDateIndex = 3; // Today
       this.selectedDate = this.dates[this.currentDateIndex];
     }
 
@@ -108,20 +93,20 @@
         const isToday = this.isToday(date);
         const isActive = index === this.currentDateIndex;
         const label = this.getDateLabel(date);
+        const displayDate = this.formatDateDisplay(date);
 
         const $item = $(`
           <div class="ss-goal-date-item ${isActive ? "active" : ""} ${
           isToday ? "today" : ""
         }" data-index="${index}">
-            <div class="ss-goal-date-label">${label}</div>
-            <div class="ss-goal-date-day">${this.formatDateShort(date)}</div>
+            <span class="ss-goal-date-label">${label}</span>
+            <span class="ss-goal-date-display">${displayDate}</span>
           </div>
         `);
 
         $slider.append($item);
       });
 
-      // Scroll to active date
       this.scrollToActiveDate();
     }
 
@@ -132,7 +117,8 @@
       return i18n.days[date.getDay()];
     }
 
-    formatDateShort(date) {
+    formatDateDisplay(date) {
+      // Single line: "26 Δεκ"
       return `${date.getDate()} ${i18n.months[date.getMonth()]}`;
     }
 
@@ -204,7 +190,6 @@
       this.currentDateIndex = index;
       this.selectedDate = this.dates[index];
 
-      // Update UI
       this.$el.find(".ss-goal-date-item").removeClass("active");
       this.$el
         .find(`.ss-goal-date-item[data-index="${index}"]`)
@@ -219,13 +204,20 @@
 
       const dateStr = this.formatDateISO(this.selectedDate);
 
+      // Use correct REST endpoint with query parameter
+      const endpoint = `${SawahSports.restUrl}/fixtures?date=${dateStr}`;
+
+      console.log("Fetching matches from:", endpoint);
+
       $.ajax({
-        url: `${SawahSports.restUrl}/fixtures/date/${dateStr}`,
+        url: endpoint,
         method: "GET",
         beforeSend: (xhr) => {
           xhr.setRequestHeader("X-WP-Nonce", SawahSports.nonce);
         },
         success: (response) => {
+          console.log("API Response:", response);
+
           let data = response;
 
           // Handle WordPress REST wrapper
@@ -233,7 +225,7 @@
             data = response.data;
           }
 
-          // Handle Sportmonks structure
+          // Handle Sportmonks structure: { data: [...] }
           if (data.data && Array.isArray(data.data)) {
             this.allMatches = data.data;
           } else if (Array.isArray(data)) {
@@ -244,9 +236,7 @@
             return;
           }
 
-          console.log(
-            `Loaded ${this.allMatches.length} matches for ${dateStr}`
-          );
+          console.log(`Loaded ${this.allMatches.length} matches`);
 
           this.processMatches();
           this.buildCompetitionFilter();
@@ -254,15 +244,17 @@
         },
         error: (xhr) => {
           console.error("Matches fetch error:", xhr);
-          this.showError(i18n.error);
+          const errorMsg =
+            xhr.responseJSON?.message || xhr.statusText || i18n.error;
+          this.showError(errorMsg);
         },
       });
     }
 
     processMatches() {
-      // Sort by Cyprus priority if enabled
-      if (this.cyprusPriority) {
-        this.allMatches.sort((a, b) => {
+      // Sort by Cyprus priority + time
+      this.allMatches.sort((a, b) => {
+        if (this.cyprusPriority) {
           const aIsCyprus = CYPRUS_LEAGUE_IDS.includes(
             a.league?.id || a.league_id
           );
@@ -272,25 +264,16 @@
 
           if (aIsCyprus && !bIsCyprus) return -1;
           if (!aIsCyprus && bIsCyprus) return 1;
+        }
 
-          // Then sort by time
-          const aTime = a.starting_at || a.time?.starting_at;
-          const bTime = b.starting_at || b.time?.starting_at;
-          return new Date(aTime) - new Date(bTime);
-        });
-      } else {
-        // Sort by time only
-        this.allMatches.sort((a, b) => {
-          const aTime = a.starting_at || a.time?.starting_at;
-          const bTime = b.starting_at || b.time?.starting_at;
-          return new Date(aTime) - new Date(bTime);
-        });
-      }
+        // Sort by time
+        const aTime = a.starting_at || a.time?.starting_at;
+        const bTime = b.starting_at || b.time?.starting_at;
+        return new Date(aTime) - new Date(bTime);
+      });
 
-      // Extract unique competitions
-      this.competitions = [];
+      // Extract competitions
       const compMap = {};
-
       this.allMatches.forEach((match) => {
         const league = match.league;
         if (!league) return;
@@ -308,7 +291,7 @@
 
       this.competitions = Object.values(compMap);
 
-      // Sort competitions: Cyprus first, then alphabetically
+      // Sort: Cyprus first, then alphabetically
       this.competitions.sort((a, b) => {
         if (this.cyprusPriority) {
           if (a.isCyprus && !b.isCyprus) return -1;
@@ -326,23 +309,18 @@
       $dropdown.append(`<option value="all">${i18n.allCompetitions}</option>`);
 
       this.competitions.forEach((comp) => {
-        const cyprusBadge = comp.isCyprus
-          ? ' <span style="color: #fbbf24;">★</span>'
-          : "";
+        const cyprusMarker = comp.isCyprus ? " ★" : "";
         $dropdown.append(`
-          <option value="${comp.id}">${comp.name}${
-          comp.country ? ` (${comp.country})` : ""
-        }${cyprusBadge}</option>
+          <option value="${comp.id}">${comp.name}${cyprusMarker}</option>
         `);
       });
 
-      // Restore selection if it still exists
+      // Restore selection
       if (
         currentValue &&
         $dropdown.find(`option[value="${currentValue}"]`).length
       ) {
         $dropdown.val(currentValue);
-        this.selectedCompetition = currentValue;
       } else {
         $dropdown.val("all");
         this.selectedCompetition = "all";
@@ -352,7 +330,7 @@
     renderMatches() {
       const $container = this.$el.find(".ss-goal-matches-container");
 
-      // Filter matches by selected competition
+      // Filter by competition
       let matches = this.allMatches;
       if (this.selectedCompetition !== "all") {
         matches = matches.filter(
@@ -390,7 +368,7 @@
 
       $container.html(html);
 
-      // Schedule next refresh if there are live matches
+      // Auto-refresh if live matches
       if (this.hasLiveMatches(matches) && this.autoRefresh > 0) {
         this.scheduleRefresh();
       }
@@ -402,23 +380,21 @@
 
       let html = '<div class="ss-goal-comp-group">';
 
-      // Competition header
+      // Header
       html += '<div class="ss-goal-comp-header">';
-      html += '<div class="ss-goal-comp-icon">⚽</div>';
-      html += '<div class="ss-goal-comp-info">';
-      html += `<div class="ss-goal-comp-name">${this.escapeHtml(
+      html += '<span class="ss-goal-comp-icon">⚽</span>';
+      html += `<span class="ss-goal-comp-name">${this.escapeHtml(
         league.name || "Unknown"
       )}`;
       if (isCyprus) {
         html += '<span class="ss-goal-cyprus-badge">CY</span>';
       }
-      html += "</div>";
+      html += "</span>";
       if (league.country?.name) {
-        html += `<div class="ss-goal-comp-meta">${this.escapeHtml(
+        html += `<span class="ss-goal-comp-meta">${this.escapeHtml(
           league.country.name
-        )}</div>`;
+        )}</span>`;
       }
-      html += "</div>";
       html += "</div>";
 
       // Matches
@@ -431,7 +407,6 @@
     }
 
     buildMatchCard(match) {
-      const state = this.getMatchState(match);
       const isLive = this.isMatchLive(match);
       const isFinished = this.isMatchFinished(match);
       const participants = match.participants || [];
@@ -440,11 +415,7 @@
       const awayTeam = participants.find((p) => p.meta?.location === "away");
 
       const score = this.getScore(match);
-
-      // Get match time/status
-      const timeInfo = this.getTimeInfo(match, state, isLive, isFinished);
-
-      // Get group info if available
+      const timeInfo = this.getTimeInfo(match, isLive, isFinished);
       const groupInfo = this.getGroupInfo(match);
 
       let html = '<div class="ss-goal-match';
@@ -452,36 +423,27 @@
       if (isFinished) html += " finished";
       html += '">';
 
-      // Mobile: wrap teams and score in a row
-      html += '<div class="ss-goal-match-teams-row">';
-
-      // Time/Status (LEFT on desktop, TOP on mobile)
+      // Time
       html += '<div class="ss-goal-match-time">';
-      html += `<span class="ss-goal-time-primary">${timeInfo.primary}</span>`;
-      if (timeInfo.secondary) {
-        html += `<span class="ss-goal-time-secondary">${timeInfo.secondary}</span>`;
+      html += `<span class="ss-goal-time-text">${timeInfo.time}</span>`;
+      if (timeInfo.status) {
+        html += `<span class="ss-goal-status-badge">${timeInfo.status}</span>`;
       }
       html += "</div>";
 
       // Home Team
       html += '<div class="ss-goal-team-home">';
-      if (homeTeam) {
-        if (homeTeam.image_path) {
-          html += `<img src="${this.escapeHtml(
-            homeTeam.image_path
-          )}" alt="${this.escapeHtml(
-            homeTeam.name
-          )}" class="ss-goal-team-flag" loading="lazy">`;
-        }
-        html += `<span class="ss-goal-team-code">${this.escapeHtml(
-          homeTeam.short_code ||
-            homeTeam.name?.substring(0, 3).toUpperCase() ||
-            "TBD"
-        )}</span>`;
+      if (homeTeam?.image_path) {
+        html += `<img src="${this.escapeHtml(
+          homeTeam.image_path
+        )}" alt="" class="ss-goal-team-flag" loading="lazy">`;
       }
+      html += `<span class="ss-goal-team-code">${this.escapeHtml(
+        this.getTeamCode(homeTeam)
+      )}</span>`;
       html += "</div>";
 
-      // Score (CENTER)
+      // Score
       html += '<div class="ss-goal-score-wrapper">';
       html += `<div class="ss-goal-score-badge">${score.home}</div>`;
       html += '<span class="ss-goal-score-separator">:</span>';
@@ -490,67 +452,46 @@
 
       // Away Team
       html += '<div class="ss-goal-team-away">';
-      if (awayTeam) {
-        html += `<span class="ss-goal-team-code">${this.escapeHtml(
-          awayTeam.short_code ||
-            awayTeam.name?.substring(0, 3).toUpperCase() ||
-            "TBD"
-        )}</span>`;
-        if (awayTeam.image_path) {
-          html += `<img src="${this.escapeHtml(
-            awayTeam.image_path
-          )}" alt="${this.escapeHtml(
-            awayTeam.name
-          )}" class="ss-goal-team-flag" loading="lazy">`;
-        }
+      html += `<span class="ss-goal-team-code">${this.escapeHtml(
+        this.getTeamCode(awayTeam)
+      )}</span>`;
+      if (awayTeam?.image_path) {
+        html += `<img src="${this.escapeHtml(
+          awayTeam.image_path
+        )}" alt="" class="ss-goal-team-flag" loading="lazy">`;
       }
       html += "</div>";
 
-      html += "</div>"; // .ss-goal-match-teams-row
-
-      // Match Info (RIGHT)
+      // Match Info
       html += '<div class="ss-goal-match-info">';
       if (groupInfo) {
-        html += `<div class="ss-goal-group-badge">${groupInfo}</div>`;
+        html += `<span class="ss-goal-group-badge">${groupInfo}</span>`;
       }
       html += "</div>";
 
-      html += "</div>"; // .ss-goal-match
+      html += "</div>";
       return html;
     }
 
-    getMatchState(match) {
-      const state = match.state || {};
-      return {
-        id: state.id || 0,
-        name: state.name || "",
-        short: state.short_name || state.short || "",
-        developer: state.developer_name || "",
-      };
+    getTeamCode(team) {
+      if (!team) return "TBD";
+      return (
+        team.short_code || team.name?.substring(0, 3).toUpperCase() || "TBD"
+      );
     }
 
     isMatchLive(match) {
-      const state = this.getMatchState(match);
-      const liveStates = [
-        "LIVE",
-        "HT",
-        "BREAK",
-        "ET",
-        "PEN_LIVE",
-        "AET",
-        "INPLAY",
-      ];
-      return liveStates.some((s) =>
-        state.short.toUpperCase().includes(s.toUpperCase())
+      const state = match.state || {};
+      const short = (state.short_name || state.short || "").toUpperCase();
+      return ["LIVE", "HT", "ET", "BREAK", "INPLAY"].some((s) =>
+        short.includes(s)
       );
     }
 
     isMatchFinished(match) {
-      const state = this.getMatchState(match);
-      const finishedStates = ["FT", "AET", "FT_PEN", "FINISHED"];
-      return finishedStates.some((s) =>
-        state.short.toUpperCase().includes(s.toUpperCase())
-      );
+      const state = match.state || {};
+      const short = (state.short_name || state.short || "").toUpperCase();
+      return ["FT", "AET", "FT_PEN", "FINISHED"].some((s) => short.includes(s));
     }
 
     getScore(match) {
@@ -558,7 +499,6 @@
       let home = "—";
       let away = "—";
 
-      // Look for current or final score
       for (const score of scores) {
         const desc = (score.description || "").toLowerCase();
         if (desc.includes("current") || desc.includes("final")) {
@@ -572,52 +512,44 @@
       return { home, away };
     }
 
-    getTimeInfo(match, state, isLive, isFinished) {
-      let primary = "";
-      let secondary = "";
+    getTimeInfo(match, isLive, isFinished) {
+      let time = "";
+      let status = "";
 
       if (isLive) {
-        // Show minute
+        const state = match.state || {};
         const minute = match.minute || state.minute || "";
-        primary = minute ? `${minute}'` : i18n.live;
-        secondary = state.short || i18n.live;
+        time = minute ? `${minute}'` : i18n.live;
+        status = i18n.live;
       } else if (isFinished) {
-        primary = state.short || i18n.fullTime;
-        secondary = "";
+        time = i18n.fullTime;
+        status = "";
       } else {
-        // Upcoming - show time
         const startTime = match.starting_at || match.time?.starting_at;
         if (startTime) {
           const date = new Date(startTime);
-          primary = `${String(date.getHours()).padStart(2, "0")}:${String(
+          time = `${String(date.getHours()).padStart(2, "0")}:${String(
             date.getMinutes()
           ).padStart(2, "0")}`;
         } else {
-          primary = "—";
+          time = "—";
         }
       }
 
-      return { primary, secondary };
+      return { time, status };
     }
 
     getGroupInfo(match) {
-      // Check for round or stage info
       const round = match.round?.name || match.round_name || "";
       const stage = match.stage?.name || match.stage_name || "";
 
       if (round && round.toLowerCase().includes("group")) {
-        return round;
+        const groupMatch = round.match(/Group\s+([A-Z])/i);
+        return groupMatch ? `${i18n.group} ${groupMatch[1]}` : round;
       }
       if (stage && stage.toLowerCase().includes("group")) {
-        return stage;
-      }
-
-      // Check for group in name
-      if (round) {
-        const groupMatch = round.match(/Group\s+([A-Z])/i);
-        if (groupMatch) {
-          return `${i18n.group} ${groupMatch[1]}`;
-        }
+        const groupMatch = stage.match(/Group\s+([A-Z])/i);
+        return groupMatch ? `${i18n.group} ${groupMatch[1]}` : stage;
       }
 
       return "";
@@ -633,13 +565,12 @@
       }
 
       this.refreshTimer = setTimeout(() => {
-        console.log("Auto-refreshing matches...");
+        console.log("Auto-refreshing...");
         this.fetchMatches();
       }, this.autoRefresh * 1000);
     }
 
     startAutoRefresh() {
-      // Initial check
       if (this.hasLiveMatches(this.allMatches)) {
         this.scheduleRefresh();
       }
@@ -682,7 +613,7 @@
     }
   }
 
-  // Initialize widgets
+  // Initialize
   function initWidgets() {
     $(".ss-goal-matches").each(function () {
       if (!$(this).data("goal-matches-instance")) {
@@ -699,15 +630,12 @@
       function ($scope) {
         const $widget = $scope.find(".ss-goal-matches");
         if ($widget.length && !$widget.data("goal-matches-instance")) {
-          const instance = new GoalStyleMatches($widget[0]);
-          $widget.data("goal-matches-instance", instance);
+          new GoalStyleMatches($widget[0]);
         }
       }
     );
   });
 
   // Regular page load
-  $(document).ready(function () {
-    initWidgets();
-  });
+  $(document).ready(initWidgets);
 })(jQuery);
