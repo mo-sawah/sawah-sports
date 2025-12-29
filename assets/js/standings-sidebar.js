@@ -1,6 +1,6 @@
 /**
  * Sawah Sports - Sidebar Standings Widget JavaScript
- * Compact standings for sidebars
+ * Clean version - No "More" button
  */
 
 (function ($) {
@@ -9,48 +9,20 @@
   class SawahStandingsSidebar {
     constructor(element) {
       this.$el = $(element);
-      this.widgetId = this.$el.attr("id");
       this.seasonId = this.$el.data("season-id");
-      this.showTeams = parseInt(this.$el.data("show-teams")) || 5;
-      this.showMoreBtn = this.$el.data("show-more") === "yes";
-      this.primaryColor = this.$el.data("primary-color") || "#000000";
+      this.showTeams = parseInt(this.$el.data("show-teams")) || 10;
       this.accentColor = this.$el.data("accent-color") || "#f59e0b";
 
       this.standings = [];
-      this.expanded = false;
 
-      // Set CSS variables for colors
-      this.$el[0].style.setProperty("--ss-primary-color", this.primaryColor);
+      // Set CSS variable for color
       this.$el[0].style.setProperty("--ss-accent-color", this.accentColor);
 
       this.init();
     }
 
     init() {
-      this.bindEvents();
       this.fetchStandings();
-    }
-
-    bindEvents() {
-      // More button toggle
-      this.$el.on("click", ".ss-sidebar-more-btn", (e) => {
-        e.preventDefault();
-        this.toggleExpanded();
-      });
-    }
-
-    toggleExpanded() {
-      this.expanded = !this.expanded;
-      const $btn = this.$el.find(".ss-sidebar-more-btn");
-      const $hiddenRows = this.$el.find("tbody tr.hidden");
-
-      if (this.expanded) {
-        $hiddenRows.addClass("expanded");
-        $btn.text(SawahSports.i18n.less || "Less").addClass("expanded");
-      } else {
-        $hiddenRows.removeClass("expanded");
-        $btn.text(SawahSports.i18n.more || "More").removeClass("expanded");
-      }
     }
 
     fetchStandings() {
@@ -59,8 +31,6 @@
         return;
       }
 
-      this.showLoading();
-
       $.ajax({
         url: SawahSports.restUrl + "/standings/" + this.seasonId,
         method: "GET",
@@ -68,23 +38,21 @@
           xhr.setRequestHeader("X-WP-Nonce", SawahSports.nonce);
         },
         success: (response) => {
-          // Handle WordPress REST response wrapper
           let data = response;
           if (response.success !== undefined && response.data) {
             data = response.data;
           }
 
-          // Handle Sportmonks API structure: { data: [...] }
           if (data.data && Array.isArray(data.data)) {
             this.standings = data.data;
           } else if (Array.isArray(data)) {
             this.standings = data;
           } else {
-            this.showError("Invalid standings data format");
+            this.showError("Invalid data");
             return;
           }
 
-          // Filter to get only overall standings (not home/away)
+          // Filter out Home/Away tables, keep only 'Total'
           this.standings = this.standings.filter((standing) => {
             const typeName = (
               standing.type_name ||
@@ -95,18 +63,14 @@
           });
 
           if (!this.standings || this.standings.length === 0) {
-            this.showError("No standings data available");
+            this.showEmpty();
             return;
           }
 
           this.renderTable();
         },
         error: (xhr) => {
-          const errorMsg =
-            xhr.responseJSON?.message ||
-            xhr.statusText ||
-            "Failed to load standings";
-          this.showError(errorMsg);
+          this.showError("Failed to load standings");
         },
       });
     }
@@ -115,26 +79,27 @@
       // Sort by position
       this.standings.sort((a, b) => a.position - b.position);
 
+      // Slice to show only the configured amount of teams
+      const displayStandings = this.standings.slice(0, this.showTeams);
+
       let html = '<table class="ss-sidebar-table"><thead><tr>';
 
-      // Headers
-      html += "<th>Pos</th>";
+      // Headers - P, W, D, L, PTS (Clean Layout)
+      html += "<th>#</th>";
       html += "<th>Team</th>";
       html += '<th class="ss-stat">P</th>';
       html += '<th class="ss-stat">W</th>';
       html += '<th class="ss-stat">D</th>';
       html += '<th class="ss-stat">L</th>';
-      html += '<th class="ss-pts">PTS</th>';
+      html += "<th>Pts</th>";
       html += "</tr></thead><tbody>";
 
       // Rows
-      this.standings.forEach((team, index) => {
+      displayStandings.forEach((team, index) => {
         const position = team.position || index + 1;
         const stats = this.extractStats(team);
-        const isHidden = index >= this.showTeams;
-        const rowClass = isHidden ? "hidden" : "";
 
-        html += `<tr class="${rowClass}">`;
+        html += "<tr>";
 
         // Position
         html += `<td class="ss-sidebar-pos">${position}</td>`;
@@ -147,7 +112,7 @@
           )}" alt="" class="ss-sidebar-team-logo" loading="lazy">`;
         }
         html += `<span class="ss-sidebar-team-name">${this.escapeHtml(
-          team.participant?.name || "Unknown"
+          team.participant?.name || "Team"
         )}</span>`;
         html += "</div></td>";
 
@@ -166,20 +131,10 @@
       html += "</tbody></table>";
 
       this.$el.find(".ss-sidebar-table-wrapper").html(html);
-
-      // Show/hide More button
-      if (this.showMoreBtn && this.standings.length > this.showTeams) {
-        this.$el.find(".ss-sidebar-more-wrapper").show();
-      }
     }
 
     extractStats(teamStanding) {
-      const stats = {
-        played: 0,
-        won: 0,
-        draw: 0,
-        lost: 0,
-      };
+      const stats = { played: 0, won: 0, draw: 0, lost: 0 };
 
       if (!teamStanding.details || !Array.isArray(teamStanding.details)) {
         return stats;
@@ -187,11 +142,9 @@
 
       teamStanding.details.forEach((detail) => {
         const typeId = detail.type?.id;
-        const typeName = detail.type?.name?.toLowerCase() || "";
+        const typeName = (detail.type?.name || "").toLowerCase();
         const value = parseInt(detail.value) || 0;
 
-        // Match by type ID or name
-        // Sportmonks type IDs: 129 = played, 130 = won, 131 = draw, 132 = lost
         if (
           typeId === 129 ||
           typeName.includes("played") ||
@@ -210,24 +163,16 @@
       return stats;
     }
 
-    showLoading() {
-      this.$el.find(".ss-sidebar-table-wrapper").html(`
-        <div class="ss-loading">
-          <div class="ss-spinner"></div>
-        </div>
-      `);
-    }
-
     showError(message) {
-      this.$el.find(".ss-sidebar-table-wrapper").html(`
-        <div class="ss-error">${this.escapeHtml(message)}</div>
-      `);
+      this.$el
+        .find(".ss-sidebar-table-wrapper")
+        .html(`<div class="ss-error">${message}</div>`);
     }
 
     showEmpty() {
-      this.$el.find(".ss-sidebar-table-wrapper").html(`
-        <div class="ss-empty">No standings data available</div>
-      `);
+      this.$el
+        .find(".ss-sidebar-table-wrapper")
+        .html(`<div class="ss-empty">No data</div>`);
     }
 
     escapeHtml(text) {
@@ -238,7 +183,7 @@
     }
   }
 
-  // Initialize on document ready
+  // Initialize
   $(document).ready(function () {
     $(".ss-standings-sidebar").each(function () {
       new SawahStandingsSidebar(this);

@@ -2,8 +2,7 @@
 if (!defined('ABSPATH')) { exit; }
 
 /**
- * Sidebar Standings Widget - Compact Design
- * Perfect for sidebars and narrow spaces
+ * Sidebar Standings Widget - Professional Design
  */
 class Sawah_Sports_Widget_Standings_Sidebar extends \Elementor\Widget_Base {
 
@@ -33,29 +32,23 @@ class Sawah_Sports_Widget_Standings_Sidebar extends \Elementor\Widget_Base {
             'label' => __('Season ID', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::NUMBER,
             'default' => 23819,
-            'description' => __('Enter Sportmonks Season ID (e.g., 23819 for EPL 2024/25, 19914 for Cyprus First Division 2024/25)', 'sawah-sports'),
+            'description' => __('Enter Sportmonks Season ID.', 'sawah-sports'),
         ]);
 
         $this->add_control('title', [
             'label' => __('Widget Title', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::TEXT,
             'default' => __('Standings', 'sawah-sports'),
+            'placeholder' => __('e.g. Premier League', 'sawah-sports'),
         ]);
 
         $this->add_control('show_teams', [
-            'label' => __('Number of Teams to Show', 'sawah-sports'),
+            'label' => __('Rows to Display', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::NUMBER,
-            'default' => 5,
+            'default' => 10,
             'min' => 1,
-            'max' => 20,
-            'description' => __('How many teams to display initially', 'sawah-sports'),
-        ]);
-
-        $this->add_control('show_more_btn', [
-            'label' => __('Show "More" Button', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::SWITCHER,
-            'default' => 'yes',
-            'description' => __('Allow users to expand and see all teams', 'sawah-sports'),
+            'max' => 50,
+            'description' => __('Total number of teams to show in the list.', 'sawah-sports'),
         ]);
 
         $this->end_controls_section();
@@ -66,16 +59,11 @@ class Sawah_Sports_Widget_Standings_Sidebar extends \Elementor\Widget_Base {
             'tab' => \Elementor\Controls_Manager::TAB_STYLE,
         ]);
 
-        $this->add_control('primary_color', [
-            'label' => __('Primary Color', 'sawah-sports'),
-            'type' => \Elementor\Controls_Manager::COLOR,
-            'default' => '#000000',
-        ]);
-
         $this->add_control('accent_color', [
             'label' => __('Accent Color', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::COLOR,
             'default' => '#f59e0b',
+            'description' => __('Color used for loading spinners and highlights.', 'sawah-sports'),
         ]);
 
         $this->end_controls_section();
@@ -89,8 +77,6 @@ class Sawah_Sports_Widget_Standings_Sidebar extends \Elementor\Widget_Base {
              class="ss-widget ss-standings-sidebar"
              data-season-id="<?php echo esc_attr($settings['season_id']); ?>"
              data-show-teams="<?php echo esc_attr($settings['show_teams']); ?>"
-             data-show-more="<?php echo esc_attr($settings['show_more_btn']); ?>"
-             data-primary-color="<?php echo esc_attr($settings['primary_color']); ?>"
              data-accent-color="<?php echo esc_attr($settings['accent_color']); ?>">
             
             <?php if (!empty($settings['title'])) : ?>
@@ -104,14 +90,6 @@ class Sawah_Sports_Widget_Standings_Sidebar extends \Elementor\Widget_Base {
                     <div class="ss-spinner"></div>
                 </div>
             </div>
-
-            <?php if ($settings['show_more_btn'] === 'yes') : ?>
-            <div class="ss-sidebar-more-wrapper" style="display: none;">
-                <button class="ss-sidebar-more-btn">
-                    <?php echo esc_html__('More', 'sawah-sports'); ?>
-                </button>
-            </div>
-            <?php endif; ?>
         </div>
         <?php
     }
