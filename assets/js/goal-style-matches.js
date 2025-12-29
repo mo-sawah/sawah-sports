@@ -344,29 +344,34 @@
         return;
       }
 
-      // Group by competition
-      const grouped = {};
+      // Build ONE horizontal list of ALL matches (no grouping)
+      let html = '<div class="ss-goal-scroller">';
+
+      // Left Arrow
+      html +=
+        '<button class="ss-goal-scroll-arrow left" data-direction="left">';
+      html += '<i class="eicon-chevron-left"></i>';
+      html += "</button>";
+
+      // Matches List
+      html += '<div class="ss-goal-matches-list">';
       matches.forEach((match) => {
-        const league = match.league;
-        if (!league) return;
-
-        const leagueId = league.id;
-        if (!grouped[leagueId]) {
-          grouped[leagueId] = {
-            league: league,
-            matches: [],
-          };
-        }
-        grouped[leagueId].matches.push(match);
+        html += this.buildMatchCard(match);
       });
+      html += "</div>";
 
-      // Build HTML
-      let html = "";
-      Object.values(grouped).forEach((group) => {
-        html += this.buildCompetitionGroup(group);
-      });
+      // Right Arrow
+      html +=
+        '<button class="ss-goal-scroll-arrow right" data-direction="right">';
+      html += '<i class="eicon-chevron-right"></i>';
+      html += "</button>";
+
+      html += "</div>";
 
       $container.html(html);
+
+      // Bind scroll arrows
+      this.bindScrollArrows();
 
       // Auto-refresh if live matches
       if (this.hasLiveMatches(matches) && this.autoRefresh > 0) {
@@ -374,38 +379,52 @@
       }
     }
 
-    buildCompetitionGroup(group) {
-      const league = group.league;
-      const isCyprus = CYPRUS_LEAGUE_IDS.includes(league.id);
+    bindScrollArrows() {
+      const $list = this.$el.find(".ss-goal-matches-list");
 
-      let html = '<div class="ss-goal-comp-group">';
+      this.$el.on("click", ".ss-goal-scroll-arrow", (e) => {
+        const direction = $(e.currentTarget).data("direction");
+        const scrollAmount = 300;
 
-      // Header
-      html += '<div class="ss-goal-comp-header">';
-      html += '<span class="ss-goal-comp-icon">⚽</span>';
-      html += `<span class="ss-goal-comp-name">${this.escapeHtml(
-        league.name || "Unknown"
-      )}`;
-      if (isCyprus) {
-        html += '<span class="ss-goal-cyprus-badge">CY</span>';
-      }
-      html += "</span>";
-      if (league.country?.name) {
-        html += `<span class="ss-goal-comp-meta">${this.escapeHtml(
-          league.country.name
-        )}</span>`;
-      }
-      html += "</div>";
-
-      // Matches Grid
-      html += '<div class="ss-goal-matches-grid">';
-      group.matches.forEach((match) => {
-        html += this.buildMatchCard(match);
+        if (direction === "left") {
+          $list.animate({ scrollLeft: $list.scrollLeft() - scrollAmount }, 300);
+        } else {
+          $list.animate({ scrollLeft: $list.scrollLeft() + scrollAmount }, 300);
+        }
       });
-      html += "</div>";
 
-      html += "</div>";
-      return html;
+      // Update arrow states on scroll
+      $list.on("scroll", () => {
+        this.updateArrowStates();
+      });
+
+      // Initial update
+      this.updateArrowStates();
+    }
+
+    updateArrowStates() {
+      const $list = this.$el.find(".ss-goal-matches-list");
+      const $leftArrow = this.$el.find(".ss-goal-scroll-arrow.left");
+      const $rightArrow = this.$el.find(".ss-goal-scroll-arrow.right");
+
+      if ($list.length) {
+        const scrollLeft = $list.scrollLeft();
+        const maxScroll = $list[0].scrollWidth - $list[0].clientWidth;
+
+        // Disable left arrow if at start
+        if (scrollLeft <= 0) {
+          $leftArrow.prop("disabled", true);
+        } else {
+          $leftArrow.prop("disabled", false);
+        }
+
+        // Disable right arrow if at end
+        if (scrollLeft >= maxScroll - 1) {
+          $rightArrow.prop("disabled", true);
+        } else {
+          $rightArrow.prop("disabled", false);
+        }
+      }
     }
 
     buildMatchCard(match) {
@@ -420,6 +439,7 @@
       const timeInfo = this.getTimeInfo(match, isLive, isFinished);
       const groupInfo = this.getGroupInfo(match);
       const league = match.league || {};
+      const isCyprus = CYPRUS_LEAGUE_IDS.includes(league.id);
 
       let html = '<div class="ss-goal-match-card';
       if (isLive) html += " live";
@@ -431,15 +451,20 @@
       html += `<div class="ss-goal-card-comp">${this.escapeHtml(
         league.name || ""
       )}`;
-      if (groupInfo) {
-        html += ` - ${groupInfo}`;
+      if (isCyprus) {
+        html += '<span class="ss-goal-cyprus-badge">CY</span>';
       }
       html += "</div>";
       html += `<div class="ss-goal-card-time">${timeInfo.time}</div>`;
       html += "</div>";
 
-      // Card Body - Teams
+      // Card Body
       html += '<div class="ss-goal-card-body">';
+
+      // Group/Round info
+      if (groupInfo) {
+        html += `<div class="ss-goal-card-round">${groupInfo}</div>`;
+      }
 
       // Home Team Row
       html += '<div class="ss-goal-team-row">';
@@ -477,11 +502,9 @@
       html += "</div>"; // .ss-goal-card-body
 
       // Card Footer - Status
-      if (isLive || isFinished || timeInfo.status) {
+      if (timeInfo.status) {
         html += '<div class="ss-goal-card-footer">';
-        html += `<span class="ss-goal-card-status">${
-          timeInfo.status || ""
-        }</span>`;
+        html += timeInfo.status;
         html += "</div>";
       }
 
@@ -512,16 +535,61 @@
 
     getScore(match) {
       const scores = match.scores || [];
-      let home = "—";
-      let away = "—";
+      let home = "-";
+      let away = "-";
 
+      // Try to find current or final score
       for (const score of scores) {
         const desc = (score.description || "").toLowerCase();
-        if (desc.includes("current") || desc.includes("final")) {
+        if (
+          desc.includes("current") ||
+          desc.includes("final") ||
+          desc.includes("fulltime")
+        ) {
           const data = score.score || {};
-          home = data.home ?? data.participant_home ?? "—";
-          away = data.away ?? data.participant_away ?? "—";
-          break;
+          const homeScore =
+            data.home ?? data.participant_home ?? data.goals?.home;
+          const awayScore =
+            data.away ?? data.participant_away ?? data.goals?.away;
+
+          if (homeScore !== undefined && homeScore !== null) {
+            home = homeScore;
+          }
+          if (awayScore !== undefined && awayScore !== null) {
+            away = awayScore;
+          }
+
+          // If we found scores, break
+          if (home !== "-" && away !== "-") {
+            break;
+          }
+        }
+      }
+
+      // If no score found but match is finished/live, get any available score
+      if (
+        (home === "-" || away === "-") &&
+        (this.isMatchFinished(match) || this.isMatchLive(match))
+      ) {
+        for (const score of scores) {
+          if (!score.score) continue;
+
+          const data = score.score;
+          const homeScore =
+            data.home ?? data.participant_home ?? data.goals?.home;
+          const awayScore =
+            data.away ?? data.participant_away ?? data.goals?.away;
+
+          if (homeScore !== undefined && homeScore !== null) {
+            home = homeScore;
+          }
+          if (awayScore !== undefined && awayScore !== null) {
+            away = awayScore;
+          }
+
+          if (home !== "-" && away !== "-") {
+            break;
+          }
         }
       }
 

@@ -1,7 +1,6 @@
 /**
- * Sawah Sports - Goal.com Style Matches Widget (CARD LAYOUT)
- * Compact horizontal cards matching Goal.com design
- * Font inheritance for all text elements
+ * Sawah Sports - Goal.com Exact Match (HORIZONTAL SCROLLER)
+ * All matches in one scrollable row with arrows
  */
 
 /* Main Container */
@@ -10,6 +9,536 @@
   margin: 0 auto;
   background: #fff;
   font-family: inherit;
+}
+
+/* Header */
+.ss-goal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.ss-goal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  font-family: inherit;
+}
+
+/* Top Bar */
+.ss-goal-top-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Competition Dropdown */
+.ss-goal-competition-wrapper {
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.ss-goal-comp-dropdown {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  font-family: inherit;
+}
+
+.ss-goal-comp-dropdown:hover {
+  border-color: #9ca3af;
+}
+
+.ss-goal-comp-dropdown:focus {
+  outline: none;
+  border-color: #000;
+}
+
+/* Date Navigation */
+.ss-goal-date-navigation {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ss-goal-date-nav {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.ss-goal-date-nav:hover:not(:disabled) {
+  border-color: #000;
+  color: #000;
+}
+
+.ss-goal-date-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Date Slider */
+.ss-goal-date-slider {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ss-goal-date-slider::-webkit-scrollbar {
+  display: none;
+}
+
+/* Date Item - Compact */
+.ss-goal-date-item {
+  min-width: 75px;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.ss-goal-date-item:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.ss-goal-date-item.active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.ss-goal-date-item.today:not(.active) {
+  border: 2px solid #000;
+  font-weight: 600;
+}
+
+.ss-goal-date-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #6b7280;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.ss-goal-date-item.active .ss-goal-date-label {
+  color: #fff;
+}
+
+.ss-goal-date-item.today:not(.active) .ss-goal-date-label {
+  color: #000;
+}
+
+.ss-goal-date-display {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.ss-goal-date-item.active .ss-goal-date-display {
+  color: #fff;
+}
+
+/* HORIZONTAL SCROLLER - Like Goal.com */
+.ss-goal-matches-container {
+  position: relative;
+  padding: 16px 0;
+  background: #fff;
+}
+
+.ss-goal-scroller {
+  position: relative;
+  padding: 0 50px;
+}
+
+/* Scroll Arrows */
+.ss-goal-scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  z-index: 10;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ss-goal-scroll-arrow:hover:not(:disabled) {
+  border-color: #000;
+  color: #000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ss-goal-scroll-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ss-goal-scroll-arrow.left {
+  left: 10px;
+}
+
+.ss-goal-scroll-arrow.right {
+  right: 10px;
+}
+
+/* Horizontal Match List */
+.ss-goal-matches-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0;
+}
+
+.ss-goal-matches-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Match Card - COMPACT like Goal.com */
+.ss-goal-match-card {
+  flex-shrink: 0;
+  width: 200px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.ss-goal-match-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.ss-goal-match-card.live {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+/* Card Header - Competition + Time */
+.ss-goal-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f3f4f6;
+  gap: 6px;
+}
+
+.ss-goal-card-comp {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.ss-goal-card-time {
+  font-size: 11px;
+  font-weight: 700;
+  color: #111827;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.ss-goal-match-card.live .ss-goal-card-time {
+  color: #10b981;
+}
+
+/* Card Body - Teams */
+.ss-goal-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ss-goal-card-round {
+  font-size: 9px;
+  color: #9ca3af;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-family: inherit;
+}
+
+/* Team Row */
+.ss-goal-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.ss-goal-team-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ss-goal-team-flag {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.ss-goal-team-code {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+/* Score Badge - COMPACT */
+.ss-goal-score-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #111827;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.ss-goal-match-card.live .ss-goal-score-badge {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.ss-goal-match-card.finished .ss-goal-score-badge {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Score Separator */
+.ss-goal-score-separator {
+  text-align: center;
+  font-size: 10px;
+  color: #d1d5db;
+  font-weight: 600;
+  margin: -3px 0;
+}
+
+/* Card Footer */
+.ss-goal-card-footer {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+  font-size: 9px;
+  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-family: inherit;
+  text-align: center;
+}
+
+.ss-goal-match-card.live .ss-goal-card-footer {
+  color: #10b981;
+}
+
+/* Cyprus Badge */
+.ss-goal-cyprus-badge {
+  display: inline-block;
+  padding: 1px 4px;
+  background: #fbbf24;
+  color: #000;
+  font-size: 8px;
+  font-weight: 700;
+  border-radius: 2px;
+  text-transform: uppercase;
+  margin-left: 4px;
+}
+
+/* Loading */
+.ss-goal-loading {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.ss-goal-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: ss-goal-spin 0.7s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes ss-goal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ss-goal-loading p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  font-family: inherit;
+}
+
+/* Empty State */
+.ss-goal-empty {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.ss-goal-empty-icon {
+  font-size: 36px;
+  color: #e5e7eb;
+  margin-bottom: 10px;
+}
+
+.ss-goal-empty-text {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  font-family: inherit;
+}
+
+/* Error State */
+.ss-goal-error {
+  padding: 40px 20px;
+  text-align: center;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+/* RESPONSIVE - MOBILE */
+@media (max-width: 768px) {
+  .ss-goal-header {
+    padding: 14px 16px;
+  }
+
+  .ss-goal-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .ss-goal-competition-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ss-goal-date-navigation {
+    width: 100%;
+  }
+
+  .ss-goal-date-item {
+    min-width: 65px;
+    padding: 5px 10px;
+  }
+
+  .ss-goal-scroller {
+    padding: 0 40px;
+  }
+
+  .ss-goal-scroll-arrow {
+    width: 30px;
+    height: 30px;
+  }
+
+  .ss-goal-scroll-arrow.left {
+    left: 6px;
+  }
+
+  .ss-goal-scroll-arrow.right {
+    right: 6px;
+  }
+
+  .ss-goal-match-card {
+    width: 180px;
+    padding: 8px;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .ss-goal-team-info {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .ss-goal-comp-dropdown {
+  background-position: left 10px center;
+  padding-left: 32px;
+  padding-right: 10px;
+}
+
+[dir="rtl"] .ss-goal-cyprus-badge {
+  margin-left: 0;
+  margin-right: 4px;
 }
 
 /* Header */
