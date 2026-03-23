@@ -130,10 +130,11 @@
 }
 .ss-ns-more-btn {
   display: inline-block;
-  border: 1.5px solid #ff4b4b;
-  background: #fff;
-  color: #1a1a1a;
-  padding: 10px 36px;
+  border: 1.5px solid #000000;
+  background: #000000;
+  color: #ffffff !important
+  ;
+  padding: 7px 36px;
   border-radius: 25px;
   text-decoration: none;
   font-weight: 600;
@@ -141,7 +142,7 @@
   transition: all 0.2s;
 }
 .ss-ns-more-btn:hover {
-  background: #ff4b4b;
+  background: #272727;
   color: #fff;
 }
 

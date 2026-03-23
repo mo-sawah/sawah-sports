@@ -27,6 +27,13 @@ final class Sawah_Sports_REST {
             'callback' => [$this, 'get_livescores'],
         ]);
 
+        // New Matches Full Widget
+        register_rest_route($namespace, '/new-matches-full/(?P<season_id>\d+)', [
+            'methods' => 'GET',
+            'permission_callback' => '__return_true',
+            'callback' => [$this, 'get_new_matches_full'],
+        ]);
+
         // New Standings Widgets (BBC Style)
         register_rest_route($namespace, '/new-standings/(?P<season_id>\d+)', [
             'methods' => 'GET',
@@ -131,6 +138,73 @@ final class Sawah_Sports_REST {
             'permission_callback' => '__return_true',
             'callback' => [$this, 'get_sidelined'],
         ]);
+    }
+
+    public function get_new_matches_full(WP_REST_Request $req) {
+        $check = $this->rate_limit_check('season_fixtures');
+        if (is_wp_error($check)) return $check;
+
+        $s = Sawah_Sports_Helpers::settings();
+        $season_id = (int) $req->get_param('season_id');
+        
+        $cache_key = 'ss_new_matches_full_v1_' . $season_id;
+        if (!empty($s['cache_enabled'])) {
+            $cached = Sawah_Sports_Cache::get($cache_key);
+            if ($cached) return rest_ensure_response($cached);
+        }
+
+        // Fetch ALL rounds for the season including their fixtures
+        $res = $this->client()->get('rounds/seasons/' . $season_id, [
+            'include' => 'fixtures.participants;fixtures.scores;fixtures.state'
+        ], 20);
+        
+        if (!$res['ok']) {
+            return new WP_Error('api_error', 'Failed to fetch rounds data.', ['status' => $res['status'] ?? 502]);
+        }
+
+        $rounds = $res['data']['data'] ?? [];
+        $gameweeks = [];
+        $current_gw = null;
+
+        // Group concurrent Round IDs by their Name (e.g. "Matchday 27")
+        foreach ($rounds as $r) {
+            $name = (string)($r['name'] ?? '');
+            if (empty($name)) continue;
+
+            if (!isset($gameweeks[$name])) {
+                $gameweeks[$name] = ['is_current' => false, 'fixtures' => []];
+            }
+
+            if (!empty($r['is_current'])) {
+                $gameweeks[$name]['is_current'] = true;
+                $current_gw = $name;
+            }
+
+            if (!empty($r['fixtures'])) {
+                foreach ($r['fixtures'] as $fx) {
+                    $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+                    if (strlen($date) === 10) {
+                        $gameweeks[$name]['fixtures'][$date][] = $fx;
+                    }
+                }
+            }
+        }
+
+        // Sort dates within each gameweek
+        foreach ($gameweeks as $name => &$gw_data) {
+            ksort($gw_data['fixtures']);
+        }
+
+        $output = [
+            'gameweeks' => $gameweeks,
+            'current' => $current_gw
+        ];
+
+        if (!empty($s['cache_enabled'])) {
+            Sawah_Sports_Cache::set($cache_key, $output, (int)($s['ttl_fixtures'] ?? 300));
+        }
+
+        return rest_ensure_response($output);
     }
 
     public function get_new_standings(WP_REST_Request $req) {

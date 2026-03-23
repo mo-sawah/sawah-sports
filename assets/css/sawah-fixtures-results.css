@@ -199,11 +199,11 @@
   display: inline-block;
   border: 1.5px solid #1a1a1a;
   border-radius: 26px;
-  padding: 10px 36px;
+  padding: 7px 36px;
   font-size: 14px;
   font-weight: 500;
-  color: #1a1a1a;
-  background: transparent;
+  color: #ffffff !important;
+  background: #000;
   text-decoration: none;
   transition:
     background 0.2s,
@@ -214,7 +214,7 @@
 
 .ss-fr-more-btn:hover,
 .ss-fr-more-btn:focus {
-  background: #1a1a1a;
+  background: #353535;
   color: #ffffff;
   outline: none;
 }

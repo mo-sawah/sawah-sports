@@ -39,6 +39,9 @@ final class Sawah_Sports_Elementor {
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings-premium.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-league-fixtures.php';
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-mobile-matches.php';
+
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-new-matches-full.php';
+        $widgets_manager->register(new \Sawah_Sports_Widget_New_Matches_Full());
         
         // Stage 2: Advanced widgets
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-match-center.php';
@@ -73,6 +76,7 @@ final class Sawah_Sports_Elementor {
         
         $widgets_manager->register(new \Sawah_Sports_Widget_New_Standing_10());
         $widgets_manager->register(new \Sawah_Sports_Widget_New_Standing_Full());
+        
 
         // Register all widgets
         $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center());
@@ -136,6 +140,9 @@ final class Sawah_Sports_Elementor {
         // Sidebar Standings (v9.0)
         wp_enqueue_style('sawah-standings-sidebar', SAWAH_SPORTS_URL . 'assets/css/standings-sidebar.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
         wp_enqueue_script('sawah-standings-sidebar', SAWAH_SPORTS_URL . 'assets/js/standings-sidebar.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+
+        wp_enqueue_style('sawah-new-matches-full', SAWAH_SPORTS_URL . 'assets/css/sawah-new-matches-full.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-new-matches-full', SAWAH_SPORTS_URL . 'assets/js/sawah-new-matches-full.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
 
         // NEW: Fixtures & Results (v10.0)
         wp_enqueue_style(
