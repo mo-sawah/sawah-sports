@@ -28,14 +28,19 @@
     return { home, away };
   }
 
-  function renderFixtures($wrapper, gameweeks, targetGw, locale) {
-    let gwData = gameweeks[targetGw];
-    if (!gwData || !gwData.fixtures) {
+  function renderFixtures($wrapper, gwData, locale) {
+    if (
+      !gwData ||
+      !gwData.fixtures ||
+      Object.keys(gwData.fixtures).length === 0
+    ) {
+      let i18n = $wrapper.data("i18n") || {};
       $wrapper
         .find(".ss-nmf-fixtures")
         .html(
-          '<div style="text-align:center;padding:30px;">No fixtures found.</div>',
-        );
+          `<div style="text-align:center;padding:30px;">${i18n.no_data || "No fixtures found."}</div>`,
+        )
+        .show();
       return;
     }
 
@@ -68,11 +73,11 @@
                     <div class="ss-nmf-status">${state}</div>
                     <div class="ss-nmf-team ss-nmf-home">
                         <span>${home.name || ""}</span>
-                        <img src="${home.image_path || ""}" class="ss-nmf-logo">
+                        <img src="${home.image_path || ""}" class="ss-nmf-logo" loading="lazy">
                     </div>
                     <div class="ss-nmf-center">${centerHtml}</div>
                     <div class="ss-nmf-team ss-nmf-away">
-                        <img src="${away.image_path || ""}" class="ss-nmf-logo">
+                        <img src="${away.image_path || ""}" class="ss-nmf-logo" loading="lazy">
                         <span>${away.name || ""}</span>
                     </div>
                 </div>`;
@@ -101,54 +106,67 @@
       success: function (data) {
         $wrapper.find(".ss-nmf-loading").hide();
 
-        if (
-          !data ||
-          !data.gameweeks ||
-          Object.keys(data.gameweeks).length === 0
-        ) {
-          $wrapper.find(".ss-nmf-fixtures").html(i18n.no_data).show();
+        if (!data || !data.gameweeks || data.gameweeks.length === 0) {
+          $wrapper
+            .find(".ss-nmf-fixtures")
+            .html(i18n.no_data || "No data")
+            .show();
           return;
         }
 
         $wrapper.data("gameweeks", data.gameweeks);
 
+        // Identify Active Game Week
+        let activeGwId = data.current;
+        if (!activeGwId)
+          activeGwId = data.gameweeks[data.gameweeks.length - 1].id;
+
         // Build Slider Tabs
         let tabsHtml = "";
-        let activeGw = data.current || Object.keys(data.gameweeks)[0];
+        data.gameweeks.forEach((gw) => {
+          let activeClass = gw.id === activeGwId ? "active" : "";
 
-        // Sort gameweek names numerically if possible
-        let gwNames = Object.keys(data.gameweeks).sort((a, b) => {
-          let numA = parseInt(a.replace(/\D/g, "")) || 0;
-          let numB = parseInt(b.replace(/\D/g, "")) || 0;
-          return numA - numB;
-        });
+          // Uses Loco Translate translation if numeric (e.g., "ΑΓΩΝΙΣΤΙΚΗ 26")
+          let isNumeric = !isNaN(gw.name);
+          let label = isNumeric
+            ? `${i18n.gameweek || "Game Week"} ${gw.name}`
+            : gw.name;
 
-        gwNames.forEach((gw) => {
-          let activeClass = gw === activeGw ? "active" : "";
-          let label = isNaN(gw) ? gw : `${i18n.gameweek} ${gw}`; // Translates "Game Week 27"
-          tabsHtml += `<button class="ss-nmf-tab ${activeClass}" data-gw="${gw}">${label}</button>`;
+          tabsHtml += `<button class="ss-nmf-tab ${activeClass}" data-id="${gw.id}">${label}</button>`;
         });
 
         let $track = $wrapper.find(".ss-nmf-tabs-track");
         $track.html(tabsHtml);
 
-        renderFixtures($wrapper, data.gameweeks, activeGw, locale);
+        // Render the initial active fixtures
+        let activeGwData =
+          data.gameweeks.find((g) => g.id === activeGwId) || data.gameweeks[0];
+        renderFixtures($wrapper, activeGwData, locale);
 
-        // Auto-scroll track to active tab
-        let $activeTab = $track.find(".active");
-        if ($activeTab.length) {
-          $track.animate({ scrollLeft: $activeTab.position().left - 50 }, 300);
-        }
+        // Auto-center the slider on the active tab
+        setTimeout(() => {
+          let $activeTab = $track.find(".active");
+          if ($activeTab.length) {
+            let trackWidth = $track.parent().width();
+            let scrollPos =
+              $activeTab.position().left -
+              trackWidth / 2 +
+              $activeTab.outerWidth() / 2;
+            $track.animate({ scrollLeft: scrollPos }, 300);
+          }
+        }, 150);
       },
     });
 
     // Tab Click
     $wrapper.on("click", ".ss-nmf-tab", function () {
-      let gw = $(this).data("gw");
+      let id = $(this).data("id");
       $wrapper.find(".ss-nmf-tab").removeClass("active");
       $(this).addClass("active");
+
       let gameweeks = $wrapper.data("gameweeks");
-      renderFixtures($wrapper, gameweeks, gw, locale);
+      let gwData = gameweeks.find((g) => g.id === id);
+      renderFixtures($wrapper, gwData, locale);
     });
 
     // Arrows Click

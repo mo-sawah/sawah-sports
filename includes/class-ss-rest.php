@@ -147,7 +147,7 @@ final class Sawah_Sports_REST {
         $s = Sawah_Sports_Helpers::settings();
         $season_id = (int) $req->get_param('season_id');
         
-        $cache_key = 'ss_new_matches_full_v1_' . $season_id;
+        $cache_key = 'ss_new_matches_full_v2_' . $season_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
@@ -164,40 +164,77 @@ final class Sawah_Sports_REST {
 
         $rounds = $res['data']['data'] ?? [];
         $gameweeks = [];
-        $current_gw = null;
+        $current_gw_id = null;
 
-        // Group concurrent Round IDs by their Name (e.g. "Matchday 27")
+        // Group concurrent rounds, but separate identically named rounds from different months (Playoffs vs Regular)
         foreach ($rounds as $r) {
             $name = (string)($r['name'] ?? '');
             if (empty($name)) continue;
 
-            if (!isset($gameweeks[$name])) {
-                $gameweeks[$name] = ['is_current' => false, 'fixtures' => []];
+            // Unique ID combining the Name and the Year-Month it starts
+            $month = isset($r['starting_at']) ? substr($r['starting_at'], 0, 7) : '0000-00';
+            $gw_id = $name . '_' . $month;
+
+            if (!isset($gameweeks[$gw_id])) {
+                $gameweeks[$gw_id] = [
+                    'id' => $gw_id,
+                    'name' => $name,
+                    'is_current' => false,
+                    'start_date' => $r['starting_at'] ?? '9999-12-31',
+                    'fixtures' => []
+                ];
             }
 
             if (!empty($r['is_current'])) {
-                $gameweeks[$name]['is_current'] = true;
-                $current_gw = $name;
+                $gameweeks[$gw_id]['is_current'] = true;
+                $current_gw_id = $gw_id;
+            }
+
+            // Track earliest start date for accurate chronological sorting
+            if (isset($r['starting_at']) && $r['starting_at'] < $gameweeks[$gw_id]['start_date']) {
+                $gameweeks[$gw_id]['start_date'] = $r['starting_at'];
             }
 
             if (!empty($r['fixtures'])) {
                 foreach ($r['fixtures'] as $fx) {
                     $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
                     if (strlen($date) === 10) {
-                        $gameweeks[$name]['fixtures'][$date][] = $fx;
+                        $gameweeks[$gw_id]['fixtures'][$date][] = $fx;
                     }
                 }
             }
         }
 
+        // Fallback: If no round is active (e.g. International Break), find the one closest to TODAY
+        if (!$current_gw_id && !empty($gameweeks)) {
+            $closest_gw = null;
+            $min_diff = PHP_INT_MAX;
+            $now = time();
+            foreach ($gameweeks as $id => $gw) {
+                $time = strtotime($gw['start_date']);
+                $diff = abs($now - $time);
+                if ($diff < $min_diff) {
+                    $min_diff = $diff;
+                    $closest_gw = $id;
+                }
+            }
+            $current_gw_id = $closest_gw;
+        }
+
         // Sort dates within each gameweek
-        foreach ($gameweeks as $name => &$gw_data) {
+        foreach ($gameweeks as &$gw_data) {
             ksort($gw_data['fixtures']);
         }
 
+        // Convert to indexed array and sort the slider chronologically
+        $gameweeks_list = array_values($gameweeks);
+        usort($gameweeks_list, function($a, $b) {
+            return strcmp($a['start_date'], $b['start_date']);
+        });
+
         $output = [
-            'gameweeks' => $gameweeks,
-            'current' => $current_gw
+            'gameweeks' => $gameweeks_list,
+            'current' => $current_gw_id
         ];
 
         if (!empty($s['cache_enabled'])) {
