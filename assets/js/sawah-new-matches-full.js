@@ -116,17 +116,13 @@
 
         $wrapper.data("gameweeks", data.gameweeks);
 
-        // Identify Active Game Week
         let activeGwId = data.current;
         if (!activeGwId)
           activeGwId = data.gameweeks[data.gameweeks.length - 1].id;
 
-        // Build Slider Tabs
         let tabsHtml = "";
         data.gameweeks.forEach((gw) => {
           let activeClass = gw.id === activeGwId ? "active" : "";
-
-          // Uses Loco Translate translation if numeric (e.g., "ΑΓΩΝΙΣΤΙΚΗ 26")
           let isNumeric = !isNaN(gw.name);
           let label = isNumeric
             ? `${i18n.gameweek || "Game Week"} ${gw.name}`
@@ -138,23 +134,30 @@
         let $track = $wrapper.find(".ss-nmf-tabs-track");
         $track.html(tabsHtml);
 
-        // Render the initial active fixtures
         let activeGwData =
           data.gameweeks.find((g) => g.id === activeGwId) || data.gameweeks[0];
         renderFixtures($wrapper, activeGwData, locale);
 
-        // Auto-center the slider on the active tab
+        // Auto-center math: Foolproof viewport offset
         setTimeout(() => {
           let $activeTab = $track.find(".active");
-          if ($activeTab.length) {
-            let trackWidth = $track.parent().width();
-            let scrollPos =
-              $activeTab.position().left -
-              trackWidth / 2 +
+          let $viewport = $wrapper.find(".ss-nmf-tabs-viewport");
+
+          if ($activeTab.length && $viewport.length) {
+            let tabOffset = $activeTab.offset().left;
+            let viewportOffset = $viewport.offset().left;
+            let currentScroll = $track.scrollLeft();
+
+            // Distance from left edge of viewport + current scroll - half viewport + half tab width
+            let scrollTarget =
+              currentScroll +
+              (tabOffset - viewportOffset) -
+              $viewport.width() / 2 +
               $activeTab.outerWidth() / 2;
-            $track.animate({ scrollLeft: scrollPos }, 300);
+
+            $track.animate({ scrollLeft: scrollTarget }, 400);
           }
-        }, 150);
+        }, 200); // Slight delay ensures CSS layout is fully painted
       },
     });
 
@@ -172,11 +175,11 @@
     // Arrows Click
     $wrapper.on("click", ".ss-nmf-nav.prev", function () {
       let $track = $wrapper.find(".ss-nmf-tabs-track");
-      $track.animate({ scrollLeft: "-=150" }, 200);
+      $track.animate({ scrollLeft: "-=200" }, 200);
     });
     $wrapper.on("click", ".ss-nmf-nav.next", function () {
       let $track = $wrapper.find(".ss-nmf-tabs-track");
-      $track.animate({ scrollLeft: "+=150" }, 200);
+      $track.animate({ scrollLeft: "+=200" }, 200);
     });
   }
 

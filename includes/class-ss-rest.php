@@ -147,13 +147,12 @@ final class Sawah_Sports_REST {
         $s = Sawah_Sports_Helpers::settings();
         $season_id = (int) $req->get_param('season_id');
         
-        $cache_key = 'ss_new_matches_full_v2_' . $season_id;
+        $cache_key = 'ss_new_matches_full_v3_' . $season_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // Fetch ALL rounds for the season including their fixtures
         $res = $this->client()->get('rounds/seasons/' . $season_id, [
             'include' => 'fixtures.participants;fixtures.scores;fixtures.state'
         ], 20);
@@ -165,22 +164,30 @@ final class Sawah_Sports_REST {
         $rounds = $res['data']['data'] ?? [];
         $gameweeks = [];
         $current_gw_id = null;
+        $stage_starts = []; // To track when each stage (Regular vs Playoff) begins
 
-        // Group concurrent rounds, but separate identically named rounds from different months (Playoffs vs Regular)
         foreach ($rounds as $r) {
             $name = (string)($r['name'] ?? '');
+            $stage_id = (int)($r['stage_id'] ?? 0);
             if (empty($name)) continue;
 
-            // Unique ID combining the Name and the Year-Month it starts
-            $month = isset($r['starting_at']) ? substr($r['starting_at'], 0, 7) : '0000-00';
-            $gw_id = $name . '_' . $month;
+            // Combine Stage ID and Name to keep Playoffs and Regular Season separated
+            $gw_id = $stage_id . '_' . $name;
+
+            $start_at = $r['starting_at'] ?? '9999-12-31';
+            
+            // Track the absolute earliest date for the Stage to keep stages chronological
+            if (!isset($stage_starts[$stage_id]) || $start_at < $stage_starts[$stage_id]) {
+                $stage_starts[$stage_id] = $start_at;
+            }
 
             if (!isset($gameweeks[$gw_id])) {
                 $gameweeks[$gw_id] = [
                     'id' => $gw_id,
                     'name' => $name,
+                    'stage_id' => $stage_id,
                     'is_current' => false,
-                    'start_date' => $r['starting_at'] ?? '9999-12-31',
+                    'start_date' => $start_at,
                     'fixtures' => []
                 ];
             }
@@ -188,11 +195,6 @@ final class Sawah_Sports_REST {
             if (!empty($r['is_current'])) {
                 $gameweeks[$gw_id]['is_current'] = true;
                 $current_gw_id = $gw_id;
-            }
-
-            // Track earliest start date for accurate chronological sorting
-            if (isset($r['starting_at']) && $r['starting_at'] < $gameweeks[$gw_id]['start_date']) {
-                $gameweeks[$gw_id]['start_date'] = $r['starting_at'];
             }
 
             if (!empty($r['fixtures'])) {
@@ -205,7 +207,7 @@ final class Sawah_Sports_REST {
             }
         }
 
-        // Fallback: If no round is active (e.g. International Break), find the one closest to TODAY
+        // Fallback: If no round is explicitly active, find the one closest to TODAY
         if (!$current_gw_id && !empty($gameweeks)) {
             $closest_gw = null;
             $min_diff = PHP_INT_MAX;
@@ -221,15 +223,32 @@ final class Sawah_Sports_REST {
             $current_gw_id = $closest_gw;
         }
 
-        // Sort dates within each gameweek
         foreach ($gameweeks as &$gw_data) {
             ksort($gw_data['fixtures']);
         }
 
-        // Convert to indexed array and sort the slider chronologically
         $gameweeks_list = array_values($gameweeks);
-        usort($gameweeks_list, function($a, $b) {
-            return strcmp($a['start_date'], $b['start_date']);
+        
+        // The Magic Sorting Formula
+        usort($gameweeks_list, function($a, $b) use ($stage_starts) {
+            // 1. First, separate by Stage (Regular vs Playoff) chronologically
+            $stageA_start = $stage_starts[$a['stage_id']] ?? '9999-12-31';
+            $stageB_start = $stage_starts[$b['stage_id']] ?? '9999-12-31';
+            
+            if ($stageA_start !== $stageB_start) {
+                return strcmp($stageA_start, $stageB_start);
+            }
+
+            // 2. Second, inside the same stage, sort strictly Numerically
+            $numA = filter_var($a['name'], FILTER_SANITIZE_NUMBER_INT);
+            $numB = filter_var($b['name'], FILTER_SANITIZE_NUMBER_INT);
+
+            if (is_numeric($numA) && is_numeric($numB)) {
+                return $numA <=> $numB;
+            }
+
+            // 3. Fallback for non-numbers
+            return strcmp($a['name'], $b['name']);
         });
 
         $output = [
