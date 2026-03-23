@@ -2,8 +2,8 @@
 if (!defined('ABSPATH')) { exit; }
 
 /**
- * Complete Elementor Integration - v6.0 Mobile Optimized
- * Added "watch" i18n for button text
+ * Complete Elementor Integration - v6.1
+ * Added "New Fixtures & Results" widget (v10.0)
  */
 final class Sawah_Sports_Elementor {
     private static $instance = null;
@@ -65,9 +65,12 @@ final class Sawah_Sports_Elementor {
         // v9.0: Sidebar Standings (Compact)
         require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-standings-sidebar.php';
 
+        // v10.0: NEW Fixtures & Results (BBC Sport style, per-league)
+        require_once SAWAH_SPORTS_PATH . 'includes/elementor/widgets/class-ss-widget-fixtures-results.php';
+
         // Register all widgets
-        $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center()); // v5.0 Stats Center
-        $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches()); // v4.0 Premium
+        $widgets_manager->register(new \Sawah_Sports_Widget_Stats_Center());
+        $widgets_manager->register(new \Sawah_Sports_Widget_Todays_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Matches());
         $widgets_manager->register(new \Sawah_Sports_Widget_Standings());
         $widgets_manager->register(new \Sawah_Sports_Widget_Standings_Premium());
@@ -85,16 +88,17 @@ final class Sawah_Sports_Elementor {
         $widgets_manager->register(new \Sawah_Sports_Widget_Match_Comparison());
         $widgets_manager->register(new \Sawah_Sports_Widget_Live_Ticker());
         $widgets_manager->register(new \Sawah_Sports_Widget_Mobile_Matches());
-        $widgets_manager->register(new \Sawah_Sports_Widget_League_Hub()); // v7.0 League Hub
-        $widgets_manager->register(new \Sawah_Sports_Widget_Goal_Style_Matches()); // v8.0 Goal.com Style
-        $widgets_manager->register(new \Sawah_Sports_Widget_Standings_Sidebar()); // v9.0 Sidebar Standings
+        $widgets_manager->register(new \Sawah_Sports_Widget_League_Hub());
+        $widgets_manager->register(new \Sawah_Sports_Widget_Goal_Style_Matches());
+        $widgets_manager->register(new \Sawah_Sports_Widget_Standings_Sidebar());
+        $widgets_manager->register(new \Sawah_Sports_Widget_Fixtures_Results()); // v10.0
     }
 
     public function frontend_assets() {
-        // v6.0: Mobile-optimized design
+        // Core modern CSS
         wp_enqueue_style('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/css/sawah-sports-modern.css', [], SAWAH_SPORTS_VERSION);
         
-        // TV Channels CSS - Mobile Optimized
+        // TV Channels CSS
         wp_enqueue_style('sawah-sports-tv-channels', SAWAH_SPORTS_URL . 'assets/css/tv-channels.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
         
         // Premium Standings CSS
@@ -102,83 +106,44 @@ final class Sawah_Sports_Elementor {
         
         wp_enqueue_script('sawah-sports-modern', SAWAH_SPORTS_URL . 'assets/js/sawah-sports-modern.js', [], SAWAH_SPORTS_VERSION, true);
 
-        // Matches Widget Script with TV Channels support
+        // Matches Widget Script
         wp_enqueue_script('sawah-matches-widget', SAWAH_SPORTS_URL . 'assets/js/sawah-todays-matches.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
 
-        // Mobile widget CSS
+        // Mobile widget
+        wp_enqueue_style('sawah-mobile-matches', SAWAH_SPORTS_URL . 'assets/css/sawah-mobile-matches.css', [], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-mobile-matches', SAWAH_SPORTS_URL . 'assets/js/sawah-mobile-matches.js', ['jquery'], SAWAH_SPORTS_VERSION, true);
+
+        // Premium Standings
+        wp_enqueue_script('sawah-standings', SAWAH_SPORTS_URL . 'assets/js/sawah-standings.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+
+        // League Hub
+        wp_enqueue_style('sawah-league-hub', SAWAH_SPORTS_URL . 'assets/css/sawah-league-hub.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-league-hub', SAWAH_SPORTS_URL . 'assets/js/sawah-league-hub.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+
+        // Goal.com Style Matches (v8.0)
+        wp_enqueue_style('sawah-goal-matches', SAWAH_SPORTS_URL . 'assets/css/goal-style-matches.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-goal-matches', SAWAH_SPORTS_URL . 'assets/js/goal-style-matches.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+
+        // Sidebar Standings (v9.0)
+        wp_enqueue_style('sawah-standings-sidebar', SAWAH_SPORTS_URL . 'assets/css/standings-sidebar.css', ['sawah-sports-modern'], SAWAH_SPORTS_VERSION);
+        wp_enqueue_script('sawah-standings-sidebar', SAWAH_SPORTS_URL . 'assets/js/standings-sidebar.js', ['jquery', 'sawah-sports-modern'], SAWAH_SPORTS_VERSION, true);
+
+        // NEW: Fixtures & Results (v10.0)
         wp_enqueue_style(
-            'sawah-mobile-matches', 
-            SAWAH_SPORTS_URL . 'assets/css/sawah-mobile-matches.css', 
-            [], 
-            SAWAH_SPORTS_VERSION
-        );
-
-        // Mobile widget JS
-        wp_enqueue_script(
-            'sawah-mobile-matches', 
-            SAWAH_SPORTS_URL . 'assets/js/sawah-mobile-matches.js', 
-            ['jquery'], 
-            SAWAH_SPORTS_VERSION, 
-            true
-        );
-
-        // Premium Standings JS
-        wp_enqueue_script(
-            'sawah-standings', 
-            SAWAH_SPORTS_URL . 'assets/js/sawah-standings.js', 
-            ['jquery', 'sawah-sports-modern'], 
-            SAWAH_SPORTS_VERSION, 
-            true
-        );
-
-        // League Hub (SofaScore-style) assets
-        wp_enqueue_style(
-            'sawah-league-hub',
-            SAWAH_SPORTS_URL . 'assets/css/sawah-league-hub.css',
+            'sawah-fixtures-results',
+            SAWAH_SPORTS_URL . 'assets/css/sawah-fixtures-results.css',
             ['sawah-sports-modern'],
             SAWAH_SPORTS_VERSION
         );
-
         wp_enqueue_script(
-            'sawah-league-hub',
-            SAWAH_SPORTS_URL . 'assets/js/sawah-league-hub.js',
+            'sawah-fixtures-results',
+            SAWAH_SPORTS_URL . 'assets/js/sawah-fixtures-results.js',
             ['jquery', 'sawah-sports-modern'],
             SAWAH_SPORTS_VERSION,
             true
         );
 
-        // Goal.com Style Matches (v8.0) - Greek/Cyprus Priority
-        wp_enqueue_style(
-            'sawah-goal-matches',
-            SAWAH_SPORTS_URL . 'assets/css/goal-style-matches.css',
-            ['sawah-sports-modern'],
-            SAWAH_SPORTS_VERSION
-        );
-
-        wp_enqueue_script(
-            'sawah-goal-matches',
-            SAWAH_SPORTS_URL . 'assets/js/goal-style-matches.js',
-            ['jquery', 'sawah-sports-modern'],
-            SAWAH_SPORTS_VERSION,
-            true
-        );
-
-        // Sidebar Standings (v9.0) - Compact for sidebars
-        wp_enqueue_style(
-            'sawah-standings-sidebar',
-            SAWAH_SPORTS_URL . 'assets/css/standings-sidebar.css',
-            ['sawah-sports-modern'],
-            SAWAH_SPORTS_VERSION
-        );
-
-        wp_enqueue_script(
-            'sawah-standings-sidebar',
-            SAWAH_SPORTS_URL . 'assets/js/standings-sidebar.js',
-            ['jquery', 'sawah-sports-modern'],
-            SAWAH_SPORTS_VERSION,
-            true
-        );
-
+        // Shared JS config (SawahSports global object)
         wp_localize_script('sawah-sports-modern', 'SawahSports', [
             'restUrl' => esc_url_raw(rest_url('sawah-sports/v1')),
             'nonce' => wp_create_nonce('wp_rest'),
@@ -199,15 +164,15 @@ final class Sawah_Sports_Elementor {
                 'standingsErr' => __('Unable to load standings.', 'sawah-sports'),
                 'dataErr' => __('Unable to load data.', 'sawah-sports'),
                 
-                // v6.0: TV Channels/Streaming i18n - UPDATED
-                'watch' => __('Watch', 'sawah-sports'), // Changed from "Watch Live" to just "Watch"
-                'watchLive' => __('Watch Live', 'sawah-sports'), // Keep for backwards compatibility
+                // TV Channels/Streaming i18n
+                'watch' => __('Watch', 'sawah-sports'),
+                'watchLive' => __('Watch Live', 'sawah-sports'),
                 'availableOn' => __('Available on', 'sawah-sports'),
                 'moreChannels' => __('more channels', 'sawah-sports'),
                 'streamingOn' => __('Streaming on', 'sawah-sports'),
                 'broadcastOn' => __('Broadcast on', 'sawah-sports'),
                 
-                // v9.0: Sidebar Standings i18n
+                // Sidebar Standings i18n
                 'more' => __('More', 'sawah-sports'),
                 'less' => __('Less', 'sawah-sports'),
             ],

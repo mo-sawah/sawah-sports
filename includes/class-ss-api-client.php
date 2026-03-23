@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) { exit; }
 
 /**
  * Enhanced Sportmonks API Client
- * v5.3 - Added TV Stations/Channels Support
+ * v5.4 - Added get_fixtures_by_season for Fixtures & Results widget
  */
 final class Sawah_Sports_API_Client {
     private $base_url = 'https://api.sportmonks.com/v3/football/';
@@ -93,7 +93,6 @@ final class Sawah_Sports_API_Client {
 
     /**
      * Get fixtures by date - ENHANCED VERSION WITH TV STATIONS
-     * Now includes periods and TV stations for complete match info
      */
     public function get_fixtures_by_date(string $date, array $params = []): array {
         $defaults = [
@@ -104,10 +103,26 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
+     * Get all fixtures for a season — used by the Fixtures & Results widget.
+     *
+     * Fetches up to $per_page fixtures sorted chronologically.
+     * Results are cached and sliced server-side by the REST controller,
+     * so this can be called once and served to multiple widget configurations.
+     */
+    public function get_fixtures_by_season(int $season_id, array $params = []): array {
+        $defaults = [
+            'include'  => 'participants;scores;state',
+            'per_page' => 300,
+            'sort'     => 'starting_at',   // ascending by kick-off time
+        ];
+        $params = array_merge($defaults, $params);
+        return $this->get('fixtures/seasons/' . $season_id, $params, 25);
+    }
+
+    /**
      * Get fixture by ID with full details
      */
     public function get_fixture(int $fixture_id, array $includes = []): array {
-        // Expanded includes for v5.0 features + TV stations
         $include_str = empty($includes) 
             ? 'participants;league;scores;state;events;lineups.player;lineups.details;statistics;coaches;formation;periods;tvstations.tvstation'
             : implode(';', $includes);
@@ -124,7 +139,7 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get Teams Stats by Season (New for v5.0 Stats Center)
+     * Get Teams Stats by Season (Stats Center)
      */
     public function get_teams_by_season(int $season_id): array {
         return $this->get('teams/seasons/' . $season_id, [
@@ -235,8 +250,7 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get TV stations for a fixture (STANDALONE METHOD)
-     * This is now also included in get_fixtures_by_date
+     * Get TV stations for a fixture
      */
     public function get_tv_stations(int $fixture_id): array {
         return $this->get('fixtures/' . $fixture_id, ['include' => 'tvstations.tvstation'], 12);
