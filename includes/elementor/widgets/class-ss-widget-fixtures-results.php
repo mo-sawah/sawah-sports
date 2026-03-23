@@ -41,21 +41,21 @@ class Sawah_Sports_Widget_Fixtures_Results extends \Elementor\Widget_Base {
         ]);
 
         $this->add_control('past_dates', [
-            'label'       => __('Past Date Groups', 'sawah-sports'),
+            'label'       => __('Past Date Groups (Days)', 'sawah-sports'),
             'type'        => \Elementor\Controls_Manager::NUMBER,
             'default'     => 1,
             'min'         => 1,
-            'max'         => 5,
-            'description' => __('How many past match-day groups to show (1 = last match day only).', 'sawah-sports'),
+            'max'         => 10,
+            'description' => __('How many past days of matches to show (1 = latest match day only).', 'sawah-sports'),
         ]);
 
         $this->add_control('upcoming_dates', [
-            'label'       => __('Upcoming Date Groups', 'sawah-sports'),
+            'label'       => __('Upcoming Date Groups (Days)', 'sawah-sports'),
             'type'        => \Elementor\Controls_Manager::NUMBER,
-            'default'     => 3,
+            'default'     => 2,
             'min'         => 1,
-            'max'         => 7,
-            'description' => __('How many upcoming match-day groups to show.', 'sawah-sports'),
+            'max'         => 10,
+            'description' => __('How many upcoming days of matches to show.', 'sawah-sports'),
         ]);
 
         $this->add_control('date_locale', [
