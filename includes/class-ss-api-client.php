@@ -33,6 +33,13 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
+     * Get all stages for a specific season (Regular, Championship, Relegation)
+     */
+    public function get_stages_by_season(int $season_id): array {
+        return $this->get('stages/seasons/' . $season_id, [], 15);
+    }
+
+    /**
      * Build full API URL with query parameters
      */
     private function build_url(string $path, array $query = []): string {

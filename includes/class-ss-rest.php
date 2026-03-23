@@ -299,51 +299,70 @@ final class Sawah_Sports_REST {
         if (is_wp_error($check)) return $check;
 
         $s = Sawah_Sports_Helpers::settings();
-        $season_id = (int) $req->get_param('league_id'); // We use Season ID 25996 here
+        $season_id = (int) $req->get_param('league_id'); 
         
-        // Cache per season to keep it fast
-        $cache_key = 'ss_rounds_auto_' . $season_id;
+        $cache_key = 'ss_stages_auto_' . $season_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // STEP 1: Get all rounds for the season
+        // 1. Fetch all STAGES for the season
+        $stages_res = $this->client()->get_stages_by_season($season_id);
+        if (!$stages_res['ok']) return new WP_Error('api_error', 'Stages fetch failed');
+
+        $stages = $stages_res['data']['data'] ?? [];
+        
+        // 2. Find the ACTIVE Stage (The one currently happening)
+        $active_stage_id = null;
+        foreach ($stages as $stage) {
+            if (!empty($stage['is_current'])) {
+                $active_stage_id = $stage['id'];
+                break;
+            }
+        }
+
+        // Fallback if no stage is marked current (use the last one)
+        if (!$active_stage_id && !empty($stages)) {
+            $active_stage_id = end($stages)['id'];
+        }
+
+        // 3. Get Rounds for the Season, but filter for the active Stage
         $rounds_res = $this->client()->get_rounds_by_season($season_id);
         if (!$rounds_res['ok']) return new WP_Error('api_error', 'Rounds fetch failed');
 
-        $rounds = $rounds_res['data']['data'] ?? [];
+        $all_rounds = $rounds_res['data']['data'] ?? [];
         
-        // Sort rounds by their ID or start date to ensure order
-        usort($rounds, function($a, $b) {
+        // Filter rounds to only include those belonging to the active stage
+        $stage_rounds = array_filter($all_rounds, function($r) use ($active_stage_id) {
+            return (int)$r['stage_id'] === (int)$active_stage_id;
+        });
+
+        // Re-index and sort
+        $stage_rounds = array_values($stage_rounds);
+        usort($stage_rounds, function($a, $b) {
             return $a['id'] - $b['id'];
         });
 
+        // 4. Anchor on is_current Round
         $current_index = -1;
-        foreach ($rounds as $index => $r) {
+        foreach ($stage_rounds as $index => $r) {
             if (!empty($r['is_current'])) {
                 $current_index = $index;
                 break;
             }
         }
 
-        // If no round is marked 'is_current', fallback to the latest one
-        if ($current_index === -1) $current_index = count($rounds) - 1;
+        if ($current_index === -1) $current_index = count($stage_rounds) - 1;
 
-        // Identify Round IDs: Previous (Results) and Current/Next (Fixtures)
+        // Pick Round IDs: Last round and Current round
         $target_round_ids = [];
-        
-        // Grab the previous round if it exists
-        if ($current_index > 0) {
-            $target_round_ids['past'] = $rounds[$current_index - 1]['id'];
-        }
-        
-        // Grab the current round
-        $target_round_ids['upcoming'] = $rounds[$current_index]['id'];
+        if ($current_index > 0) $target_round_ids['past'] = $stage_rounds[$current_index - 1]['id'];
+        $target_round_ids['upcoming'] = $stage_rounds[$current_index]['id'];
 
         $output = ['past' => [], 'upcoming' => []];
 
-        // STEP 2: Fetch fixtures for these specific rounds
+        // 5. Fetch fixtures for these rounds
         foreach ($target_round_ids as $type => $r_id) {
             $data = $this->client()->get_round_with_fixtures($r_id);
             if ($data['ok'] && !empty($data['data']['data']['fixtures'])) {
@@ -355,7 +374,7 @@ final class Sawah_Sports_REST {
         }
 
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $output, 3600); // Cache for 1 hour
+            Sawah_Sports_Cache::set($cache_key, $output, 3600);
         }
 
         return rest_ensure_response($output);
