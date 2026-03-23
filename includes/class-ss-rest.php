@@ -301,80 +301,47 @@ final class Sawah_Sports_REST {
         $s = Sawah_Sports_Helpers::settings();
         $season_id = (int) $req->get_param('league_id'); 
         
-        $cache_key = 'ss_stages_auto_' . $season_id;
+        $cache_key = 'ss_latest_upcoming_v1_' . $season_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // 1. Fetch all STAGES for the season
-        $stages_res = $this->client()->get_stages_by_season($season_id);
-        if (!$stages_res['ok']) return new WP_Error('api_error', 'Stages fetch failed');
-
-        $stages = $stages_res['data']['data'] ?? [];
+        // Fetch the Season data, which now includes 'latest' and 'upcoming' arrays directly from Sportmonks
+        $res = $this->client()->get_season_latest_upcoming($season_id);
         
-        // 2. Find the ACTIVE Stage (The one currently happening)
-        $active_stage_id = null;
-        foreach ($stages as $stage) {
-            if (!empty($stage['is_current'])) {
-                $active_stage_id = $stage['id'];
-                break;
-            }
+        if (!$res['ok']) {
+            return new WP_Error('api_error', 'Failed to fetch season data', ['status' => $res['status'] ?? 502]);
         }
 
-        // Fallback if no stage is marked current (use the last one)
-        if (!$active_stage_id && !empty($stages)) {
-            $active_stage_id = end($stages)['id'];
-        }
-
-        // 3. Get Rounds for the Season, but filter for the active Stage
-        $rounds_res = $this->client()->get_rounds_by_season($season_id);
-        if (!$rounds_res['ok']) return new WP_Error('api_error', 'Rounds fetch failed');
-
-        $all_rounds = $rounds_res['data']['data'] ?? [];
-        
-        // Filter rounds to only include those belonging to the active stage
-        $stage_rounds = array_filter($all_rounds, function($r) use ($active_stage_id) {
-            return (int)$r['stage_id'] === (int)$active_stage_id;
-        });
-
-        // Re-index and sort
-        $stage_rounds = array_values($stage_rounds);
-        usort($stage_rounds, function($a, $b) {
-            return $a['id'] - $b['id'];
-        });
-
-        // 4. Anchor on is_current Round
-        $current_index = -1;
-        foreach ($stage_rounds as $index => $r) {
-            if (!empty($r['is_current'])) {
-                $current_index = $index;
-                break;
-            }
-        }
-
-        if ($current_index === -1) $current_index = count($stage_rounds) - 1;
-
-        // Pick Round IDs: Last round and Current round
-        $target_round_ids = [];
-        if ($current_index > 0) $target_round_ids['past'] = $stage_rounds[$current_index - 1]['id'];
-        $target_round_ids['upcoming'] = $stage_rounds[$current_index]['id'];
+        $data = $res['data']['data'] ?? [];
+        $latest = $data['latest'] ?? [];
+        $upcoming = $data['upcoming'] ?? [];
 
         $output = ['past' => [], 'upcoming' => []];
 
-        // 5. Fetch fixtures for these rounds
-        foreach ($target_round_ids as $type => $r_id) {
-            $data = $this->client()->get_round_with_fixtures($r_id);
-            if ($data['ok'] && !empty($data['data']['data']['fixtures'])) {
-                foreach ($data['data']['data']['fixtures'] as $fx) {
-                    $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
-                    $output[$type][$date][] = $fx;
+        // Helper function to group a flat list of fixtures by their starting date
+        $group_by_date = function($fixtures) {
+            $grouped = [];
+            foreach ($fixtures as $fx) {
+                $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+                if (strlen($date) === 10) {
+                    $grouped[$date][] = $fx;
                 }
             }
-        }
+            return $grouped;
+        };
+
+        // Group both arrays
+        $output['past'] = $group_by_date($latest);
+        $output['upcoming'] = $group_by_date($upcoming);
+
+        // Sort past dates descending (newest first), upcoming dates ascending (soonest first)
+        krsort($output['past']);
+        ksort($output['upcoming']);
 
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $output, 3600);
+            Sawah_Sports_Cache::set($cache_key, $output, (int)($s['ttl_fixtures'] ?? 300));
         }
 
         return rest_ensure_response($output);
