@@ -344,18 +344,38 @@ final class Sawah_Sports_REST {
             return rest_ensure_response(['_debug_raw' => $res['data']]);
         }
 
-        // ── Unwrap schedules response ───────────────────────────────────────
-        // Schedules response: { data: [ { id, name, fixtures: [...] } ] }
-        // Each item in data[] is a round/matchday, fixtures are nested inside.
-        $body  = $res['data'] ?? [];
-        $rounds = $body['data'] ?? [];   // outer data.data = array of rounds
+        // ── Unwrap fixtures response ────────────────────────────────────────
+        // fixtures endpoint returns: { data: [ {...fixture...}, ... ], pagination: {...} }
+        // NOT nested inside rounds like schedules endpoint
+        $body = $res['data'] ?? [];
 
-        // Flatten all fixtures from all rounds into one array
+        // Handle both possible shapes
         $all = [];
-        foreach ($rounds as $round) {
-            $round_fixtures = $round['fixtures'] ?? [];
-            foreach ($round_fixtures as $fx) {
-                $all[] = $fx;
+        if (isset($body['data']) && is_array($body['data'])) {
+            $all = $body['data'];                      // Standard: { data: [...] }
+        } elseif (is_array($body) && !empty($body) && isset($body[0])) {
+            $all = $body;                              // Flat array fallback
+        }
+
+        // If response has pagination and there are more pages, fetch them
+        // (only up to page 3 max to avoid hammering the API)
+        if (!empty($body['pagination'])) {
+            $pagination = $body['pagination'];
+            $total_pages = (int) ($pagination['last_page'] ?? 1);
+            $current_page = (int) ($pagination['current_page'] ?? 1);
+
+            if ($total_pages > 1 && $current_page === 1) {
+                $max_pages = min($total_pages, 3);
+                for ($page = 2; $page <= $max_pages; $page++) {
+                    $page_res = $this->client()->get_schedule_by_season($league_id, ['page' => $page]);
+                    if ($page_res['ok']) {
+                        $page_body = $page_res['data'] ?? [];
+                        $page_data = $page_body['data'] ?? [];
+                        if (is_array($page_data)) {
+                            $all = array_merge($all, $page_data);
+                        }
+                    }
+                }
             }
         }
 

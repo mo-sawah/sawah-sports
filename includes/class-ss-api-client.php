@@ -103,20 +103,21 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get full season schedule — used by the Fixtures & Results widget.
+     * Get fixtures for a league — used by the Fixtures & Results widget.
      *
-     * Correct endpoint per Sportmonks v3 docs:
-     * GET /v3/football/schedules/seasons/{season_id}
-     *
-     * Response wraps fixtures inside round objects:
-     *   { data: [ { id, name, fixtures: [ {id, starting_at, ...} ] } ] }
+     * Uses GET /v3/football/fixtures?filters=fixtureLeagues:{id}
+     * This endpoint DOES support includes unlike schedules/seasons.
+     * Returns { data: [...], pagination: {...} }
      */
-    public function get_schedule_by_season(int $season_id, array $params = []): array {
+    public function get_schedule_by_season(int $league_id, array $params = []): array {
         $defaults = [
-            'include' => 'participants;scores;state',
+            'include'  => 'participants;scores;state',
+            'filters'  => 'fixtureLeagues:' . $league_id,
+            'per_page' => 100,
+            'sortBy'   => 'starting_at',
         ];
         $params = array_merge($defaults, $params);
-        return $this->get('schedules/seasons/' . $season_id, $params, 25);
+        return $this->get('fixtures', $params, 25);
     }
 
     /**
