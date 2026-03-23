@@ -16,7 +16,7 @@ class Sawah_Sports_Widget_New_Standing_10 extends \Elementor\Widget_Base {
         $this->add_control('season_id', [
             'label' => __('Season ID', 'sawah-sports'),
             'type' => \Elementor\Controls_Manager::NUMBER,
-            'default' => 21646, // Premier League Example
+            'default' => 21646,
         ]);
 
         $this->add_control('more_link', [
@@ -34,7 +34,6 @@ class Sawah_Sports_Widget_New_Standing_10 extends \Elementor\Widget_Base {
         $more_url = $settings['more_link']['url'] ?? '';
         ?>
         <div class="ss-new-standing-wrapper ss-limit-10" data-season-id="<?php echo esc_attr($season_id); ?>">
-            <div class="ss-ns-header-title">STANDINGS</div>
             <div class="ss-ns-container">
                 <div class="ss-ns-loading"><div class="ss-ns-spinner"></div></div>
                 <div class="ss-ns-content"></div>
