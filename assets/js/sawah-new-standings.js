@@ -1,7 +1,6 @@
 (function ($) {
   "use strict";
 
-  // Colors matching your screenshot style
   const RULE_COLORS = [
     "#22c55e",
     "#3b82f6",
@@ -12,7 +11,6 @@
     "#f43f5e",
   ];
 
-  // Extracts the specific stat from Sportmonks' complex v3 array
   function getStat(details, typePrefix, statKey1, statKey2) {
     if (!details || !Array.isArray(details)) return 0;
     let keysToTry = [`${typePrefix}-${statKey1}`, `${typePrefix}_${statKey1}`];
@@ -35,38 +33,59 @@
     let rulesMap = {};
     let colorIndex = 0;
 
-    // 1. Deduplicate teams and find the latest stats (fixes the multiple stages issue)
     let teamsMap = {};
-    for (let i = 0; i < data.length; i++) {
-      let row = data[i];
-      if (!row.participant_id) continue;
-      let teamId = row.participant_id;
 
+    // 1. Deduplicate teams and STITCH the form history together
+    for (let i = 0; i < data.length; i++) {
+      let rawRow = data[i];
+      if (!rawRow.participant_id) continue;
+      let teamId = rawRow.participant_id;
       let played = getStat(
-        row.details,
+        rawRow.details,
         "overall",
         "matches-played",
         "matches_played",
       );
 
+      // Extract the form safely (handles both string and array formats)
+      let currentFormStr = "";
+      if (typeof rawRow.form === "string") {
+        currentFormStr = rawRow.form.replace(/[^WDL]/gi, "");
+      } else if (Array.isArray(rawRow.form)) {
+        currentFormStr = rawRow.form
+          .map((f) => {
+            if (typeof f === "string") return f;
+            if (f && f.form) return f.form;
+            if (f && f.result) return f.result;
+            return "";
+          })
+          .join("")
+          .replace(/[^WDL]/gi, "");
+      }
+
       if (!teamsMap[teamId]) {
-        teamsMap[teamId] = row;
+        // Deep copy to prevent mutating the cached data
+        teamsMap[teamId] = $.extend(true, {}, rawRow);
+        teamsMap[teamId]._parsed_form = currentFormStr;
+        teamsMap[teamId]._played = played;
       } else {
-        let existingPlayed = getStat(
-          teamsMap[teamId].details,
-          "overall",
-          "matches-played",
-          "matches_played",
-        );
+        let existingPlayed = teamsMap[teamId]._played;
+        let existingForm = teamsMap[teamId]._parsed_form;
+
+        // Stitch older stage form with newer stage form
         if (played > existingPlayed) {
-          teamsMap[teamId] = row;
+          teamsMap[teamId] = $.extend(true, {}, rawRow);
+          teamsMap[teamId]._parsed_form = existingForm + currentFormStr;
+          teamsMap[teamId]._played = played;
+        } else if (played < existingPlayed) {
+          teamsMap[teamId]._parsed_form = currentFormStr + existingForm;
         }
       }
     }
 
     let unified = Object.values(teamsMap);
 
-    // 2. Sort Unified array by Points DESC, then Goal Difference DESC
+    // 2. Sort by Points DESC, then Goal Difference DESC
     unified.sort((a, b) => {
       let ptsA = a.points || 0;
       let ptsB = b.points || 0;
@@ -104,7 +123,6 @@
       let team = row.participant || {};
       let details = row.details;
 
-      let formStr = row.form || [];
       let rule = row.rule || null;
       let ruleColor = "transparent";
 
@@ -148,11 +166,14 @@
       html += `<td>${gd}</td>`;
       html += `<td class="ss-ns-pts">${pts}</td>`;
 
+      // Render Form Boxes (Guaranteed up to 5)
+      let formStr = row._parsed_form || "";
+      let formChars = formStr.slice(-5).split(""); // Grab the last 5 stitched characters
+
       html += `<td class="ss-ns-form-td"><div class="ss-ns-form">`;
-      let formLimit = 5;
-      for (let fIdx = 0; fIdx < formLimit; fIdx++) {
-        if (formStr[fIdx] && formStr[fIdx].form) {
-          let res = formStr[fIdx].form.toUpperCase();
+      for (let fIdx = 0; fIdx < 5; fIdx++) {
+        let res = formChars[fIdx] ? formChars[fIdx].toUpperCase() : "";
+        if (["W", "D", "L"].includes(res)) {
           let badgeClass = res === "W" ? "ss-w" : res === "D" ? "ss-d" : "ss-l";
           html += `<span class="ss-ns-badge ${badgeClass}">${res}</span>`;
         } else {
