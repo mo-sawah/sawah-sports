@@ -334,47 +334,45 @@ final class Sawah_Sports_REST {
             return new WP_Error('api_error', $res['error'] ?? 'API error', ['status' => $res['status'] ?? 502]);
         }
 
-        $all = $res['data']['data'] ?? [];
+        // Sportmonks v3 wraps results in data.data; handle both shapes
+        $all = [];
+        $body = $res['data'] ?? [];
+        if (isset($body['data']) && is_array($body['data'])) {
+            $all = $body['data'];
+        } elseif (is_array($body) && isset($body[0])) {
+            $all = $body; // already a flat array
+        }
 
         if (empty($all)) {
-            return rest_ensure_response(['past' => [], 'upcoming' => []]);
+            return rest_ensure_response(['past' => [], 'upcoming' => [], 'debug' => 'empty_data']);
         }
 
         $today   = date('Y-m-d');
         $past    = [];
         $future  = [];
 
-        $finished_states = [
-            'FT', 'AET', 'PEN',
-            'CANC', 'CANCELLED',
-            'AWARDED',
-            'POSTP', 'POSTPONED',
-            'ABD', 'ABANDONED',
-            'INT', 'WO',
-        ];
-
         foreach ($all as $fx) {
+            // Extract date from starting_at (handles object or string)
             $sa   = $fx['starting_at'] ?? null;
             $date = '';
 
             if (is_array($sa)) {
-                $date = $sa['date'] ?? substr($sa['datetime'] ?? '', 0, 10);
-            } elseif (is_string($sa)) {
+                // Sportmonks v3 returns starting_at as an object: {date, time, timestamp, datetime}
+                $date = $sa['date'] ?? '';
+                if (!$date && !empty($sa['datetime'])) {
+                    $date = substr($sa['datetime'], 0, 10);
+                }
+            } elseif (is_string($sa) && strlen($sa) >= 10) {
                 $date = substr($sa, 0, 10);
             }
 
             if (!$date || strlen($date) < 10) continue;
 
-            $state = $fx['state'] ?? [];
-            $short = strtoupper(
-                $state['short_name'] ?? $state['developer_name'] ?? $state['name'] ?? ''
-            );
-
-            $is_finished = in_array($short, $finished_states, true);
-
-            if ($date <= $today && $is_finished) {
+            // Bucket purely by date — state is only used for display in JS
+            if ($date < $today) {
                 $past[$date][] = $fx;
-            } elseif ($date >= $today && !$is_finished) {
+            } else {
+                // today and future
                 $future[$date][] = $fx;
             }
         }
