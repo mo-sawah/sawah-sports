@@ -1,0 +1,183 @@
+.ss-new-standing-wrapper {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  max-width: 100%;
+  margin: 0 auto;
+  color: #1a1a1a;
+}
+.ss-ns-header-title {
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  letter-spacing: -0.5px;
+}
+.ss-ns-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ss-ns-tab {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.ss-ns-tab.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+.ss-ns-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding: 20px;
+}
+.ss-ns-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+.ss-ns-table th {
+  color: #1a1a1a;
+  font-weight: 700;
+  padding: 10px 8px;
+  border-bottom: 2px solid #f0f0f0;
+  white-space: nowrap;
+}
+.ss-ns-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f5f5f5;
+  vertical-align: middle;
+}
+.ss-ns-table th:not(:nth-child(2)),
+.ss-ns-table td:not(:nth-child(2)) {
+  text-align: center;
+}
+.ss-ns-pos {
+  font-weight: 700;
+  width: 30px;
+}
+.ss-ns-team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+.ss-ns-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.ss-ns-pts {
+  font-weight: 700;
+}
+.ss-ns-form {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.ss-ns-badge {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+.ss-ns-badge.W {
+  background: #22c55e;
+}
+.ss-ns-badge.D {
+  background: #9ca3af;
+}
+.ss-ns-badge.L {
+  background: #ef4444;
+}
+.ss-ns-badge.empty {
+  background: transparent;
+}
+.ss-ns-more-wrapper {
+  text-align: center;
+  margin-top: 20px;
+}
+.ss-ns-more-btn {
+  display: inline-block;
+  border: 1.5px solid #ff4b4b;
+  color: #1a1a1a;
+  padding: 8px 30px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.ss-ns-more-btn:hover {
+  background: #ff4b4b;
+  color: #fff;
+}
+.ss-ns-legend {
+  margin-top: 20px;
+  padding: 15px;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.ss-ns-legend-title {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.ss-ns-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ss-ns-legend-color {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+}
+.ss-ns-loading {
+  text-align: center;
+  padding: 40px;
+}
+.ss-ns-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #ff4b4b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 600px) {
+  .ss-ns-hide-mobile {
+    display: none;
+  }
+  .ss-ns-team span {
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -27,6 +27,13 @@ final class Sawah_Sports_REST {
             'callback' => [$this, 'get_livescores'],
         ]);
 
+        // New Standings Widgets (BBC Style)
+        register_rest_route($namespace, '/new-standings/(?P<season_id>\d+)', [
+            'methods' => 'GET',
+            'permission_callback' => '__return_true',
+            'callback' => [$this, 'get_new_standings'],
+        ]);
+
         // Fixtures
         register_rest_route($namespace, '/fixtures', [
             'methods' => 'GET',
@@ -124,6 +131,37 @@ final class Sawah_Sports_REST {
             'permission_callback' => '__return_true',
             'callback' => [$this, 'get_sidelined'],
         ]);
+    }
+
+    public function get_new_standings(WP_REST_Request $req) {
+        $check = $this->rate_limit_check('standings');
+        if (is_wp_error($check)) return $check;
+
+        $s = Sawah_Sports_Helpers::settings();
+        $season_id = (int)$req->get_param('season_id');
+        
+        $cache_key = 'ss_new_standings_v1_' . $season_id;
+        if (!empty($s['cache_enabled'])) {
+            $cached = Sawah_Sports_Cache::get($cache_key);
+            if ($cached) return rest_ensure_response($cached);
+        }
+
+        // Using the exact includes recommended by the AI
+        $res = $this->client()->get('standings/seasons/' . $season_id, [
+            'include' => 'participant;details.type;form;rule'
+        ], 15);
+        
+        if (!$res['ok']) {
+            return new WP_Error('api_error', 'Failed to fetch standings', ['status' => $res['status'] ?? 502]);
+        }
+
+        $data = $res['data']['data'] ?? [];
+        
+        if (!empty($s['cache_enabled'])) {
+            Sawah_Sports_Cache::set($cache_key, $data, (int)($s['ttl_standings'] ?? 3600));
+        }
+
+        return rest_ensure_response($data);
     }
 
     private function rate_limit_check(string $route) {
