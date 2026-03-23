@@ -294,116 +294,71 @@ final class Sawah_Sports_REST {
         return rest_ensure_response($data);
     }
 
-    /**
-     * League Fixtures endpoint for the "Fixtures & Results" widget.
-     *
-     * Confirmed correct approach per Sportmonks API:
-     * GET fixtures/between/{from}/{to}?filters=fixtureLeagues:{id}&include=participants;scores;state
-     * Max 100 days per request — so we make TWO calls:
-     *   1. Past:     today-90 days  → today
-     *   2. Upcoming: today          → today+90 days
-     *
-     * Then group by date, slice to requested number of date groups.
-     *
-     * Query params:
-     *   past_dates     – how many past date groups (default 1, max 5)
-     *   upcoming_dates – how many future date groups (default 3, max 7)
-     *   debug          – pass 1 to return raw API responses for troubleshooting
-     */
-    /**
-     * League Fixtures — Fixtures & Results widget.
-     *
-     * Two API calls: past 90 days + upcoming 90 days.
-     * Groups by round_id so Fri+Sat+Sun of the same matchday count as ONE round.
-     * Returns the N most recent past rounds and N soonest upcoming rounds.
-     * Within each round fixtures are keyed by date so JS renders date sub-headers.
-     */
     public function get_season_fixtures(WP_REST_Request $req) {
         $check = $this->rate_limit_check('season_fixtures');
         if (is_wp_error($check)) return $check;
 
-        $s             = Sawah_Sports_Helpers::settings();
-        $league_id     = (int) $req->get_param('league_id');
-        $past_rounds   = max(1, min(5, (int) ($req->get_param('past_dates')    ?: 1)));
-        $future_rounds = max(1, min(7, (int) ($req->get_param('upcoming_dates') ?: 2)));
-        $debug         = (bool) $req->get_param('debug');
-
-        if (!$league_id) {
-            return new WP_Error('bad_request', 'League ID is required.', ['status' => 400]);
+        $s = Sawah_Sports_Helpers::settings();
+        $season_id = (int) $req->get_param('league_id'); // We use Season ID 25996 here
+        
+        // Cache per season to keep it fast
+        $cache_key = 'ss_rounds_auto_' . $season_id;
+        if (!empty($s['cache_enabled'])) {
+            $cached = Sawah_Sports_Cache::get($cache_key);
+            if ($cached) return rest_ensure_response($cached);
         }
 
-        $cache_key = 'ss_lfx4_' . $league_id;
+        // STEP 1: Get all rounds for the season
+        $rounds_res = $this->client()->get_rounds_by_season($season_id);
+        if (!$rounds_res['ok']) return new WP_Error('api_error', 'Rounds fetch failed');
 
-        if (!$debug && !empty($s['cache_enabled'])) {
-            $cached = Sawah_Sports_Cache::get($cache_key);
-            if ($cached !== false) {
-                return rest_ensure_response(
-                    $this->slice_by_rounds($cached, $past_rounds, $future_rounds)
-                );
+        $rounds = $rounds_res['data']['data'] ?? [];
+        
+        // Sort rounds by their ID or start date to ensure order
+        usort($rounds, function($a, $b) {
+            return $a['id'] - $b['id'];
+        });
+
+        $current_index = -1;
+        foreach ($rounds as $index => $r) {
+            if (!empty($r['is_current'])) {
+                $current_index = $index;
+                break;
             }
         }
 
-        $today     = date('Y-m-d');
-        $yesterday = date('Y-m-d', strtotime('-1 day'));
-        $past_from = date('Y-m-d', strtotime('-90 days'));
-        $future_to = date('Y-m-d', strtotime('+90 days'));
+        // If no round is marked 'is_current', fallback to the latest one
+        if ($current_index === -1) $current_index = count($rounds) - 1;
 
-        $past_res   = $this->client()->get_fixtures_by_league_and_range($league_id, $past_from, $yesterday);
-        $future_res = $this->client()->get_fixtures_by_league_and_range($league_id, $today, $future_to);
-
-        if ($debug) {
-            return rest_ensure_response([
-                'past_ok'      => $past_res['ok'],
-                'past_error'   => $past_res['error'] ?? null,
-                'past_count'   => count($past_res['data']['data'] ?? []),
-                'past_sample'  => array_slice($past_res['data']['data'] ?? [], 0, 2),
-                'future_ok'    => $future_res['ok'],
-                'future_error' => $future_res['error'] ?? null,
-                'future_count' => count($future_res['data']['data'] ?? []),
-                'future_sample'=> array_slice($future_res['data']['data'] ?? [], 0, 2),
-            ]);
+        // Identify Round IDs: Previous (Results) and Current/Next (Fixtures)
+        $target_round_ids = [];
+        
+        // Grab the previous round if it exists
+        if ($current_index > 0) {
+            $target_round_ids['past'] = $rounds[$current_index - 1]['id'];
         }
+        
+        // Grab the current round
+        $target_round_ids['upcoming'] = $rounds[$current_index]['id'];
 
-        $past_fixtures   = ($past_res['ok'])   ? ($past_res['data']['data']   ?? []) : [];
-        $future_fixtures = ($future_res['ok']) ? ($future_res['data']['data'] ?? []) : [];
+        $output = ['past' => [], 'upcoming' => []];
 
-        // Group past by round_id → date
-        $past_map = [];
-        foreach ($past_fixtures as $fx) {
-            $round_id = (int) ($fx['round_id'] ?? 0);
-            $date     = substr((string)($fx['starting_at'] ?? ''), 0, 10);
-            if (strlen($date) !== 10) continue;
-            $past_map[$round_id][$date][] = $fx;
+        // STEP 2: Fetch fixtures for these specific rounds
+        foreach ($target_round_ids as $type => $r_id) {
+            $data = $this->client()->get_round_with_fixtures($r_id);
+            if ($data['ok'] && !empty($data['data']['data']['fixtures'])) {
+                foreach ($data['data']['data']['fixtures'] as $fx) {
+                    $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+                    $output[$type][$date][] = $fx;
+                }
+            }
         }
-
-        // Group upcoming by round_id → date
-        $future_map = [];
-        foreach ($future_fixtures as $fx) {
-            $round_id = (int) ($fx['round_id'] ?? 0);
-            $date     = substr((string)($fx['starting_at'] ?? ''), 0, 10);
-            if (strlen($date) !== 10) continue;
-            $future_map[$round_id][$date][] = $fx;
-        }
-
-        // Sort past rounds: newest first (sort by max date in each round ascending, then we reverse-slice)
-        uasort($past_map, function($a, $b) {
-            return strcmp(max(array_keys($a)), max(array_keys($b)));
-        });
-
-        // Sort future rounds: soonest first
-        uasort($future_map, function($a, $b) {
-            return strcmp(min(array_keys($a)), min(array_keys($b)));
-        });
-
-        $processed = ['past' => $past_map, 'upcoming' => $future_map];
 
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $processed, (int)($s['ttl_fixtures'] ?? 300));
+            Sawah_Sports_Cache::set($cache_key, $output, 3600); // Cache for 1 hour
         }
 
-        return rest_ensure_response(
-            $this->slice_by_rounds($processed, $past_rounds, $future_rounds)
-        );
+        return rest_ensure_response($output);
     }
 
     /**

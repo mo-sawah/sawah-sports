@@ -15,6 +15,24 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
+     * Get all rounds for a specific season
+     * Ref: Sportmonks Step 2
+     */
+    public function get_rounds_by_season(int $season_id): array {
+        return $this->get('rounds/seasons/' . $season_id, [], 15);
+    }
+
+    /**
+     * Get a specific round's fixtures with all nested data
+     * Ref: Sportmonks Step 3 (fixtures.participants;fixtures.scores;fixtures.state)
+     */
+    public function get_round_with_fixtures(int $round_id): array {
+        return $this->get('rounds/' . $round_id, [
+            'include' => 'fixtures.participants;fixtures.scores;fixtures.state'
+        ], 20);
+    }
+
+    /**
      * Build full API URL with query parameters
      */
     private function build_url(string $path, array $query = []): string {
