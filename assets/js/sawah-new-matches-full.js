@@ -14,6 +14,33 @@
     }
   }
 
+  // New robust time extractor
+  function getTime(fx) {
+    let sa = fx.starting_at;
+    if (!sa) return "";
+
+    // If Sportmonks sends it as an object
+    if (typeof sa === "object") {
+      if (sa.time) return sa.time.substring(0, 5);
+      if (sa.datetime) return sa.datetime.substring(11, 16);
+      if (sa.timestamp) {
+        let d = new Date(sa.timestamp * 1000);
+        return (
+          d.getUTCHours().toString().padStart(2, "0") +
+          ":" +
+          d.getUTCMinutes().toString().padStart(2, "0")
+        );
+      }
+    }
+
+    // If Sportmonks sends it as a raw string "YYYY-MM-DD HH:MM:SS"
+    if (typeof sa === "string" && sa.length >= 16) {
+      return sa.substring(11, 16);
+    }
+
+    return "";
+  }
+
   function getScore(fx) {
     if (!fx.scores || !fx.scores.length) return null;
     let home = null,
@@ -54,10 +81,8 @@
         let away = fx.participants[1] || {};
         let state = fx.state && fx.state.short_name ? fx.state.short_name : "";
 
-        let time = "";
-        if (fx.starting_at && fx.starting_at.time) {
-          time = fx.starting_at.time.substring(0, 5);
-        }
+        // Use the new robust time extractor
+        let time = getTime(fx);
 
         let score = getScore(fx);
         let centerHtml = "";
@@ -138,7 +163,6 @@
           data.gameweeks.find((g) => g.id === activeGwId) || data.gameweeks[0];
         renderFixtures($wrapper, activeGwData, locale);
 
-        // Auto-center math: Foolproof viewport offset
         setTimeout(() => {
           let $activeTab = $track.find(".active");
           let $viewport = $wrapper.find(".ss-nmf-tabs-viewport");
@@ -148,7 +172,6 @@
             let viewportOffset = $viewport.offset().left;
             let currentScroll = $track.scrollLeft();
 
-            // Distance from left edge of viewport + current scroll - half viewport + half tab width
             let scrollTarget =
               currentScroll +
               (tabOffset - viewportOffset) -
@@ -157,7 +180,7 @@
 
             $track.animate({ scrollLeft: scrollTarget }, 400);
           }
-        }, 200); // Slight delay ensures CSS layout is fully painted
+        }, 200);
       },
     });
 
