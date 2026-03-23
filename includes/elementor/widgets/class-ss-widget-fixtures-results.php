@@ -33,11 +33,11 @@ class Sawah_Sports_Widget_Fixtures_Results extends \Elementor\Widget_Base {
         ]);
 
         $this->add_control('season_id', [
-            'label'       => __('Sportmonks League ID', 'sawah-sports'),
+            'label'       => __('Sportmonks Season ID', 'sawah-sports'),
             'type'        => \Elementor\Controls_Manager::NUMBER,
             'default'     => 0,
             'min'         => 0,
-            'description' => __('Enter the League ID from Sportmonks (e.g. 570 for Cyprus First Division). Find it at: Sportmonks Dashboard → Football → Leagues.', 'sawah-sports'),
+            'description' => __('Enter the Season ID (NOT League ID). Find it at: Sportmonks Dashboard → ID Finder → search your league → copy the current Season ID. Example: Cyprus First Division 2025/26 season ID is different from league ID 570.', 'sawah-sports'),
         ]);
 
         $this->add_control('past_dates', [
