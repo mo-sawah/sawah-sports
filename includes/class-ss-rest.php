@@ -299,19 +299,21 @@ final class Sawah_Sports_REST {
         if (is_wp_error($check)) return $check;
 
         $s = Sawah_Sports_Helpers::settings();
-        $season_id = (int) $req->get_param('league_id'); 
         
-        $cache_key = 'ss_latest_upcoming_v1_' . $season_id;
+        // IMPORTANT: We are now using the League ID (e.g. 253)
+        $league_id = (int) $req->get_param('league_id'); 
+        
+        $cache_key = 'ss_league_latest_upcoming_' . $league_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // Fetch the Season data, which now includes 'latest' and 'upcoming' arrays directly from Sportmonks
-        $res = $this->client()->get_season_latest_upcoming($season_id);
+        // Fetch the League data, which includes 'latest' and 'upcoming' arrays
+        $res = $this->client()->get_league_latest_upcoming($league_id);
         
         if (!$res['ok']) {
-            return new WP_Error('api_error', 'Failed to fetch season data', ['status' => $res['status'] ?? 502]);
+            return new WP_Error('api_error', 'Failed to fetch league data. Please ensure you entered the League ID (253).', ['status' => $res['status'] ?? 502]);
         }
 
         $data = $res['data']['data'] ?? [];
@@ -323,6 +325,13 @@ final class Sawah_Sports_REST {
         // Helper function to group a flat list of fixtures by their starting date
         $group_by_date = function($fixtures) {
             $grouped = [];
+            if (!is_array($fixtures)) return $grouped;
+            
+            // Safety check in case Sportmonks returns a single object instead of an array
+            if (isset($fixtures['id'])) {
+                $fixtures = [$fixtures];
+            }
+
             foreach ($fixtures as $fx) {
                 $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
                 if (strlen($date) === 10) {

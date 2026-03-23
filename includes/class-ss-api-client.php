@@ -15,11 +15,11 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get a Season with Sportmonks' auto-calculated latest and upcoming fixtures
+     * Get a League with Sportmonks' auto-calculated latest and upcoming fixtures
      * This safely handles concurrent split-stages (like Cyprus Playoffs)
      */
-    public function get_season_latest_upcoming(int $season_id): array {
-        return $this->get('seasons/' . $season_id, [
+    public function get_league_latest_upcoming(int $league_id): array {
+        return $this->get('leagues/' . $league_id, [
             'include' => 'latest.participants;latest.scores;latest.state;upcoming.participants;upcoming.scores;upcoming.state'
         ], 15);
     }
