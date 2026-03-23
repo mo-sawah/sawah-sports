@@ -295,17 +295,20 @@ final class Sawah_Sports_REST {
     }
 
     /**
-     * NEW: Season Fixtures endpoint for the "Fixtures & Results" widget.
+     * League Fixtures endpoint for the "Fixtures & Results" widget.
      *
-     * Uses GET /v3/football/schedules/seasons/{season_id} which returns:
-     *   { data: [ { id, name, ..., fixtures: [ {id, starting_at (string), ...} ] } ] }
+     * Confirmed correct approach per Sportmonks API:
+     * GET fixtures/between/{from}/{to}?filters=fixtureLeagues:{id}&include=participants;scores;state
+     * Max 100 days per request — so we make TWO calls:
+     *   1. Past:     today-90 days  → today
+     *   2. Upcoming: today          → today+90 days
      *
-     * starting_at is a plain string: "2025-03-23 15:30:00"
+     * Then group by date, slice to requested number of date groups.
      *
      * Query params:
      *   past_dates     – how many past date groups (default 1, max 5)
      *   upcoming_dates – how many future date groups (default 3, max 7)
-     *   debug          – pass 1 to return raw API response for troubleshooting
+     *   debug          – pass 1 to return raw API responses for troubleshooting
      */
     public function get_season_fixtures(WP_REST_Request $req) {
         $check = $this->rate_limit_check('season_fixtures');
@@ -313,15 +316,15 @@ final class Sawah_Sports_REST {
 
         $s            = Sawah_Sports_Helpers::settings();
         $league_id    = (int) $req->get_param('league_id');
-        $past_limit   = max(1, min(5,  (int) ($req->get_param('past_dates')    ?: 1)));
-        $future_limit = max(1, min(7,  (int) ($req->get_param('upcoming_dates') ?: 3)));
+        $past_limit   = max(1, min(5, (int) ($req->get_param('past_dates')    ?: 1)));
+        $future_limit = max(1, min(7, (int) ($req->get_param('upcoming_dates') ?: 3)));
         $debug        = (bool) $req->get_param('debug');
 
         if (!$league_id) {
-            return new WP_Error('bad_request', 'Season ID is required.', ['status' => 400]);
+            return new WP_Error('bad_request', 'League ID is required.', ['status' => 400]);
         }
 
-        $cache_key = 'ss_lfx2_' . $league_id;
+        $cache_key = 'ss_lfx3_' . $league_id;
 
         if (!$debug && !empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
@@ -332,96 +335,72 @@ final class Sawah_Sports_REST {
             }
         }
 
-        // ── Call Sportmonks schedules endpoint ─────────────────────────────
-        $res = $this->client()->get_schedule_by_season($league_id);
+        $today      = date('Y-m-d');
+        $past_from  = date('Y-m-d', strtotime('-90 days'));
+        $future_to  = date('Y-m-d', strtotime('+90 days'));
 
-        if (!$res['ok']) {
-            return new WP_Error('api_error', $res['error'] ?? 'API error', ['status' => $res['status'] ?? 502]);
-        }
+        // ── Call 1: Past fixtures (last 90 days) ───────────────────────────
+        $past_res = $this->client()->get_fixtures_by_league_and_range($league_id, $past_from, $today);
 
-        // Debug mode: return raw response so you can inspect it
+        // ── Call 2: Upcoming fixtures (next 90 days) ───────────────────────
+        $future_res = $this->client()->get_fixtures_by_league_and_range($league_id, $today, $future_to);
+
+        // Debug mode: return raw responses
         if ($debug) {
-            return rest_ensure_response(['_debug_raw' => $res['data']]);
-        }
-
-        // ── Unwrap fixtures response ────────────────────────────────────────
-        // fixtures endpoint returns: { data: [ {...fixture...}, ... ], pagination: {...} }
-        // NOT nested inside rounds like schedules endpoint
-        $body = $res['data'] ?? [];
-
-        // Handle both possible shapes
-        $all = [];
-        if (isset($body['data']) && is_array($body['data'])) {
-            $all = $body['data'];                      // Standard: { data: [...] }
-        } elseif (is_array($body) && !empty($body) && isset($body[0])) {
-            $all = $body;                              // Flat array fallback
-        }
-
-        // If response has pagination and there are more pages, fetch them
-        // (only up to page 3 max to avoid hammering the API)
-        if (!empty($body['pagination'])) {
-            $pagination = $body['pagination'];
-            $total_pages = (int) ($pagination['last_page'] ?? 1);
-            $current_page = (int) ($pagination['current_page'] ?? 1);
-
-            if ($total_pages > 1 && $current_page === 1) {
-                $max_pages = min($total_pages, 3);
-                for ($page = 2; $page <= $max_pages; $page++) {
-                    $page_res = $this->client()->get_schedule_by_season($league_id, ['page' => $page]);
-                    if ($page_res['ok']) {
-                        $page_body = $page_res['data'] ?? [];
-                        $page_data = $page_body['data'] ?? [];
-                        if (is_array($page_data)) {
-                            $all = array_merge($all, $page_data);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (empty($all)) {
             return rest_ensure_response([
-                'past'     => [],
-                'upcoming' => [],
-                '_meta'    => [
-                    'rounds_count'   => count($rounds),
-                    'fixtures_found' => 0,
-                    'note'           => 'Check season_id is correct. Add ?debug=1 to see raw API response.',
-                ],
+                '_debug_past_ok'    => $past_res['ok'],
+                '_debug_past_error' => $past_res['error'] ?? null,
+                '_debug_past_data'  => $past_res['data'] ?? null,
+                '_debug_future_ok'  => $future_res['ok'],
+                '_debug_future_err' => $future_res['error'] ?? null,
+                '_debug_future_data'=> $future_res['data'] ?? null,
             ]);
         }
 
-        // ── Sort all fixtures by starting_at ascending ──────────────────────
-        usort($all, function ($a, $b) {
-            return strcmp(
-                (string) ($a['starting_at'] ?? ''),
-                (string) ($b['starting_at'] ?? '')
-            );
-        });
+        if (!$past_res['ok'] && !$future_res['ok']) {
+            $err = $past_res['error'] ?? $future_res['error'] ?? 'API error';
+            return new WP_Error('api_error', $err, ['status' => 502]);
+        }
 
-        // ── Bucket by date (pure date comparison, no state dependency) ──────
-        $today  = date('Y-m-d');
-        $past   = [];
-        $future = [];
+        // ── Extract fixtures from each response ────────────────────────────
+        $past_fixtures   = $past_res['ok']   ? ($past_res['data']['data']   ?? []) : [];
+        $future_fixtures = $future_res['ok'] ? ($future_res['data']['data'] ?? []) : [];
 
-        foreach ($all as $fx) {
-            // starting_at is a plain string "2025-03-23 15:30:00"
-            $sa = $fx['starting_at'] ?? '';
-            if (is_array($sa)) {
-                // In case API wraps it as an object in some versions
-                $sa = $sa['datetime'] ?? $sa['date'] ?? '';
-            }
-            $date = substr((string) $sa, 0, 10); // → "2025-03-23"
-            if (strlen($date) < 10) continue;
-
-            if ($date < $today) {
+        // ── Group past fixtures by date ────────────────────────────────────
+        $past = [];
+        foreach ($past_fixtures as $fx) {
+            $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+            if (strlen($date) === 10) {
                 $past[$date][] = $fx;
+            }
+        }
+
+        // ── Group upcoming fixtures by date ────────────────────────────────
+        // Today's unfinished matches go to upcoming; finished today go to past
+        $finished_states = ['FT','AET','PEN','CANC','CANCELLED','POSTP','POSTPONED','ABD','AWARDED','INT','WO'];
+        $future = [];
+        foreach ($future_fixtures as $fx) {
+            $date  = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+            if (strlen($date) !== 10) continue;
+
+            if ($date === $today) {
+                // For today, split by state: finished → past, not yet → future
+                $state_short = strtoupper(
+                    $fx['state']['short_name'] ??
+                    $fx['state']['developer_name'] ??
+                    $fx['state']['name'] ?? 'NS'
+                );
+                if (in_array($state_short, $finished_states, true)) {
+                    $past[$date][] = $fx;
+                } else {
+                    $future[$date][] = $fx;
+                }
             } else {
                 $future[$date][] = $fx;
             }
         }
 
-        // Past: newest first; future: soonest first
+        // Past: newest date first; upcoming: soonest date first
         krsort($past);
         ksort($future);
 

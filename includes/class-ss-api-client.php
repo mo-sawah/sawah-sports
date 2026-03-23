@@ -103,21 +103,21 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get fixtures for a league — used by the Fixtures & Results widget.
-     *
-     * Uses GET /v3/football/fixtures?filters=fixtureLeagues:{id}
-     * This endpoint DOES support includes unlike schedules/seasons.
-     * Returns { data: [...], pagination: {...} }
+     * Get fixtures for a league by date range.
+     * Confirmed correct endpoint per Sportmonks AI:
+     * GET /v3/football/fixtures/between/{from}/{to}?filters=fixtureLeagues:{id}&include=participants;scores;state
+     * Max range = 100 days per request.
      */
-    public function get_schedule_by_season(int $league_id, array $params = []): array {
-        $defaults = [
-            'include'  => 'participants;scores;state',
-            'filters'  => 'fixtureLeagues:' . $league_id,
-            'per_page' => 100,
-            'sortBy'   => 'starting_at',
-        ];
-        $params = array_merge($defaults, $params);
-        return $this->get('fixtures', $params, 25);
+    public function get_fixtures_by_league_and_range(int $league_id, string $from, string $to): array {
+        return $this->get(
+            'fixtures/between/' . $from . '/' . $to,
+            [
+                'filters' => 'fixtureLeagues:' . $league_id,
+                'include' => 'participants;scores;state',
+                'per_page' => 50,
+            ],
+            25
+        );
     }
 
     /**
