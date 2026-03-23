@@ -377,23 +377,23 @@
   /* ── Bootstrap ── */
 
   function init($widget) {
-    var seasonId = $widget.data("season-id");
+    var leagueId = $widget.data("league-id");
     var pastDates = $widget.data("past-dates") || 1;
     var upcomingDates = $widget.data("upcoming-dates") || 3;
 
-    if (!seasonId || seasonId === 0) {
+    if (!leagueId || leagueId === 0) {
       $widget
         .find(".ss-fr-body")
         .html(
-          '<div class="ss-fr-empty">⚙️ Please set a Sportmonks Season ID in the widget settings.</div>',
+          '<div class="ss-fr-empty">⚙️ Please set a Sportmonks League ID in the widget settings.</div>',
         );
       return;
     }
 
     var url =
       SawahSports.restUrl +
-      "/season-fixtures/" +
-      seasonId +
+      "/league-fixtures/" +
+      leagueId +
       "?past_dates=" +
       pastDates +
       "&upcoming_dates=" +

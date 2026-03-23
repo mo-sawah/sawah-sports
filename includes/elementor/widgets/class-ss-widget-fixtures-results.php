@@ -33,11 +33,11 @@ class Sawah_Sports_Widget_Fixtures_Results extends \Elementor\Widget_Base {
         ]);
 
         $this->add_control('season_id', [
-            'label'       => __('Sportmonks Season ID', 'sawah-sports'),
+            'label'       => __('Sportmonks League ID', 'sawah-sports'),
             'type'        => \Elementor\Controls_Manager::NUMBER,
             'default'     => 0,
             'min'         => 0,
-            'description' => __('Find the Season ID in your Sportmonks dashboard → Seasons. Each season of a league has a unique numeric ID.', 'sawah-sports'),
+            'description' => __('Enter the League ID from Sportmonks (e.g. 570 for Cyprus First Division). Find it at: Sportmonks Dashboard → Football → Leagues.', 'sawah-sports'),
         ]);
 
         $this->add_control('past_dates', [
@@ -164,7 +164,7 @@ class Sawah_Sports_Widget_Fixtures_Results extends \Elementor\Widget_Base {
         ?>
         <div id="ss-fr-<?php echo esc_attr($widget_id); ?>"
              class="ss-fixtures-results"
-             data-season-id="<?php echo esc_attr($season_id); ?>"
+             data-league-id="<?php echo esc_attr($season_id); ?>"
              data-past-dates="<?php echo esc_attr($past_dates); ?>"
              data-upcoming-dates="<?php echo esc_attr($upcoming_dates); ?>"
              data-locale="<?php echo esc_attr($locale); ?>"

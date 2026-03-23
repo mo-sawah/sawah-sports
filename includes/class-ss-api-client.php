@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) { exit; }
 
 /**
  * Enhanced Sportmonks API Client
- * v5.4 - Added get_fixtures_by_season for Fixtures & Results widget
+ * v5.4 - Added get_fixtures_by_league for Fixtures & Results widget
  */
 final class Sawah_Sports_API_Client {
     private $base_url = 'https://api.sportmonks.com/v3/football/';
@@ -103,20 +103,20 @@ final class Sawah_Sports_API_Client {
     }
 
     /**
-     * Get all fixtures for a season — used by the Fixtures & Results widget.
+     * Get all fixtures for a league — used by the Fixtures & Results widget.
      *
-     * Fetches up to $per_page fixtures sorted chronologically.
-     * Results are cached and sliced server-side by the REST controller,
-     * so this can be called once and served to multiple widget configurations.
+     * Uses the filters=fixtureLeagues:LEAGUE_ID approach as recommended
+     * by the Sportmonks API playground. Fetches up to 300 fixtures.
      */
-    public function get_fixtures_by_season(int $season_id, array $params = []): array {
+    public function get_fixtures_by_league(int $league_id, array $params = []): array {
         $defaults = [
             'include'  => 'participants;scores;state',
+            'filters'  => 'fixtureLeagues:' . $league_id,
             'per_page' => 300,
-            'sort'     => 'starting_at',   // ascending by kick-off time
+            'sort'     => 'starting_at',
         ];
         $params = array_merge($defaults, $params);
-        return $this->get('fixtures/seasons/' . $season_id, $params, 25);
+        return $this->get('fixtures', $params, 25);
     }
 
     /**

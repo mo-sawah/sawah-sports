@@ -55,8 +55,8 @@ final class Sawah_Sports_REST {
             'callback' => [$this, 'get_season_teams_stats'],
         ]);
 
-        // Season Fixtures — NEW: Fixtures & Results widget
-        register_rest_route($namespace, '/season-fixtures/(?P<season_id>\d+)', [
+        // Season Fixtures — NEW: Fixtures & Results widget (uses League ID)
+        register_rest_route($namespace, '/league-fixtures/(?P<league_id>\d+)', [
             'methods' => 'GET',
             'permission_callback' => '__return_true',
             'callback' => [$this, 'get_season_fixtures'],
@@ -295,10 +295,10 @@ final class Sawah_Sports_REST {
     }
 
     /**
-     * NEW: Season Fixtures endpoint for the "Fixtures & Results" widget.
+     * NEW: League Fixtures endpoint for the "Fixtures & Results" widget.
      *
-     * Returns completed fixtures grouped under 'past' (keyed by date, newest first)
-     * and upcoming fixtures grouped under 'upcoming' (keyed by date, soonest first).
+     * Returns completed fixtures grouped under 'past' (keyed by date)
+     * and upcoming fixtures grouped under 'upcoming' (keyed by date).
      *
      * Query params:
      *   past_dates     – how many past date groups to return (default 1, max 5)
@@ -309,18 +309,15 @@ final class Sawah_Sports_REST {
         if (is_wp_error($check)) return $check;
 
         $s            = Sawah_Sports_Helpers::settings();
-        $season_id    = (int) $req->get_param('season_id');
+        $league_id    = (int) $req->get_param('league_id');
         $past_limit   = max(1, min(5, (int) ($req->get_param('past_dates')    ?: 1)));
         $future_limit = max(1, min(7, (int) ($req->get_param('upcoming_dates') ?: 3)));
 
-        if (!$season_id) {
-            return new WP_Error('bad_request', 'Season ID is required.', ['status' => 400]);
+        if (!$league_id) {
+            return new WP_Error('bad_request', 'League ID is required.', ['status' => 400]);
         }
 
-        // Cache the full processed dataset; slicing happens on every request so
-        // different widget configurations sharing the same season are all served
-        // from one cached API response.
-        $cache_key = 'ss_sfx_' . $season_id;
+        $cache_key = 'ss_lfx_' . $league_id;
 
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
@@ -331,7 +328,7 @@ final class Sawah_Sports_REST {
             }
         }
 
-        $res = $this->client()->get_fixtures_by_season($season_id);
+        $res = $this->client()->get_fixtures_by_league($league_id);
 
         if (!$res['ok']) {
             return new WP_Error('api_error', $res['error'] ?? 'API error', ['status' => $res['status'] ?? 502]);
@@ -347,7 +344,6 @@ final class Sawah_Sports_REST {
         $past    = [];
         $future  = [];
 
-        // States Sportmonks uses for finished matches
         $finished_states = [
             'FT', 'AET', 'PEN',
             'CANC', 'CANCELLED',
@@ -358,7 +354,6 @@ final class Sawah_Sports_REST {
         ];
 
         foreach ($all as $fx) {
-            // ── Extract date ───────────────────────────────────────────────
             $sa   = $fx['starting_at'] ?? null;
             $date = '';
 
@@ -370,7 +365,6 @@ final class Sawah_Sports_REST {
 
             if (!$date || strlen($date) < 10) continue;
 
-            // ── Classify state ─────────────────────────────────────────────
             $state = $fx['state'] ?? [];
             $short = strtoupper(
                 $state['short_name'] ?? $state['developer_name'] ?? $state['name'] ?? ''
@@ -378,7 +372,6 @@ final class Sawah_Sports_REST {
 
             $is_finished = in_array($short, $finished_states, true);
 
-            // Matches for today that aren't finished yet go to upcoming
             if ($date <= $today && $is_finished) {
                 $past[$date][] = $fx;
             } elseif ($date >= $today && !$is_finished) {
@@ -386,7 +379,6 @@ final class Sawah_Sports_REST {
             }
         }
 
-        // Sort: past → newest date first; future → earliest date first
         krsort($past);
         ksort($future);
 
@@ -396,7 +388,6 @@ final class Sawah_Sports_REST {
         ];
 
         if (!empty($s['cache_enabled'])) {
-            // Use ttl_fixtures for caching; typically 5–15 minutes
             Sawah_Sports_Cache::set($cache_key, $processed, (int) ($s['ttl_fixtures'] ?? 300));
         }
 
