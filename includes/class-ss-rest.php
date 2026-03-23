@@ -310,119 +310,133 @@ final class Sawah_Sports_REST {
      *   upcoming_dates – how many future date groups (default 3, max 7)
      *   debug          – pass 1 to return raw API responses for troubleshooting
      */
+    /**
+     * League Fixtures — Fixtures & Results widget.
+     *
+     * Two API calls: past 90 days + upcoming 90 days.
+     * Groups by round_id so Fri+Sat+Sun of the same matchday count as ONE round.
+     * Returns the N most recent past rounds and N soonest upcoming rounds.
+     * Within each round fixtures are keyed by date so JS renders date sub-headers.
+     */
     public function get_season_fixtures(WP_REST_Request $req) {
         $check = $this->rate_limit_check('season_fixtures');
         if (is_wp_error($check)) return $check;
 
-        $s            = Sawah_Sports_Helpers::settings();
-        $league_id    = (int) $req->get_param('league_id');
-        $past_limit   = max(1, min(5, (int) ($req->get_param('past_dates')    ?: 1)));
-        $future_limit = max(1, min(7, (int) ($req->get_param('upcoming_dates') ?: 3)));
-        $debug        = (bool) $req->get_param('debug');
+        $s             = Sawah_Sports_Helpers::settings();
+        $league_id     = (int) $req->get_param('league_id');
+        $past_rounds   = max(1, min(5, (int) ($req->get_param('past_dates')    ?: 1)));
+        $future_rounds = max(1, min(7, (int) ($req->get_param('upcoming_dates') ?: 2)));
+        $debug         = (bool) $req->get_param('debug');
 
         if (!$league_id) {
             return new WP_Error('bad_request', 'League ID is required.', ['status' => 400]);
         }
 
-        $cache_key = 'ss_lfx3_' . $league_id;
+        $cache_key = 'ss_lfx4_' . $league_id;
 
         if (!$debug && !empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached !== false) {
                 return rest_ensure_response(
-                    $this->slice_season_fixtures($cached, $past_limit, $future_limit)
+                    $this->slice_by_rounds($cached, $past_rounds, $future_rounds)
                 );
             }
         }
 
-        $today      = date('Y-m-d');
-        $past_from  = date('Y-m-d', strtotime('-90 days'));
-        $future_to  = date('Y-m-d', strtotime('+90 days'));
+        $today     = date('Y-m-d');
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $past_from = date('Y-m-d', strtotime('-90 days'));
+        $future_to = date('Y-m-d', strtotime('+90 days'));
 
-        // ── Call 1: Past fixtures (last 90 days) ───────────────────────────
-        $past_res = $this->client()->get_fixtures_by_league_and_range($league_id, $past_from, $today);
-
-        // ── Call 2: Upcoming fixtures (next 90 days) ───────────────────────
+        $past_res   = $this->client()->get_fixtures_by_league_and_range($league_id, $past_from, $yesterday);
         $future_res = $this->client()->get_fixtures_by_league_and_range($league_id, $today, $future_to);
 
-        // Debug mode: return raw responses
         if ($debug) {
             return rest_ensure_response([
-                '_debug_past_ok'    => $past_res['ok'],
-                '_debug_past_error' => $past_res['error'] ?? null,
-                '_debug_past_data'  => $past_res['data'] ?? null,
-                '_debug_future_ok'  => $future_res['ok'],
-                '_debug_future_err' => $future_res['error'] ?? null,
-                '_debug_future_data'=> $future_res['data'] ?? null,
+                'past_ok'      => $past_res['ok'],
+                'past_error'   => $past_res['error'] ?? null,
+                'past_count'   => count($past_res['data']['data'] ?? []),
+                'past_sample'  => array_slice($past_res['data']['data'] ?? [], 0, 2),
+                'future_ok'    => $future_res['ok'],
+                'future_error' => $future_res['error'] ?? null,
+                'future_count' => count($future_res['data']['data'] ?? []),
+                'future_sample'=> array_slice($future_res['data']['data'] ?? [], 0, 2),
             ]);
         }
 
-        if (!$past_res['ok'] && !$future_res['ok']) {
-            $err = $past_res['error'] ?? $future_res['error'] ?? 'API error';
-            return new WP_Error('api_error', $err, ['status' => 502]);
-        }
+        $past_fixtures   = ($past_res['ok'])   ? ($past_res['data']['data']   ?? []) : [];
+        $future_fixtures = ($future_res['ok']) ? ($future_res['data']['data'] ?? []) : [];
 
-        // ── Extract fixtures from each response ────────────────────────────
-        $past_fixtures   = $past_res['ok']   ? ($past_res['data']['data']   ?? []) : [];
-        $future_fixtures = $future_res['ok'] ? ($future_res['data']['data'] ?? []) : [];
-
-        // ── Group past fixtures by date ────────────────────────────────────
-        $past = [];
+        // Group past by round_id → date
+        $past_map = [];
         foreach ($past_fixtures as $fx) {
-            $date = substr((string)($fx['starting_at'] ?? ''), 0, 10);
-            if (strlen($date) === 10) {
-                $past[$date][] = $fx;
-            }
-        }
-
-        // ── Group upcoming fixtures by date ────────────────────────────────
-        // Today's unfinished matches go to upcoming; finished today go to past
-        $finished_states = ['FT','AET','PEN','CANC','CANCELLED','POSTP','POSTPONED','ABD','AWARDED','INT','WO'];
-        $future = [];
-        foreach ($future_fixtures as $fx) {
-            $date  = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+            $round_id = (int) ($fx['round_id'] ?? 0);
+            $date     = substr((string)($fx['starting_at'] ?? ''), 0, 10);
             if (strlen($date) !== 10) continue;
-
-            if ($date === $today) {
-                // For today, split by state: finished → past, not yet → future
-                $state_short = strtoupper(
-                    $fx['state']['short_name'] ??
-                    $fx['state']['developer_name'] ??
-                    $fx['state']['name'] ?? 'NS'
-                );
-                if (in_array($state_short, $finished_states, true)) {
-                    $past[$date][] = $fx;
-                } else {
-                    $future[$date][] = $fx;
-                }
-            } else {
-                $future[$date][] = $fx;
-            }
+            $past_map[$round_id][$date][] = $fx;
         }
 
-        // Past: newest date first; upcoming: soonest date first
-        krsort($past);
-        ksort($future);
+        // Group upcoming by round_id → date
+        $future_map = [];
+        foreach ($future_fixtures as $fx) {
+            $round_id = (int) ($fx['round_id'] ?? 0);
+            $date     = substr((string)($fx['starting_at'] ?? ''), 0, 10);
+            if (strlen($date) !== 10) continue;
+            $future_map[$round_id][$date][] = $fx;
+        }
 
-        $processed = ['past' => $past, 'upcoming' => $future];
+        // Sort past rounds: newest first (sort by max date in each round ascending, then we reverse-slice)
+        uasort($past_map, function($a, $b) {
+            return strcmp(max(array_keys($a)), max(array_keys($b)));
+        });
+
+        // Sort future rounds: soonest first
+        uasort($future_map, function($a, $b) {
+            return strcmp(min(array_keys($a)), min(array_keys($b)));
+        });
+
+        $processed = ['past' => $past_map, 'upcoming' => $future_map];
 
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $processed, (int) ($s['ttl_fixtures'] ?? 300));
+            Sawah_Sports_Cache::set($cache_key, $processed, (int)($s['ttl_fixtures'] ?? 300));
         }
 
         return rest_ensure_response(
-            $this->slice_season_fixtures($processed, $past_limit, $future_limit)
+            $this->slice_by_rounds($processed, $past_rounds, $future_rounds)
         );
     }
 
     /**
-     * Return only the requested number of date groups from each section.
+     * Slice to N rounds and flatten to date-keyed array for JS rendering.
      */
-    private function slice_season_fixtures(array $data, int $past_limit, int $future_limit): array {
-        return [
-            'past'     => array_slice($data['past']     ?? [], 0, $past_limit,   true),
-            'upcoming' => array_slice($data['upcoming'] ?? [], 0, $future_limit, true),
-        ];
+    private function slice_by_rounds(array $data, int $past_limit, int $future_limit): array {
+        // Past: take the LAST N rounds (most recent)
+        $past_rounds = array_values($data['past'] ?? []);
+        $past_slice  = array_slice($past_rounds, -$past_limit);
+        $past_flat   = [];
+        foreach (array_reverse($past_slice) as $round_dates) {
+            krsort($round_dates);
+            foreach ($round_dates as $date => $fixtures) {
+                $past_flat[$date] = isset($past_flat[$date])
+                    ? array_merge($past_flat[$date], $fixtures)
+                    : $fixtures;
+            }
+        }
+
+        // Upcoming: take the FIRST N rounds (soonest)
+        $future_rounds = array_values($data['upcoming'] ?? []);
+        $future_slice  = array_slice($future_rounds, 0, $future_limit);
+        $future_flat   = [];
+        foreach ($future_slice as $round_dates) {
+            ksort($round_dates);
+            foreach ($round_dates as $date => $fixtures) {
+                $future_flat[$date] = isset($future_flat[$date])
+                    ? array_merge($future_flat[$date], $fixtures)
+                    : $fixtures;
+            }
+        }
+
+        return ['past' => $past_flat, 'upcoming' => $future_flat];
     }
 
     public function get_xg(WP_REST_Request $req) {

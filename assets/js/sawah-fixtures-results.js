@@ -136,50 +136,67 @@
   }
 
   /**
-   * Extract the best available score from the scores array.
+   * Extract score from Sportmonks v3 scores array.
+   *
+   * Each entry: { description: "CURRENT"|"2ND_HALF"|..., score: { goals: 2, participant: "home"|"away" } }
+   * We pick the best description and pull home/away goals from score.participant.
    */
   function getScore(fx) {
     var scores = fx.scores;
     if (!scores || !scores.length) return null;
 
+    // Priority order for description
     var preferred = [
       "CURRENT",
       "2ND_HALF",
       "FT",
       "AFTER_EXTRA_TIME",
       "AFTER_PENALTIES",
+      "1ST_HALF",
+      "ET",
+      "PENALTIES",
     ];
-    var found = null;
+    var chosen = null;
 
     for (var p = 0; p < preferred.length; p++) {
       for (var i = 0; i < scores.length; i++) {
-        if (scores[i].description === preferred[p]) {
-          found = scores[i];
+        if ((scores[i].description || "").toUpperCase() === preferred[p]) {
+          // We need BOTH home and away for this description
+          // Keep looking through all scores with this description
+          chosen = preferred[p];
           break;
         }
       }
-      if (found) break;
+      if (chosen) break;
     }
 
-    if (!found) found = scores[scores.length - 1];
-    if (!found || !found.score) return null;
+    // If nothing matched, use last entry as fallback
+    if (!chosen && scores.length) {
+      chosen = (scores[scores.length - 1].description || "").toUpperCase();
+    }
 
-    var score = found.score;
-    var goals = score.goals || score;
-    var homeG =
-      goals.home != null
-        ? goals.home
-        : score.home_score != null
-          ? score.home_score
-          : "-";
-    var awayG =
-      goals.away != null
-        ? goals.away
-        : score.away_score != null
-          ? score.away_score
-          : "-";
+    if (!chosen) return null;
 
-    return { home: homeG, away: awayG };
+    // Collect home and away goals for the chosen description
+    var home = null,
+      away = null;
+    for (var j = 0; j < scores.length; j++) {
+      var s = scores[j];
+      if ((s.description || "").toUpperCase() !== chosen) continue;
+      if (!s.score) continue;
+
+      var participant = (s.score.participant || "").toLowerCase();
+      var goals = s.score.goals;
+
+      if (participant === "home" && home === null) home = goals;
+      if (participant === "away" && away === null) away = goals;
+    }
+
+    if (home === null && away === null) return null;
+    return {
+      home: home !== null ? home : "-",
+      away: away !== null ? away : "-",
+    };
   }
 
   /**
