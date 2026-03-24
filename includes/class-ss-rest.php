@@ -154,15 +154,18 @@ final class Sawah_Sports_REST {
         $s = Sawah_Sports_Helpers::settings();
         $season_id = (int) $req->get_param('season_id');
         
-        $cache_key = 'ss_new_player_stats_v1_' . $season_id;
+        $cache_key = 'ss_new_player_stats_v2_' . $season_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // Fetch all topscorer types for the season
+        // Fetch topscorers using the exact Category IDs recommended by Sportmonks
+        // 208 = Goals, 209 = Assists, 84/1600 = Yellows, 83/1601 = Reds
         $res = $this->client()->get('topscorers/seasons/' . $season_id, [
-            'include' => 'player;participant;type'
+            'filters' => 'seasonTopscorerTypes:208,209,84,83,1600,1601',
+            'include' => 'player;participant;type',
+            'per_page' => 50
         ], 20);
         
         if (!$res['ok']) {
