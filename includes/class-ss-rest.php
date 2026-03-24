@@ -34,6 +34,13 @@ final class Sawah_Sports_REST {
             'callback' => [$this, 'get_new_matches_full'],
         ]);
 
+        // New Player Stats Widget
+        register_rest_route($namespace, '/new-player-stats/(?P<season_id>\d+)', [
+            'methods' => 'GET',
+            'permission_callback' => '__return_true',
+            'callback' => [$this, 'get_new_player_stats'],
+        ]);
+
         // New Standings Widgets (BBC Style)
         register_rest_route($namespace, '/new-standings/(?P<season_id>\d+)', [
             'methods' => 'GET',
@@ -138,6 +145,37 @@ final class Sawah_Sports_REST {
             'permission_callback' => '__return_true',
             'callback' => [$this, 'get_sidelined'],
         ]);
+    }
+
+    public function get_new_player_stats(WP_REST_Request $req) {
+        $check = $this->rate_limit_check('topscorers');
+        if (is_wp_error($check)) return $check;
+
+        $s = Sawah_Sports_Helpers::settings();
+        $season_id = (int) $req->get_param('season_id');
+        
+        $cache_key = 'ss_new_player_stats_v1_' . $season_id;
+        if (!empty($s['cache_enabled'])) {
+            $cached = Sawah_Sports_Cache::get($cache_key);
+            if ($cached) return rest_ensure_response($cached);
+        }
+
+        // Fetch all topscorer types for the season
+        $res = $this->client()->get('topscorers/seasons/' . $season_id, [
+            'include' => 'player;participant;type'
+        ], 20);
+        
+        if (!$res['ok']) {
+            return new WP_Error('api_error', 'Failed to fetch player stats.', ['status' => $res['status'] ?? 502]);
+        }
+
+        $data = $res['data']['data'] ?? [];
+
+        if (!empty($s['cache_enabled'])) {
+            Sawah_Sports_Cache::set($cache_key, $data, (int)($s['ttl_statistics'] ?? 3600));
+        }
+
+        return rest_ensure_response($data);
     }
 
     public function get_new_matches_full(WP_REST_Request $req) {
