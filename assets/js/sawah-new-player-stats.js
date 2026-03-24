@@ -1,7 +1,6 @@
 (function ($) {
   "use strict";
 
-  // Format Name: "E. Haaland"
   function formatName(player) {
     if (!player) return "Unknown";
     let first = player.firstname || "";
@@ -19,10 +18,9 @@
     if (!dataArray || dataArray.length === 0) {
       html += `<div class="ss-nps-empty">${noDataText}</div>`;
     } else {
-      // Sort by total DESC
+      // Ensure they are sorted from highest to lowest
       dataArray.sort((a, b) => (b.total || 0) - (a.total || 0));
 
-      // Limit to Top 10
       let limit = Math.min(dataArray.length, 10);
       for (let i = 0; i < limit; i++) {
         let item = dataArray[i];
@@ -37,7 +35,7 @@
         html += `
                 <div class="ss-nps-row">
                     <div class="ss-nps-rank">${rank}</div>
-                    <img src="${teamLogo}" class="ss-nps-team" loading="lazy">
+                    <img src="${teamLogo}" class="ss-nps-team" loading="lazy" onerror="this.style.display='none'">
                     <div class="ss-nps-player">${playerName}</div>
                     <div class="ss-nps-stat">${statValue}</div>
                 </div>`;
@@ -60,48 +58,22 @@
       success: function (data) {
         $wrapper.find(".ss-nps-loading").hide();
 
-        // Group data by Type
-        let grouped = {
-          goals: [],
-          assists: [],
-          shots: [],
-          fouls: [],
-          yellow: [],
-          red: [],
-        };
+        if (!data) return;
 
-        if (Array.isArray(data)) {
-          data.forEach((item) => {
-            let typeName =
-              item.type && item.type.name ? item.type.name.toLowerCase() : "";
-            let typeCode =
-              item.type && item.type.code ? item.type.code.toLowerCase() : "";
-
-            if (typeName.includes("goal") || typeCode.includes("goal"))
-              grouped.goals.push(item);
-            else if (typeName.includes("assist") || typeCode.includes("assist"))
-              grouped.assists.push(item);
-            else if (typeName.includes("yellow") || typeCode.includes("yellow"))
-              grouped.yellow.push(item);
-            else if (typeName.includes("red") || typeCode.includes("red"))
-              grouped.red.push(item);
-            else if (typeName.includes("shot") && typeName.includes("target"))
-              grouped.shots.push(item);
-            else if (typeName.includes("foul")) grouped.fouls.push(item);
-          });
-        }
-
-        // Render the 6 cards
+        // Render the 6 cards using the pre-sorted PHP object
         let gridHtml = "";
-        gridHtml += renderCard(i18n.goals, grouped.goals, i18n.no_data);
-        gridHtml += renderCard(i18n.assists, grouped.assists, i18n.no_data);
-        gridHtml += renderCard(i18n.red, grouped.red, i18n.no_data); // Top row
+        gridHtml += renderCard(i18n.goals, data.goals || [], i18n.no_data);
+        gridHtml += renderCard(i18n.assists, data.assists || [], i18n.no_data);
+        gridHtml += renderCard(i18n.red, data.red || [], i18n.no_data); // Top row
 
-        gridHtml += renderCard(i18n.yellow, grouped.yellow, i18n.no_data); // Bottom row
-        gridHtml += renderCard(i18n.shots, grouped.shots, i18n.no_data);
-        gridHtml += renderCard(i18n.fouls, grouped.fouls, i18n.no_data);
+        gridHtml += renderCard(i18n.yellow, data.yellow || [], i18n.no_data); // Bottom row
+        gridHtml += renderCard(i18n.shots, data.shots || [], i18n.no_data);
+        gridHtml += renderCard(i18n.fouls, data.fouls || [], i18n.no_data);
 
         $wrapper.find(".ss-nps-grid").html(gridHtml).show();
+      },
+      error: function () {
+        $wrapper.find(".ss-nps-loading").html("Error loading stats.");
       },
     });
   }

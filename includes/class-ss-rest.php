@@ -154,31 +154,58 @@ final class Sawah_Sports_REST {
         $s = Sawah_Sports_Helpers::settings();
         $season_id = (int) $req->get_param('season_id');
         
-        $cache_key = 'ss_new_player_stats_v2_' . $season_id;
+        // Bumped cache key to v3 to ensure you don't load the old broken data
+        $cache_key = 'ss_new_player_stats_v3_' . $season_id;
         if (!empty($s['cache_enabled'])) {
             $cached = Sawah_Sports_Cache::get($cache_key);
             if ($cached) return rest_ensure_response($cached);
         }
 
-        // Fetch topscorers using the exact Category IDs recommended by Sportmonks
-        // 208 = Goals, 209 = Assists, 84/1600 = Yellows, 83/1601 = Reds
-        $res = $this->client()->get('topscorers/seasons/' . $season_id, [
-            'filters' => 'seasonTopscorerTypes:208,209,84,83,1600,1601',
-            'include' => 'player;participant;type',
-            'per_page' => 50
-        ], 20);
-        
-        if (!$res['ok']) {
-            return new WP_Error('api_error', 'Failed to fetch player stats.', ['status' => $res['status'] ?? 502]);
-        }
+        // Fetch each category separately to bypass the 50-item pagination limit flooding
+        // IDs defined by Sportmonks AI: Goals (208), Assists (209), Yellows (1600 or 84), Reds (1601 or 83)
+        $categories = [
+            'goals'   => 208,
+            'assists' => 209,
+            'yellow'  => 1600, 
+            'red'     => 1601   
+        ];
 
-        $data = $res['data']['data'] ?? [];
+        $final_data = [
+            'goals'   => [],
+            'assists' => [],
+            'yellow'  => [],
+            'red'     => [],
+            'shots'   => [], // Usually not provided in this endpoint by Sportmonks
+            'fouls'   => []  // Usually not provided in this endpoint by Sportmonks
+        ];
+
+        foreach ($categories as $key => $type_id) {
+            $res = $this->client()->get('topscorers/seasons/' . $season_id, [
+                'filters' => 'seasonTopscorerTypes:' . $type_id,
+                'include' => 'player;participant;type',
+            ], 10);
+            
+            if ($res['ok'] && !empty($res['data']['data'])) {
+                // Slice to top 10 immediately to keep the payload lightning fast
+                $final_data[$key] = array_slice($res['data']['data'], 0, 10); 
+            }
+        }
+        
+        // Fallback: Sportmonks sometimes uses older IDs (84 and 83) for cards depending on the league
+        if (empty($final_data['yellow'])) {
+            $res = $this->client()->get('topscorers/seasons/' . $season_id, ['filters' => 'seasonTopscorerTypes:84', 'include' => 'player;participant;type']);
+            if ($res['ok'] && !empty($res['data']['data'])) $final_data['yellow'] = array_slice($res['data']['data'], 0, 10);
+        }
+        if (empty($final_data['red'])) {
+            $res = $this->client()->get('topscorers/seasons/' . $season_id, ['filters' => 'seasonTopscorerTypes:83', 'include' => 'player;participant;type']);
+            if ($res['ok'] && !empty($res['data']['data'])) $final_data['red'] = array_slice($res['data']['data'], 0, 10);
+        }
 
         if (!empty($s['cache_enabled'])) {
-            Sawah_Sports_Cache::set($cache_key, $data, (int)($s['ttl_statistics'] ?? 3600));
+            Sawah_Sports_Cache::set($cache_key, $final_data, (int)($s['ttl_statistics'] ?? 3600));
         }
 
-        return rest_ensure_response($data);
+        return rest_ensure_response($final_data);
     }
 
     public function get_new_matches_full(WP_REST_Request $req) {
